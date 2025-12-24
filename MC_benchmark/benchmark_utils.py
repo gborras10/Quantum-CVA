@@ -20,7 +20,7 @@ def P0(u: float, r: float) -> float:
     Returns
     -------
     float
-        Discount factor P(0,u) = \exp{-r*u}.
+        Discount factor P(0,u) = exp{-r*u}.
     """
     return float(np.exp(-r * u))
 
