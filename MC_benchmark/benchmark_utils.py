@@ -396,7 +396,7 @@ def discrete_cva(
     T : float
         Maturity of the deal (years).
     LGD : float
-        Loss-given-default (typically 1 - recovery).
+        Loss-given-default.
     P0_func : callable
         Discount factor function. Must accept a single time argument u and return P(0,u).
     q_interval : callable
@@ -433,36 +433,132 @@ def discrete_cva(
     5.5e-05
     """
     n_arr = np.atleast_1d(n).astype(int)
-    M = len(S_by_time)
+    n_times = len(S_by_time)
 
-    disc = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
-    dq = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
+    discount_factors = np.array(
+        [P0_func(t[i]) for i in range(1, n_times + 1)],
+        dtype=float,
+    )
+    default_prob_increments = np.array(
+        [q_interval(t[i - 1], t[i]) for i in range(1, n_times + 1)],
+        dtype=float,
+    )
 
-    X = S_by_time[-1]  # S(T): widest distribution -> global range
-    muhat = float(X.mean())
-    sighat = float(X.std(ddof=1))
-    s0 = max(muhat - n_sigma * sighat, 0.0)
-    sN = muhat + n_sigma * sighat
+    terminal_prices = S_by_time[-1]          # S(T)
+    terminal_mean = float(terminal_prices.mean())
+    terminal_std = float(terminal_prices.std(ddof=1))
 
-    edges_list = [np.linspace(s0, sN, 2**ni + 1) for ni in n_arr]
-    s_mid_list = [0.5 * (e[:-1] + e[1:]) for e in edges_list]
+    price_min = max(terminal_mean - n_sigma * terminal_std, 0.0)
+    price_max = terminal_mean + n_sigma * terminal_std
 
-    CVA_out = np.zeros(len(n_arr), dtype=float)
+    bin_edges_per_n = [
+        np.linspace(price_min, price_max, 2**ni + 1) for ni in n_arr
+    ]
+    bin_midpoints_per_n = [
+        0.5 * (edges[:-1] + edges[1:]) for edges in bin_edges_per_n
+    ]
 
-    for k, (e, s_mid) in enumerate(zip(edges_list, s_mid_list)):
-        Et = np.zeros(M, dtype=float)
+    cva_values = np.zeros(len(n_arr), dtype=float)
 
-        for i in range(1, M + 1):
-            counts, _ = np.histogram(S_by_time[i - 1], bins=e)
-            in_range = counts.sum()
-            if in_range == 0:
-                raise ValueError("No samples in range; widen [s0,sN] or increase n_sigma.")
-            p_disc = counts / in_range
+    for k, (bin_edges, bin_midpoints) in enumerate(
+        zip(bin_edges_per_n, bin_midpoints_per_n)
+    ):
+        expected_exposure = np.zeros(n_times, dtype=float)
+
+        for i in range(1, n_times + 1):
+            spot_samples = S_by_time[i - 1]
+
+            bin_counts, _ = np.histogram(spot_samples, bins=bin_edges)
+            n_in_support = bin_counts.sum()
+            if n_in_support == 0:
+                raise ValueError(
+                    "No samples in range; widen [price_min, price_max] or increase n_sigma."
+                )
+
+            discrete_price_prob = bin_counts / n_in_support
 
             ti = t[i]
-            Vpos_mid = np.maximum(s_mid - K * np.exp(-r * (T - ti)), 0.0)
-            Et[i - 1] = np.dot(p_disc, Vpos_mid)
+            forward_strike = K * np.exp(-r * (T - ti))
+            positive_payoff_midpoints = np.maximum(
+                bin_midpoints - forward_strike, 0.0
+            )
 
-        CVA_out[k] = LGD * np.sum(Et * disc * dq)
+            expected_exposure[i - 1] = np.dot(
+                discrete_price_prob, positive_payoff_midpoints
+            )
 
-    return float(CVA_out[0]) if np.isscalar(n) else CVA_out
+        cva_values[k] = LGD * np.sum(
+            expected_exposure * discount_factors * default_prob_increments
+        )
+
+    return float(cva_values[0]) if np.isscalar(n) else cva_values
+
+
+def discrete_cva_paper_form(
+    S_by_time: list[np.ndarray],
+    t: np.ndarray,
+    K: float,
+    r: float,
+    T: float,
+    LGD: float,
+    P0_func,
+    q_interval,
+    n: int | np.ndarray,
+    n_sigma: float = 3.0,
+    C_v: float = 1.0,
+    C_p: float = 1.0,
+    C_q: float = 1.0,
+) -> np.ndarray | float:
+    """
+    Same estimator as discrete_cva but written explicitly in the paper form:
+      CVA = M*LGD*C_v*C_p*C_q * sum_{i,j} P(sj,ti) v~(sj,ti) p~(ti) q~(ti)
+    where v = C_v v~, p = C_p p~, q = C_q q~.
+    """
+
+    n_arr = np.atleast_1d(n).astype(int)
+    M = len(S_by_time)
+
+    # p(t_i) and q(t_{i-1},t_i)
+    p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
+    q = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
+
+    # scaled versions
+    p_tilde = p / C_p
+    q_tilde = q / C_q
+
+    # global price support from terminal distribution
+    X_T = S_by_time[-1]
+    mu_T = float(X_T.mean())
+    sigma_T = float(X_T.std(ddof=1))
+    s_min = max(mu_T - n_sigma * sigma_T, 0.0)
+    s_max = mu_T + n_sigma * sigma_T
+
+    edges_list = [np.linspace(s_min, s_max, 2**ni + 1) for ni in n_arr]
+    mids_list  = [0.5 * (e[:-1] + e[1:]) for e in edges_list]
+
+    out = np.zeros(len(n_arr), dtype=float)
+
+    for k, (edges, s_mid) in enumerate(zip(edges_list, mids_list)):
+        bracket_sum = 0.0  # this is the bracketed double-sum (already includes time-sum)
+
+        for i in range(1, M + 1):
+            counts, _ = np.histogram(S_by_time[i - 1], bins=edges)
+            in_range = counts.sum()
+            if in_range == 0:
+                raise ValueError("No samples in range; widen [s_min,s_max] or increase n_sigma.")
+            P_bin_given_t = counts / in_range  # sums to 1 over bins
+
+            ti = t[i]
+            v_mid = np.maximum(s_mid - K * np.exp(-r * (T - ti)), 0.0)
+            v_tilde_mid = v_mid / C_v
+
+            # sum_j P(sj|ti) v~(sj,ti)
+            E_tilde_ti = np.dot(P_bin_given_t, v_tilde_mid)
+
+            # multiply by p~(ti) q~(ti) and accumulate over i
+            bracket_sum += E_tilde_ti * p_tilde[i - 1] * q_tilde[i - 1]
+
+        # prefactor M * LGD * C_v * C_p * C_q
+        out[k] = M * LGD * C_v * C_p * C_q * bracket_sum
+
+    return float(out[0]) if np.isscalar(n) else out
