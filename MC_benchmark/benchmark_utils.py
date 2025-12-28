@@ -3,7 +3,7 @@
 # =============================
 import numpy as np
 from scipy.optimize import brentq
-from typing import Callable, Sequence, Tuple, List
+from collections.abc import Callable, Sequence
 
 # ------------------------------
 # Auxiliary functions for discount factors
@@ -53,40 +53,73 @@ def P_t_T(ti: float, T: float, r: float) -> float:
 # Function to build survival curve from CDS quotes via bootstrapping
 # -----------------------------
 #%%
-def build_survival_from_cds(
-    P0: Callable[[float], float],
+def build_survival_from_cds(P0: Callable[[float], float],
     tenors: Sequence[float],
     spreads: Sequence[float],
     R_cds: float,
     pay_freq: int = 4,
-) -> Tuple[np.ndarray, np.ndarray, Callable[[float], float], Callable[[float, float], float]]:
+) -> tuple[np.ndarray, np.ndarray, Callable[[float], float], Callable[[float, float], float]]:
     """
-    Bootstrap a piecewise-constant hazard rate curve from CDS par spreads.
+    Bootstrap a survival probability curve from CDS par spreads using a
+    piecewise-constant hazard rate model. This function calibrates a hazard rate 
+    curve λ(t) assumed constant on each interval (T_{i-1}, T_i), 
+    where T_i are the CDS maturities. The calibration enforces, for each
+    tenor, equality between the present value of the premium leg and the 
+    protection leg of a standard CDS contract.
 
     Parameters
     ----------
     P0 : Callable[[float], float]
-        Discount factor function P0(t) = P(0,t).
+        Discount factor function P(0,t). It must return the present
+        value of one unit of currency paid at time ``t`` (in years).
     tenors : Sequence[float]
-        CDS maturities in years (strictly increasing).
+        CDS maturities in years (strictly increasing), e.g.
+        ``[1, 3, 5, 7, 10]``.
     spreads : Sequence[float]
-        CDS par spreads in decimal form.
+        CDS par spreads corresponding to ``tenors``, expressed in decimal
+        form (e.g. ``0.001`` for 100 bps).
     R_cds : float
-        CDS recovery rate.
+        Recovery rate assumed in the CDS contracts.
     pay_freq : int, optional
-        Number of premium payments per year (e.g. 4 for quarterly).
+        Number of premium payments per year (default is 4, i.e. quarterly).
 
     Returns
     -------
     breaks : np.ndarray
-        Interval boundaries [0, T_1, ..., T_n].
+        Array of interval boundaries ``[0, T_1, ..., T_n]`` defining the
+        piecewise-constant hazard rate structure.
     lambdas : np.ndarray
-        Calibrated hazard rates for each interval.
+        Calibrated hazard rates (λ_i), one for each interval
+        ``(T_{i-1}, T_i]``.
     survival_curve : Callable[[float], float]
-        Survival probability function S(t).
+        Survival probability function ``S(t)`` implied by the calibrated
+        hazard curve.
     q_interval : Callable[[float, float], float]
-        Default probability over (t_prev, t_curr].
+        Function returning the default probability over an interval
+        ``(t_prev, t_curr]``, i.e.
+        ``S(t_prev) - S(t_curr)``.
+
+    Examples
+    --------
+    Bootstrap a survival curve from CDS spreads:
+
+    >>> tenors = [1, 3, 5, 7, 10]
+    >>> spreads = [0.0010, 0.0018, 0.0032, 0.0047, 0.0057]
+    >>> breaks, λs, S, q = build_survival_from_cds(
+    ...     P0=P0_flat,
+    ...     tenors=tenors,
+    ...     spreads=spreads,
+    ...     R_cds=0.4,
+    ... )
+    >>> S(5.0)
+    0.96
+    >>> q(2.0, 2.25)
+    0.0008
     """
+    # Sanity check
+    if np.any(np.diff(tenors) <= 0):
+        raise ValueError("Los tenors deben estar estrictamente ordenados de menor a mayor.")
+    
     tenors = np.asarray(tenors, dtype=float)
     spreads = np.asarray(spreads, dtype=float)
 
@@ -126,7 +159,7 @@ def build_survival_from_cds(
 
         return float(np.exp(-integral))
 
-    def pv_legs(Tm: float, spread: float, idx: int) -> Tuple[float, float]:
+    def pv_legs(Tm: float, spread: float, idx: int) -> tuple[float, float]:
         """
         Present value of premium and protection legs up to maturity Tm.
 
@@ -174,6 +207,16 @@ def build_survival_from_cds(
         def f(lam: float) -> float:
             """
             Objective function for root finding: difference between PVs of legs.
+
+            Parameters
+            ----------
+            lam : float
+                Hazard rate for the current interval.
+            
+            Returns
+            -------
+            float
+                Difference between premium leg and protection leg PVs.
             """
             lambdas[i] = lam
             prem, prot = pv_legs(Tm, s_i, idx=i)
@@ -181,7 +224,9 @@ def build_survival_from_cds(
 
         # Find the root for lambda_i using Brent's method in
         # a reasonable interval
-        lambdas[i] = brentq(f, 1e-12, 5.0)
+        max_hazard_rate = 5.0
+        min_hazard_rate = 1e-12
+        lambdas[i] = brentq(f, min_hazard_rate, max_hazard_rate)
 
     def survival_curve(t: float) -> float:
         """
@@ -229,7 +274,7 @@ def simulate_S(
     sigma: float,
     t: np.ndarray,
     Z: np.ndarray,   # shape (N_paths, M)
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """
     Simulate marginal samples of a Geometric Brownian Motion at given time points.
 
@@ -249,7 +294,7 @@ def simulate_S(
 
     Returns
     -------
-    List[np.ndarray]
+    list[np.ndarray]
         List of length M. The i-th element is an array of shape (N_paths,)
         containing samples of S(t_i).
 
@@ -366,11 +411,115 @@ def discrete_probs_from_samples(
         raise ValueError("No samples in range; widen [s0, sN].")
     return counts / in_range
 
+#%%
+#------------------------------
+# Continuous-underlying-distribution CVA estimator 
+#------------------------------
+def classical_continuous_cva_MC(
+    S0: float,
+    mu: float,
+    sigma: float,
+    t: np.ndarray,
+    K: float,
+    r: float,
+    T: float,
+    LGD: float,
+    P0_func: Callable[[float], float],
+    q_interval: Callable[[float, float], float],
+    Z: np.ndarray | None = None
+) -> tuple[float, float]:
+    """
+    Classical Monte Carlo estimator of CVA with a continuous distribution
+    of the underlying (no price discretization). This function computes the CVA
+    contribution for a single Monte Carlo run using marginal sampling of a 
+    geometric Brownian motion at each exposure date. It returns both the 
+    CVA estimate and the Monte Carlo standard error for that run.
+
+    Parameters
+    ----------
+    S0 : float
+        Initial underlying price.
+    mu : float
+        Drift of the geometric Brownian motion.
+    sigma : float
+        Volatility of the geometric Brownian motion.
+    t : np.ndarray
+        Time grid of length ``M+1`` with ``t[0] = 0`` and exposure dates
+        ``t[1], …, t[M]``.
+    K : float
+        Strike parameter of the forward-like exposure.
+    r : float
+        Flat continuously compounded risk-free rate used for discounting
+        and for the forward strike adjustment.
+    T : float
+        Maturity of the contract.
+    LGD : float
+        Loss-given-default (typically ``1 - recovery``).
+    P0_func : callable
+        Discount factor function. Must accept a single maturity ``u`` and
+        return ``P(0,u)``.
+    q_interval : callable
+        Incremental default probability function ``q(a,b)`` for the interval
+        ``(a,b]``.
+    Z : np.ndarray
+        Standard normal shocks with shape ``(N_paths, M)``, where each column
+        corresponds to the normal variates used to sample ``S(t_i)``.
+
+    Returns
+    -------
+    cva : float
+        Monte Carlo estimate of CVA for this run.
+    std_err : float
+        Monte Carlo standard error of the estimator for this run,
+        computed from the sample variance of the pathwise CVA contributions.
+
+    Examples
+    --------
+    Single Monte Carlo run:
+
+    >>> rng = np.random.default_rng(42)
+    >>> Z = rng.standard_normal(size=(100_000, M))
+    >>> cva, std = classical_continuous_cva_MC(
+    ...     S0=S0,
+    ...     mu=mu,
+    ...     sigma=sigma,
+    ...     t=t,
+    ...     K=K,
+    ...     r=r,
+    ...     T=T,
+    ...     LGD=1.0,
+    ...     P0_func=P0_flat,
+    ...     q_interval=q_interval,
+    ...     Z=Z,
+    ... )
+    >>> cva, std
+    (5.6e-05, 1.2e-06)
+    """
+    
+    N_paths, M = Z.shape
+
+    # Precompute time scalars
+    dq = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
+    p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
+    fwd_strike = np.array([K * np.exp(-r * (T - t[i])) for i in range(1, M + 1)], dtype=float)
+
+    cva_path = np.zeros(N_paths, dtype=float)
+
+    for i in range(1, M + 1):
+        ti = float(t[i])
+        Si = S0 * np.exp((mu - 0.5 * sigma**2) * ti + sigma * np.sqrt(ti) * Z[:, i - 1])
+        Vpos = np.maximum(Si - fwd_strike[i - 1], 0.0)
+        cva_path += Vpos * p[i - 1] * dq[i - 1]
+
+    cva = float(LGD * cva_path.mean())
+    std_err = float(np.sqrt((LGD**2) * cva_path.var(ddof=1) / N_paths))
+    return cva, std_err
+
+#%%
 # -----------------------------
 # Discrete-underlying-distribution CVA estimator    
 # -----------------------------
-#%%
-def discrete_cva(
+def classical_discrete_cva_MC(
     S_by_time: list[np.ndarray],
     t: np.ndarray,
     K: float,
@@ -384,6 +533,7 @@ def discrete_cva(
     C_v: float = 1.0,
     C_p: float = 1.0,
     C_q: float = 1.0,
+    payoff_repr: str = "left",   # "left" | "right" | "midpoint"
 ) -> np.ndarray | float:
     """
     Discrete-time, discrete-price CVA estimator with explicit
@@ -477,16 +627,29 @@ def discrete_cva(
     M = len(S_by_time)
 
     p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
-    q = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
+    dq = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
     p_tilde = p / C_p
-    q_tilde = q / C_q
+    dq_tilde = dq / C_q
 
     out = np.zeros(len(n_arr), dtype=float)
 
+    pr = payoff_repr.lower()
+
     for k, ni in enumerate(n_arr):
-        # utils: global grid from terminal samples (uniform), representative midpoints not used here
         edges, _ = price_grid_from_samples(S_by_time, n=int(ni), n_sigma=n_sigma)
+
         left_edges = edges[:-1]
+        right_edges = edges[1:]
+        mid_edges = 0.5 * (left_edges + right_edges)
+
+        if pr in ("left", "l"):
+            s_rep = left_edges
+        elif pr in ("right", "r"):
+            s_rep = right_edges
+        elif pr in ("mid", "midpoint", "m"):
+            s_rep = mid_edges
+        else:
+            raise ValueError("payoff_repr must be one of {'left','right','midpoint'}")
 
         bracket_sum = 0.0
         for i in range(1, M + 1):
@@ -495,11 +658,11 @@ def discrete_cva(
             ti = t[i]
             forward_strike = K * np.exp(-r * (T - ti))
 
-            payoff_left = np.maximum(left_edges - forward_strike, 0.0)
-            payoff_tilde_left = payoff_left / C_v
+            payoff = np.maximum(s_rep - forward_strike, 0.0)
+            payoff_tilde = payoff / C_v
 
-            E_tilde_ti = np.dot(P_bin_given_t, payoff_tilde_left)
-            bracket_sum += E_tilde_ti * p_tilde[i - 1] * q_tilde[i - 1]
+            E_tilde_ti = np.dot(P_bin_given_t, payoff_tilde)
+            bracket_sum += E_tilde_ti * p_tilde[i - 1] * dq_tilde[i - 1]
 
         out[k] = LGD * C_v * C_p * C_q * bracket_sum
 
