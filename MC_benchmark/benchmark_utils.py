@@ -366,135 +366,11 @@ def discrete_probs_from_samples(
         raise ValueError("No samples in range; widen [s0, sN].")
     return counts / in_range
 
+# -----------------------------
+# Discrete-underlying-distribution CVA estimator    
+# -----------------------------
 #%%
 def discrete_cva(
-    S_by_time: list[np.ndarray],   # length M, each shape (N_paths,)
-    t: np.ndarray,                 # length M+1
-    K: float,
-    r: float,
-    T: float,
-    LGD: float,
-    P0_func,                       # callable: P0(0,ti) or P0(ti)
-    q_interval,                    # callable: q(t_{i-1},t_i)
-    n: int | np.ndarray,
-    n_sigma: float = 3.0,
-) -> np.ndarray | float:
-    """
-    Compute the discrete-time, discrete-price CVA approximation (Alcázar et al., 2022) for a single Monte Carlo run.
-
-    Parameters
-    ----------
-    S_by_time : list[np.ndarray]
-        List of Monte Carlo samples for each exposure date: [S(t_1), ..., S(t_M)].
-        Each entry has shape (N_paths,).
-    t : np.ndarray
-        Time grid of length M+1 with t[0]=0 and exposure dates t[1],...,t[M].
-    K : float
-        Strike of the forward-like payoff used for exposure: max(S(t_i) - K*exp(-r*(T-t_i)), 0).
-    r : float
-        Flat continuously-compounded rate used in the forward strike adjustment.
-    T : float
-        Maturity of the deal (years).
-    LGD : float
-        Loss-given-default.
-    P0_func : callable
-        Discount factor function. Must accept a single time argument u and return P(0,u).
-    q_interval : callable
-        Incremental default probability function q(a,b) for interval (a,b].
-    n : int or array-like of int
-        Price discretization levels. Uses N=2^n bins. If an array is provided, CVA is computed for
-        all values in one call.
-    n_sigma : float, optional
-        Truncation width for the global price range in standard deviations of S(T).
-
-    Returns
-    -------
-    float or np.ndarray
-        If n is an int, returns CVA(n) as a float.
-        If n is array-like, returns an array of CVA(n) with the same shape as n.
-
-    Examples
-    --------
-    Compute CVA for multiple discretization levels in one run:
-    >>> ns = np.arange(1, 15)  # n=1..14
-    >>> cva_ns = discrete_cva(
-    ...     S_by_time=S_by_time, t=t, K=K, r=r, T=T, LGD=LGD,
-    ...     P0_func=P0_flat, q_interval=q_interval, n=ns, n_sigma=4.0
-    ... )
-    >>> cva_ns.shape
-    (14,)
-
-    Proxy for CVA(infinity) using a fine grid:
-    >>> cva_inf = discrete_cva(
-    ...     S_by_time=S_by_time, t=t, K=K, r=r, T=T, LGD=LGD,
-    ...     P0_func=P0_flat, q_interval=q_interval, n=20, n_sigma=4.0
-    ... )
-    >>> float(cva_inf)  # doctest: +SKIP
-    5.5e-05
-    """
-    n_arr = np.atleast_1d(n).astype(int)
-    n_times = len(S_by_time)
-
-    discount_factors = np.array(
-        [P0_func(t[i]) for i in range(1, n_times + 1)],
-        dtype=float,
-    )
-    default_prob_increments = np.array(
-        [q_interval(t[i - 1], t[i]) for i in range(1, n_times + 1)],
-        dtype=float,
-    )
-
-    terminal_prices = S_by_time[-1]          # S(T)
-    terminal_mean = float(terminal_prices.mean())
-    terminal_std = float(terminal_prices.std(ddof=1))
-
-    price_min = max(terminal_mean - n_sigma * terminal_std, 0.0)
-    price_max = terminal_mean + n_sigma * terminal_std
-
-    bin_edges_per_n = [
-        np.linspace(price_min, price_max, 2**ni + 1) for ni in n_arr
-    ]
-    bin_midpoints_per_n = [
-        0.5 * (edges[:-1] + edges[1:]) for edges in bin_edges_per_n
-    ]
-
-    cva_values = np.zeros(len(n_arr), dtype=float)
-
-    for k, (bin_edges, bin_midpoints) in enumerate(
-        zip(bin_edges_per_n, bin_midpoints_per_n)
-    ):
-        expected_exposure = np.zeros(n_times, dtype=float)
-
-        for i in range(1, n_times + 1):
-            spot_samples = S_by_time[i - 1]
-
-            bin_counts, _ = np.histogram(spot_samples, bins=bin_edges)
-            n_in_support = bin_counts.sum()
-            if n_in_support == 0:
-                raise ValueError(
-                    "No samples in range; widen [price_min, price_max] or increase n_sigma."
-                )
-
-            discrete_price_prob = bin_counts / n_in_support
-
-            ti = t[i]
-            forward_strike = K * np.exp(-r * (T - ti))
-            positive_payoff_midpoints = np.maximum(
-                bin_midpoints - forward_strike, 0.0
-            )
-
-            expected_exposure[i - 1] = np.dot(
-                discrete_price_prob, positive_payoff_midpoints
-            )
-
-        cva_values[k] = LGD * np.sum(
-            expected_exposure * discount_factors * default_prob_increments
-        )
-
-    return float(cva_values[0]) if np.isscalar(n) else cva_values
-
-
-def discrete_cva_paper_form(
     S_by_time: list[np.ndarray],
     t: np.ndarray,
     K: float,
@@ -510,55 +386,121 @@ def discrete_cva_paper_form(
     C_q: float = 1.0,
 ) -> np.ndarray | float:
     """
-    Same estimator as discrete_cva but written explicitly in the paper form:
-      CVA = M*LGD*C_v*C_p*C_q * sum_{i,j} P(sj,ti) v~(sj,ti) p~(ti) q~(ti)
-    where v = C_v v~, p = C_p p~, q = C_q q~.
-    """
+    Discrete-time, discrete-price CVA estimator with explicit
+    scaling constants introduced to rescale the payoff, 
+    discount factor and default probability to 
+    the unit interval [0,1] for amplitude encoding, and to recover and
+    amplify small variations when rescaling back to the original magnitude.
+    Designed to be run in quantum registers.
 
+    Parameters
+    ----------
+    S_by_time : list[np.ndarray]
+        Monte Carlo samples of the underlying price at each exposure date
+        \\([S(t_1), \\dots, S(t_M)]\\). Each array has shape ``(N_paths,)``.
+    t : np.ndarray
+        Time grid of length ``M+1`` with ``t[0] = 0`` and exposure dates
+        ``t[1], …, t[M]``.
+    K : float
+        Strike parameter of the forward-like exposure payoff. The effective
+        strike at time ``t_i`` is ``K * exp(-r * (T - t_i))``.
+    r : float
+        Flat continuously compounded risk-free rate used in the forward
+        strike adjustment.
+    T : float
+        Maturity of the deal (in years).
+    LGD : float
+        Loss-given-default (typically ``1 - recovery``).
+    P0_func : callable
+        Discount factor function. Must accept a single maturity ``u`` and
+        return the discount factor ``P(0,u)``.
+    q_interval : callable
+        Incremental default probability function ``q(a, b)`` for the interval
+        ``(a, b]``.
+    n : int or array-like of int
+        Price discretization level(s). For a given ``n``, the price grid has
+        ``N = 2**n`` bins. If an array is provided, CVA is computed for all
+        values in one call.
+    n_sigma : float, optional
+        Width of the global price truncation interval expressed in standard
+        deviations of the terminal price distribution ``S(T)``.
+    C_v : float, optional
+        Scaling constant for the exposure/payoff function ``v``.
+    C_p : float, optional
+        Scaling constant for the discount factor ``p``.
+    C_q : float, optional
+        Scaling constant for the default probability ``q``.
+
+    Returns
+    -------
+    float or np.ndarray
+        If ``n`` is a scalar, returns ``CVA(n)`` as a float.
+        If ``n`` is array-like, returns an array of ``CVA(n)`` values with
+        the same shape as ``n``.
+
+    Examples
+    --------
+    Compute CVA for a single discretization level:
+
+    >>> cva_4 = discrete_cva(
+    ...     S_by_time=S_by_time,
+    ...     t=t,
+    ...     K=K,
+    ...     r=r,
+    ...     T=T,
+    ...     LGD=1.0,
+    ...     P0_func=P0_flat,
+    ...     q_interval=q_interval,
+    ...     n=4,
+    ...     n_sigma=4.0,
+    ... )
+
+    Compute CVA for several discretization levels in one call:
+
+    >>> ns = np.arange(2, 10)
+    >>> cva_ns = discrete_cva(
+    ...     S_by_time=S_by_time,
+    ...     t=t,
+    ...     K=K,
+    ...     r=r,
+    ...     T=T,
+    ...     LGD=1.0,
+    ...     P0_func=P0_flat,
+    ...     q_interval=q_interval,
+    ...     n=ns,
+    ...     n_sigma=4.0,
+    ... )
+    >>> cva_ns.shape
+    (8,)
+    """
     n_arr = np.atleast_1d(n).astype(int)
     M = len(S_by_time)
 
-    # p(t_i) and q(t_{i-1},t_i)
     p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
     q = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
-
-    # scaled versions
     p_tilde = p / C_p
     q_tilde = q / C_q
 
-    # global price support from terminal distribution
-    X_T = S_by_time[-1]
-    mu_T = float(X_T.mean())
-    sigma_T = float(X_T.std(ddof=1))
-    s_min = max(mu_T - n_sigma * sigma_T, 0.0)
-    s_max = mu_T + n_sigma * sigma_T
-
-    edges_list = [np.linspace(s_min, s_max, 2**ni + 1) for ni in n_arr]
-    mids_list  = [0.5 * (e[:-1] + e[1:]) for e in edges_list]
-
     out = np.zeros(len(n_arr), dtype=float)
 
-    for k, (edges, s_mid) in enumerate(zip(edges_list, mids_list)):
-        bracket_sum = 0.0  # this is the bracketed double-sum (already includes time-sum)
+    for k, ni in enumerate(n_arr):
+        # utils: global grid from terminal samples (uniform), representative midpoints not used here
+        edges, _ = price_grid_from_samples(S_by_time, n=int(ni), n_sigma=n_sigma)
+        left_edges = edges[:-1]
 
+        bracket_sum = 0.0
         for i in range(1, M + 1):
-            counts, _ = np.histogram(S_by_time[i - 1], bins=edges)
-            in_range = counts.sum()
-            if in_range == 0:
-                raise ValueError("No samples in range; widen [s_min,s_max] or increase n_sigma.")
-            P_bin_given_t = counts / in_range  # sums to 1 over bins
+            P_bin_given_t = discrete_probs_from_samples(S_by_time[i - 1], edges)
 
             ti = t[i]
-            v_mid = np.maximum(s_mid - K * np.exp(-r * (T - ti)), 0.0)
-            v_tilde_mid = v_mid / C_v
+            forward_strike = K * np.exp(-r * (T - ti))
 
-            # sum_j P(sj|ti) v~(sj,ti)
-            E_tilde_ti = np.dot(P_bin_given_t, v_tilde_mid)
+            payoff_left = np.maximum(left_edges - forward_strike, 0.0)
+            payoff_tilde_left = payoff_left / C_v
 
-            # multiply by p~(ti) q~(ti) and accumulate over i
+            E_tilde_ti = np.dot(P_bin_given_t, payoff_tilde_left)
             bracket_sum += E_tilde_ti * p_tilde[i - 1] * q_tilde[i - 1]
 
-        # prefactor M * LGD * C_v * C_p * C_q
-        out[k] = M * LGD * C_v * C_p * C_q * bracket_sum
+        out[k] = LGD * C_v * C_p * C_q * bracket_sum
 
     return float(out[0]) if np.isscalar(n) else out
