@@ -1,9 +1,7 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
 import numpy as np
 
-# Importa las utilidades que ya tienes
+from __future__ import annotations
+from dataclasses import dataclass
 from benchmark_utils import price_grid_from_samples, discrete_probs_from_samples
 
 
@@ -32,11 +30,67 @@ def extract_tables_and_scalings(
     n: int,
     n_sigma: float = 3.0,
     eps: float = 1e-6,
-    payoff_repr: str = "left",  # "left" | "right" | "midpoint"
+    payoff_repr: str = "left",
 ) -> DiscreteCvaTables:
     """
-    Build tables (p_i, dq_i, P_{i,j}, v_{i,j}) and scaling constants,
-    forcing C_p = 1 as in the reference implementation.
+    Precompute discrete CVA tables (time, price and payoff) and normalization
+    constants used in a discretized CVA estimator, with Cp fixed to 1.
+
+    From Monte Carlo samples of the underlying at discrete times, this function:
+      - builds a common price grid with N = 2**n bins,
+      - estimates marginal price probabilities per time step,
+      - evaluates discounted call payoffs on a bin representative,
+      - computes discount factors and default probabilities,
+      - defines scaling constants (Cp, Cq, Cv) as in Alcázar et al. (2022). :contentReference[oaicite:0]{index=0}
+
+    Parameters
+    ----------
+    S_by_time : list[np.ndarray]
+        Samples of the underlying at times t[1:], length M.
+    t : np.ndarray
+        Time grid [t0, ..., tM] in years.
+    K : float
+        Option strike at maturity T.
+    r : float
+        Continuously compounded risk-free rate.
+    T : float
+        Maturity in years.
+    P0_func : callable
+        Discount factor P0(0,u).
+    q_interval : callable
+        Default probability over (t_{i-1}, t_i).
+    n : int
+        Price discretization level (N = 2**n bins).
+    n_sigma : float
+        Width of the price grid in standard deviations.
+    eps : float
+        Safety buffer for Cq and Cv.
+    payoff_repr : {"left","right","midpoint"}
+        Representative price per bin for payoff evaluation.
+
+    Returns
+    -------
+    DiscreteCvaTables
+        Dataclass with price grid, probabilities, payoff table and scaling
+        constants.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(0)
+    >>> t = np.linspace(0.0, 0.5, 5)          # 4 time steps
+    >>> S_by_time = [5.0 * np.exp(0.2 * rng.standard_normal(20_000))
+    ...              for _ in range(4)]
+    >>> P0 = lambda u: np.exp(-0.02 * u)
+    >>> q_interval = lambda a, b: 0.01 * (b - a)
+    >>> tables = extract_tables_and_scalings(
+    ...     S_by_time, t, K=5.5, r=0.02, T=0.5,
+    ...     P0_func=P0, q_interval=q_interval, n=2
+    ... )
+    >>> tables.P_bin.shape
+    (4, 4)
+    >>> tables.C_p
+    1.0
     """
     M = len(S_by_time)
 
