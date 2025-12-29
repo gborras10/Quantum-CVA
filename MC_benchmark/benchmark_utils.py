@@ -638,18 +638,30 @@ def classical_discrete_cva_MC(
     for k, ni in enumerate(n_arr):
         edges, _ = price_grid_from_samples(S_by_time, n=int(ni), n_sigma=n_sigma)
 
-        left_edges = edges[:-1]
+        left_edges  = edges[:-1]
         right_edges = edges[1:]
-        mid_edges = 0.5 * (left_edges + right_edges)
+        mid_edges   = 0.5 * (left_edges + right_edges)
+
+        # parámetro de sesgo: 0=left, 0.5=mid, 1=right
+        theta = 0.25
 
         if pr in ("left", "l"):
             s_rep = left_edges
+
         elif pr in ("right", "r"):
             s_rep = right_edges
+
         elif pr in ("mid", "midpoint", "m"):
             s_rep = mid_edges
+
+        elif pr in ("theta", "tilted", "t"):
+            # representante interior sesgado hacia la derecha
+            s_rep = (1.0 - theta) * left_edges + theta * right_edges
+
         else:
-            raise ValueError("payoff_repr must be one of {'left','right','midpoint'}")
+            raise ValueError(
+                "payoff_repr must be one of {'left','right','midpoint','theta'}"
+            )
 
         bracket_sum = 0.0
         for i in range(1, M + 1):

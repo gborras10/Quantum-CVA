@@ -1,9 +1,8 @@
-import numpy as np
-
 from __future__ import annotations
 from dataclasses import dataclass
 from benchmark_utils import price_grid_from_samples, discrete_probs_from_samples
 
+import numpy as np
 
 @dataclass
 class DiscreteCvaTables:
@@ -105,14 +104,21 @@ def extract_tables_and_scalings(
     mid_edges = 0.5 * (left_edges + right_edges)
 
     pr = payoff_repr.lower()
-    if pr in ("left"):
+
+    if pr == "left":
         s_rep = left_edges
-    elif pr in ("right"):
+    elif pr == "right":
         s_rep = right_edges
-    elif pr in ("midpoint"):
+    elif pr == "midpoint":
         s_rep = mid_edges
+    elif pr.startswith("tilted"):
+        # admite "tilted" o "tilted:0.75"
+        theta = 0.25
+        if ":" in pr:
+            theta = float(pr.split(":", 1)[1])
+        s_rep = (1.0 - theta) * left_edges + theta * right_edges
     else:
-        raise ValueError("payoff_repr must be one of {'left','right','midpoint'}")
+        raise ValueError("payoff_repr must be one of {'left','right','midpoint','tilted' (or 'tilted:theta')}")
 
     N = len(s_rep)
 
@@ -126,13 +132,21 @@ def extract_tables_and_scalings(
         forward_strike = K * np.exp(-r * (T - ti))
         v_rep[i - 1] = np.maximum(s_rep - forward_strike, 0.0)
 
-    # scalings
-    dq_max = float(np.max(dq)) if np.size(dq) else 0.0
-    v_max = float(np.max(v_rep)) if np.size(v_rep) else 0.0
+    # scalings (Alcázar-style)
+    # - Ensure p_tilde, dq_tilde, v_tilde are in [0,1]
+    # - Avoid extremely small scalings that would kill resolution after encoding
+    # - Keep C_p, C_q, C_v >= 1
 
-    C_p = 1.0  
+    p_max  = float(np.max(p))  if np.size(p)  else 0.0
+    dq_max = float(np.max(dq)) if np.size(dq) else 0.0
+    v_max  = float(np.max(v_rep)) if np.size(v_rep) else 0.0
+
+    # If you want the *tight* normalization to [0,1], choose max.
+    # The eps buffer avoids hitting 1 exactly due to floating error.
+    C_p = (1.0 + eps) * p_max  if p_max  > 0 else 1.0
     C_q = (1.0 + eps) * dq_max if dq_max > 0 else 1.0
-    C_v = (1.0 + eps) * v_max if v_max > 0 else 1.0
+    C_v = (1.0 + eps) * v_max  if v_max  > 0 else 1.0
+
 
     return DiscreteCvaTables(
         n=int(n),
