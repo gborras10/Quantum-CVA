@@ -113,7 +113,7 @@ def extract_tables_and_scalings(
         s_rep = mid_edges
     elif pr.startswith("tilted"):
         # admite "tilted" o "tilted:0.75"
-        theta = 0.25
+        theta = 1.0
         if ":" in pr:
             theta = float(pr.split(":", 1)[1])
         s_rep = (1.0 - theta) * left_edges + theta * right_edges

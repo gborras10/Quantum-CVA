@@ -643,7 +643,7 @@ def classical_discrete_cva_MC(
         mid_edges   = 0.5 * (left_edges + right_edges)
 
         # parámetro de sesgo: 0=left, 0.5=mid, 1=right
-        theta = 0.25
+        theta = 1.0
 
         if pr in ("left", "l"):
             s_rep = left_edges
