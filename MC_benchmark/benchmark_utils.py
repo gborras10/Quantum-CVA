@@ -642,7 +642,7 @@ def classical_discrete_cva_MC(
         right_edges = edges[1:]
         mid_edges   = 0.5 * (left_edges + right_edges)
 
-        # parámetro de sesgo: 0=left, 0.5=mid, 1=right
+        # bias parameter 
         theta = 1.0
 
         if pr in ("left", "l"):
@@ -654,13 +654,9 @@ def classical_discrete_cva_MC(
         elif pr in ("mid", "midpoint", "m"):
             s_rep = mid_edges
 
-        elif pr in ("theta", "tilted", "t"):
-            # representante interior sesgado hacia la derecha
-            s_rep = (1.0 - theta) * left_edges + theta * right_edges
-
         else:
             raise ValueError(
-                "payoff_repr must be one of {'left','right','midpoint','theta'}"
+                "payoff_repr must be one of {'left','right','midpoint'}"
             )
 
         bracket_sum = 0.0
