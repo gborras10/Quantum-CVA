@@ -139,7 +139,7 @@ def build_survival_from_cds(P0: Callable[[float], float],
             Index of the last interval (inclusive) used in the hazard integral.
 
         Returns
-        -------
+        ---------
         float
             Survival probability S(t).
         """
