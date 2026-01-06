@@ -331,7 +331,7 @@ def simulate_S(
 def price_grid_from_samples(
     S_samples_by_time: list[np.ndarray],
     n: int,
-    n_sigma: float = 4.0,
+    n_sigma: float = 3.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Build a global uniform price grid with N = 2^n points from GBM samples.
@@ -602,7 +602,7 @@ def classical_discrete_cva_MC(
     ...     P0_func=P0_flat,
     ...     q_interval=q_interval,
     ...     n=4,
-    ...     n_sigma=4.0,
+    ...     n_sigma=3.0,
     ... )
 
     Compute CVA for several discretization levels in one call:
@@ -618,7 +618,7 @@ def classical_discrete_cva_MC(
     ...     P0_func=P0_flat,
     ...     q_interval=q_interval,
     ...     n=ns,
-    ...     n_sigma=4.0,
+    ...     n_sigma=3.0,
     ... )
     >>> cva_ns.shape
     (8,)

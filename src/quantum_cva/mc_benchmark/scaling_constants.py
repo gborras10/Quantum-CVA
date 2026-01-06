@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from benchmark_utils import price_grid_from_samples, discrete_probs_from_samples
+from .benchmark_utils import price_grid_from_samples, discrete_probs_from_samples
 
 import numpy as np
 
