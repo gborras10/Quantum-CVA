@@ -642,9 +642,6 @@ def classical_discrete_cva_MC(
         right_edges = edges[1:]
         mid_edges   = 0.5 * (left_edges + right_edges)
 
-        # bias parameter 
-        theta = 1.0
-
         if pr in ("left", "l"):
             s_rep = left_edges
 
