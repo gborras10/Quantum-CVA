@@ -61,11 +61,9 @@ def build_joint_target_from_P_bin(
     r"""
     Build the joint target distribution used to train a QCBM, following:
 
-    \[
-    p_{\text{tg}}(i,j) = \mathcal{P}(t_i, s_j) = \mathcal{P}(s_j \mid t_i)\,P(t_i)
-    \]
+    p_{tg}(i,j) = P(t_i, s_j) = P(s_j|t_i) · P(t_i)
 
-    where \(\mathcal{P}(s_j \mid t_i)\) is given by `P_bin[i, j]` (row-stochastic), and \(P(t_i)\) is
+    where P(s_j|t_i)\) is given by `P_bin[i, j]` (row-stochastic), and P(t_i) is
     uniform.
 
     Parameters
@@ -82,11 +80,6 @@ def build_joint_target_from_P_bin(
     -------
     JointQcbmTarget
         Contains flattened p_tg and metadata (M, N, m, n, etc.).
-
-    Notes
-    -----
-    - If you later want a *single* register of size M*N without separate registers, keep
-      "time_major" so bits are (time bits) then (price bits).
     """
     P_bin = np.asarray(P_bin, dtype=float)
     if P_bin.ndim != 2:
@@ -94,7 +87,7 @@ def build_joint_target_from_P_bin(
 
     M, N = P_bin.shape
 
-    # 1) sanitize/renormalize each conditional row P(s|t_i)
+    # Sanitize/renormalize each conditional row P(s|t_i)
     P = np.clip(P_bin, 0.0, None)
     row_sums = P.sum(axis=1, keepdims=True)
     if np.any(row_sums <= 0.0):
@@ -102,17 +95,17 @@ def build_joint_target_from_P_bin(
         raise ValueError(f"At least one row in P_bin has zero mass. Bad rows: {bad.tolist()}")
     P = P / row_sums
 
-    # 2) define P(t_i) = pi_i
+    # Define P(t_i) = pi_i
     w = np.full(M, 1.0 / M, dtype=float)
 
-    # 3) require sizes compatible with qubit registers
+    # Require sizes compatible with qubit registers
     if (M & (M - 1)) != 0 or (N & (N - 1)) != 0:
         raise ValueError("M and N must be powers of two.")
 
-    # 4) joint p(t_i, s_j) = w_i * P(s_j|t_i)
+    # Joint p(t_i, s_j) = w_i * P(s_j|t_i)
     joint = w[:, None] * P  # shape (M, N)
 
-    # 5) flatten in the chosen order
+    # Flatten in the chosen order
     if order == "time_major":
         p_tg = joint.reshape(M * N)
     elif order == "price_major":
@@ -122,7 +115,7 @@ def build_joint_target_from_P_bin(
 
     p_tg = _check_and_normalize_prob_vector(p_tg)
 
-    # 6) qubit counts
+    # Qubit counts
     # (safe because M and N are powers of two)
     m = int(np.log2(M))
     n = int(np.log2(N))
