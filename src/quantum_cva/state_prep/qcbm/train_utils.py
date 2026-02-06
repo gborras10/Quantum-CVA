@@ -4,37 +4,34 @@ from __future__ import annotations
 import numpy as np
 import json
 import quantum_cva
+import matplotlib.pyplot as plt
 
 from collections.abc import Callable, Mapping
 from scipy.optimize import OptimizeResult
 from pathlib import Path
 
-
-
 def minimize_with_cost_history(
-    cost_fn: Callable[[np.ndarray], float],
+    cost_fn,
     *,
-    x0: np.ndarray,
-    minimize_fn: Callable[..., OptimizeResult],
-    method: str,
-    options: dict,
-) -> tuple[OptimizeResult, np.ndarray]:
-    """
-    Run scipy.optimize.minimize (or a compatible function) and record the cost
-    at each iterate via callback. Works with COBYLA.
-
-    Returns
-    -------
-    res : OptimizeResult
-    cost_history : np.ndarray
-    """
+    x0,
+    minimize_fn,
+    method,
+    options,
+):
     cost_history: list[float] = []
+    last_val: float | None = None
 
-    def callback(xk: np.ndarray) -> None:
-        cost_history.append(float(cost_fn(xk)))
+    def wrapped(x):
+        nonlocal last_val
+        last_val = float(cost_fn(x))
+        return last_val
+
+    def callback(xk):
+        if last_val is not None:
+            cost_history.append(last_val)
 
     res = minimize_fn(
-        cost_fn,
+        wrapped,
         x0=x0,
         method=method,
         callback=callback,
@@ -42,6 +39,7 @@ def minimize_with_cost_history(
     )
 
     return res, np.asarray(cost_history, dtype=float)
+
 
 def _repo_root() -> Path:
     # .../Quantum-CVA/src/quantum_cva/__init__.py -> parents[2] = repo root
@@ -144,13 +142,6 @@ def save_qcbm_distributions(
         json.dump(payload, f, indent=2)
 
     return npz_path, json_path
-
-# src/quantum_cva/state_prep/qcbm/utils_plot.py
-from __future__ import annotations
-
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 def plot_qcbm_training_diagnostics(
     *,
@@ -256,90 +247,4 @@ def plot_qcbm_training_diagnostics(
     ax_bottom.grid(True, axis="y", alpha=0.25)
 
     plt.tight_layout()
-    plt.show()
-
-def plot_joint_and_marginals(
-    *,
-    ptg: np.ndarray,
-    p_star: np.ndarray,
-    M: int,
-    N: int,
-    order: str = "time_major",
-    title_suffix: str = "",
-) -> None:
-    """
-    Plot joint distributions (heatmaps) and marginals from flattened vectors.
-
-    Parameters
-    ----------
-    ptg, p_star : np.ndarray
-        Flattened joint probability vectors of length M*N.
-    M, N : int
-        Joint grid shape: M time steps, N price bins.
-    order : {"time_major","price_major"}
-        Flattening convention:
-          - time_major: x = i*N + j  (reshape to (M,N))
-          - price_major: x = j*M + i (reshape to (N,M).T)
-    title_suffix : str, optional
-        Extra string appended to plot titles.
-    """
-    ptg = np.asarray(ptg, dtype=float).ravel()
-    p_star = np.asarray(p_star, dtype=float).ravel()
-
-    if ptg.size != M * N or p_star.size != M * N:
-        raise ValueError(f"ptg and p_star must have length M*N = {M*N}.")
-
-    if order == "time_major":
-        Ptg_2d = ptg.reshape(M, N)
-        Pst_2d = p_star.reshape(M, N)
-    elif order == "price_major":
-        Ptg_2d = ptg.reshape(N, M).T
-        Pst_2d = p_star.reshape(N, M).T
-    else:
-        raise ValueError("order must be 'time_major' or 'price_major'.")
-
-    # Marginals
-    ptg_time  = Ptg_2d.sum(axis=1)
-    pst_time  = Pst_2d.sum(axis=1)
-    ptg_price = Ptg_2d.sum(axis=0)
-    pst_price = Pst_2d.sum(axis=0)
-
-    # Heatmaps: target
-    plt.figure()
-    plt.title(f"ptg (target) heatmap {title_suffix}".strip())
-    plt.imshow(Ptg_2d, aspect="auto")
-    plt.colorbar()
-    plt.xlabel("price bin j")
-    plt.ylabel("time i")
-    plt.show()
-
-    # Heatmaps: learned
-    plt.figure()
-    plt.title(f"p* (learned) heatmap {title_suffix}".strip())
-    plt.imshow(Pst_2d, aspect="auto")
-    plt.colorbar()
-    plt.xlabel("price bin j")
-    plt.ylabel("time i")
-    plt.show()
-
-    # Time marginal
-    plt.figure()
-    plt.title("Time marginal: ptg vs p*")
-    plt.plot(ptg_time, marker="o", label="ptg")
-    plt.plot(pst_time, marker="o", label="p*")
-    plt.xlabel("i (time)")
-    plt.ylabel("probability")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.show()
-
-    # Price marginal
-    plt.figure()
-    plt.title("Price marginal: ptg vs p*")
-    plt.plot(ptg_price, marker="o", label="ptg")
-    plt.plot(pst_price, marker="o", label="p*")
-    plt.xlabel("j (price)")
-    plt.ylabel("probability")
-    plt.legend()
-    plt.grid(alpha=0.3)
     plt.show()

@@ -1,14 +1,12 @@
-# =============================
-# benchmark_utils.py
-# =============================
+# src/quantum_cva/mc_benchmark/benchmark_utils.py
 import numpy as np
 from scipy.optimize import brentq
 from collections.abc import Callable, Sequence
 
 # ------------------------------
-# Auxiliary functions for discount factors
+# Auxiliary functions for computing discount factors
 # ------------------------------
-#%%
+
 def P0(u: float, r: float) -> float:
     """
     Return the discount factor P(0,u) under a flat continuously-compounded rate.
@@ -27,7 +25,6 @@ def P0(u: float, r: float) -> float:
     """
     return float(np.exp(-r * u))
 
-#%%
 def P_t_T(ti: float, T: float, r: float) -> float:
     """
     Return the forward discount factor P(ti,T) under a flat curve.
@@ -48,11 +45,10 @@ def P_t_T(ti: float, T: float, r: float) -> float:
     """
     return float(np.exp(-r * (T - ti)))
 
-
 # -----------------------------
 # Function to build survival curve from CDS quotes via bootstrapping
 # -----------------------------
-#%%
+
 def build_survival_from_cds(P0: Callable[[float], float],
     tenors: Sequence[float],
     spreads: Sequence[float],
@@ -264,70 +260,543 @@ def build_survival_from_cds(P0: Callable[[float], float],
 
     return breaks, lambdas, survival_curve, q_interval
 
-# -----------------------------
-# Functions to work with the discretized underlying distribution
-# -----------------------------
-#%%
+# ===========================================
+# MAIN CVA DRIVERS FUNCTIONS
+# ===========================================
+
 def simulate_S(
     S0: float,
     mu: float,
     sigma: float,
     t: np.ndarray,
-    Z: np.ndarray,   # shape (N_paths, M)
+    Z: np.ndarray,   # shape (N_paths, M) where M = len(t) - 1
+    antithetic: bool = True,
+    moment_match: bool = False,
+    replications: int = 1,
+    replication_seed: int = 12345,
+    pathwise: bool = False,
 ) -> list[np.ndarray]:
     """
-    Simulate marginal samples of a Geometric Brownian Motion at given time points.
+    Simulate samples of a Geometric Brownian Motion (GBM) at the time grid
+    `t`, including the initial time t[0] = 0.
+
+    The function returns samples of the underlying at all grid points:
+    S_by_time[i] contains samples of S(t[i]) for i = 0, ..., M, where M = len(t) - 1.
+    The first entry S_by_time[0] is deterministic and equal to S0 replicated across
+    all Monte Carlo paths; stochastic sampling starts at t[1].
+
+    The simulation can be either marginal (pathwise=False) or pathwise (pathwise=True).
+    - Marginal: samples at different times are generated independently using columns of Z.
+    - Pathwise: samples follow a cumulative path, S(t_i) = S(t_{i-1}) * exp(...).
 
     Parameters
     ----------
     S0 : float
-        Initial underlying price at time t = 0.
+        Initial value of the underlying at time t[0].
     mu : float
         Drift parameter of the GBM.
     sigma : float
-        Volatility of the GBM.
+        Volatility parameter of the GBM.
     t : np.ndarray
-        Time grid of length M+1 with t[0] = 0 and t[i] the i-th exposure date.
+        One-dimensional array of times with t[0] = 0 and length M+1.
     Z : np.ndarray
-        Standard normal samples with shape (N_paths, M). Column i-1 is used
-        to generate samples at time t_i.
+        Array of standard normal variates with shape (N_paths, M), where column
+        i-1 is used to generate samples at time t[i].
+    antithetic : bool, optional
+        If True, use antithetic variates by stacking Z and -Z. Default is True.
+    moment_match : bool, optional
+        If True, apply per-time-step moment matching to the normal variates after
+        antithetic expansion. Default is False.
+    replications : int, optional
+        Number of independent normal blocks to concatenate in order to increase the
+        effective number of Monte Carlo paths. Default is 1.
+    replication_seed : int, optional
+        Seed used to generate additional normal blocks when replications > 1.
+        Default is 12345.
+    pathwise : bool, optional
+        If True, simulate pathwise where S(t_i) = S(t_{i-1}) * exp(...).
+        If False, simulate marginally where S(t_i) = S0 * exp(...).
+        Default is False.
 
     Returns
     -------
     list[np.ndarray]
-        List of length M. The i-th element is an array of shape (N_paths,)
-        containing samples of S(t_i).
-
-    Example
-    -------
-    >>> import numpy as np
-    >>> S0, mu, sigma = 5.0, 0.02, 0.25
-    >>> t = np.linspace(0.0, 0.5, 5)   # M = 4 time steps
-    >>> N_paths = 100_000
-    >>> Z = np.random.standard_normal(size=(N_paths, 4))
-    >>> S_by_time = simulate_S(S0, mu, sigma, t, Z)
-    >>> len(S_by_time)
-    4
-    >>> S_by_time[0]
-    array([4.92017382, 5.58214855, 4.52283849, ..., 5.67746454, 4.53352251,
-       5.00398244], shape=(100000,))
+        List of length M+1. Each element is a one-dimensional array of shape
+        (N_paths,) containing samples of the underlying at the corresponding time.
+        The first element corresponds to t[0] and is a constant array equal to S0.
     """
-    if Z.shape[1] != len(t) - 1:
-        raise ValueError("Z shape and time grid t are inconsistent.")
 
-    M = Z.shape[1]
-    S_list = []
-    for i in range(1, M + 1):
-        ti = t[i]
-        # Marginal GBM sampling at time t_i (no pathwise dynamics)
-        Si = S0 * np.exp(
-            (mu - 0.5 * sigma**2) * ti
-            + sigma * np.sqrt(ti) * Z[:, i - 1]
-        )
-        S_list.append(Si)
+    t = np.asarray(t, dtype=float)
+    Z = np.asarray(Z, dtype=float)
+
+    if t.ndim != 1 or len(t) < 2:
+        raise ValueError("t must be a 1D array with at least two points (t[0]=0 plus exposure dates).")
+    if Z.ndim != 2:
+        raise ValueError("Z must be a 2D array with shape (N_paths, M).")
+
+    M = len(t) - 1
+    if Z.shape[1] != M:
+        raise ValueError("Z shape and time grid t are inconsistent: need Z.shape[1] == len(t) - 1.")
+    if replications < 1:
+        raise ValueError("replications must be >= 1.")
+
+    # --- concatenate independent blocks to increase effective N ---
+    if replications > 1:
+        rng = np.random.default_rng(int(replication_seed))
+        blocks = [Z]
+        for _ in range(replications - 1):
+            blocks.append(rng.standard_normal(size=Z.shape))
+        Z = np.vstack(blocks)
+
+    # --- antithetic expansion ---
+    if antithetic:
+        Z = np.vstack([Z, -Z])
+
+    # --- moment matching (after antithetic) ---
+    if moment_match:
+        col_mean = Z.mean(axis=0, keepdims=True)
+        col_std = Z.std(axis=0, ddof=0, keepdims=True)
+        if np.any(col_std <= 0.0):
+            bad = np.where(col_std.ravel() <= 0.0)[0].tolist()
+            raise ValueError(f"Moment matching failed: zero-variance columns {bad}.")
+        Z = (Z - col_mean) / col_std
+
+    N_paths = int(Z.shape[0])
+
+    # i=0: deterministic S0 replicated across paths
+    S_list: list[np.ndarray] = [np.full(N_paths, float(S0), dtype=float)]
+
+    # i=1..M: exposure dates
+    if pathwise:
+        # Pathwise simulation: S(t_i) = S(t_{i-1}) * exp(...)
+        for i in range(1, M + 1):
+            ti_prev = float(t[i - 1])
+            ti = float(t[i])
+            dt = ti - ti_prev
+            Si = S_list[i - 1] * np.exp(
+                (mu - 0.5 * sigma**2) * dt
+                + sigma * np.sqrt(dt) * Z[:, i - 1]
+            )
+            S_list.append(Si.astype(float, copy=False))
+    else:
+        # Marginal simulation: S(t_i) = S0 * exp(...) (independent at each time)
+        for i in range(1, M + 1):
+            ti = float(t[i])
+            Si = float(S0) * np.exp(
+                (mu - 0.5 * sigma**2) * ti
+                + sigma * np.sqrt(ti) * Z[:, i - 1]
+            )
+            S_list.append(Si.astype(float, copy=False))
+
     return S_list
 
+def discount_factors_on_grid(
+    t: np.ndarray,
+    P0_func: Callable[[float], float],
+) -> np.ndarray:
+    """
+    Build the discount-factor array p(t_i) = P(0, t_i) on the full time grid.
+
+    Parameters
+    ----------
+    t : np.ndarray
+        Time grid of length M+1 with t[0] = 0.
+    P0_func : Callable[[float], float]
+        Discount factor function P(0, u) as a one-argument callable.
+
+    Returns
+    -------
+    np.ndarray
+        Array of length M+1 with entries p_i = P(0, t[i]) for i=0..M.
+    """
+    t = np.asarray(t, dtype=float)
+    return np.array([P0_func(float(ti)) for ti in t], dtype=float)
+
+def default_increments_on_grid(
+    t: np.ndarray,
+    q_interval: Callable[[float, float], float],
+) -> np.ndarray:
+    """
+    Build the default-increment array on the full time grid, including t0.
+
+    Convention:
+        q_full[0] = 0.0
+        q_full[i] = q_interval(t[i-1], t[i]) for i=1..M
+
+    Parameters
+    ----------
+    t : np.ndarray
+        Time grid of length M+1 with t[0] = 0.
+    q_interval : Callable[[float, float], float]
+        Function returning default probability over (a, b].
+
+    Returns
+    -------
+    np.ndarray
+        Array of length M+1 with q_full[0]=0 and interval increments in positions 1..M.
+    """
+    t = np.asarray(t, dtype=float)
+    q_full = np.zeros(len(t), dtype=float)
+    for i in range(1, len(t)):
+        q_full[i] = float(q_interval(float(t[i - 1]), float(t[i])))
+    return q_full
+
+
+def positive_exposure_matrix_from_samples(
+    S_by_time: list[np.ndarray],
+    t: np.ndarray,
+    *,
+    K: float,
+    r: float,
+    T: float,
+) -> np.ndarray:
+    """
+    Build the positive exposure matrix Vpos(paths, time) from continuous samples,
+    aligned with the full time grid (including t0).
+
+    The forward-adjusted strike is computed internally for each time:
+        fwd_strike(t_i) = K * exp(-r * (T - t_i))
+
+    Parameters
+    ----------
+    S_by_time : list[np.ndarray]
+        Samples aligned with `t`, length M+1 with S_by_time[i] ~ S(t[i]).
+        Typically produced by `simulate_S` that includes t0.
+    t : np.ndarray
+        Time grid of length M+1 aligned with S_by_time.
+    K : float
+        Strike parameter.
+    r : float
+        Flat risk-free rate.
+    T : float
+        Contract maturity.
+
+    Returns
+    -------
+    np.ndarray
+        Positive exposure matrix of shape (N_paths, M+1).
+    """
+    t = np.asarray(t, dtype=float)
+    n_times = len(S_by_time)
+    if t.shape != (n_times,):
+        raise ValueError("t must have shape (M+1,) matching the length of S_by_time.")
+
+    # forward-adjusted strike aligned with t[0..M]
+    fwd_strike = K * np.exp(-r * (T - t))  # (M+1,)
+
+    N_paths = int(np.asarray(S_by_time[0]).shape[0])
+    Vpos = np.empty((N_paths, n_times), dtype=float)
+
+    for k, Sk in enumerate(S_by_time):
+        Sk = np.asarray(Sk, dtype=float)
+        if Sk.shape != (N_paths,):
+            raise ValueError("All arrays in S_by_time must have the same shape (N_paths,).")
+        Vpos[:, k] = np.maximum(Sk - float(fwd_strike[k]), 0.0)
+
+    return Vpos
+
+# ---------------------------------------
+# Classical cva estimation in the continuous underlying regime
+# ---------------------------------------
 #%%
+def cva_from_continuous_blocks(
+    Vpos: np.ndarray,  # (N_paths, M+1)
+    p_t: np.ndarray,   # (M+1,)
+    q_t: np.ndarray,   # (M+1,) with q_t[0]=0
+    *,
+    LGD: float,
+) -> tuple[float, float]:
+    """
+    Compute CVA (and MC standard error) from continuous-sampling building blocks,
+    aligned with the full time grid (including t0).
+
+    Convention:
+        q_t[0] = 0 so the t0 column contributes nothing automatically.
+
+    Parameters
+    ----------
+    Vpos : np.ndarray
+        Positive exposure matrix of shape (N_paths, M+1) aligned with t[0..M].
+    p_t : np.ndarray
+        Discount factors of length M+1 aligned with t[0..M].
+    q_t : np.ndarray
+        Default increments of length M+1 aligned with t[0..M], with q_t[0]=0.
+    LGD : float
+        Loss-given-default.
+
+    Returns
+    -------
+    cva : float
+        Monte Carlo estimate of CVA.
+    std_err : float
+        Monte Carlo standard error computed from the sample variance of the
+        pathwise CVA contributions.
+    """
+    Vpos = np.asarray(Vpos, dtype=float)
+    p_t = np.asarray(p_t, dtype=float)
+    q_t = np.asarray(q_t, dtype=float)
+
+    if Vpos.ndim != 2:
+        raise ValueError("Vpos must be a 2D array of shape (N_paths, M+1).")
+
+    N_paths, n_times = Vpos.shape
+    if p_t.shape != (n_times,) or q_t.shape != (n_times,):
+        raise ValueError("p_t and q_t must have shape (M+1,) matching Vpos.shape[1].")
+    if N_paths <= 1:
+        raise ValueError("Need at least 2 paths to estimate a standard error.")
+    if float(q_t[0]) != 0.0:
+        raise ValueError("q_t[0] must be 0.0 to ensure t0 contributes nothing.")
+
+    w = p_t * q_t
+    cva_path = Vpos @ w
+
+    cva = float(LGD * cva_path.mean())
+    std_err = float(abs(LGD) * np.sqrt(cva_path.var(ddof=1) / N_paths))
+    return cva, std_err
+
+# ===========================================
+# DISCRETE UNDERLYING SETTING FUNCTIONS
+# ===========================================
+
+def grid_and_prob_matrix(
+    S_by_time: list[np.ndarray],
+    n: int,
+    *,
+    n_sigma: float = 3.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Build (edges, s_mid, P_s_t) in one pass.
+
+    - Global uniform grid from terminal samples (mean ± n_sigma * std, clipped at 0).
+    - Probability matrix by histogramming samples at each time and renormalizing.
+
+    Parameters
+    ----------
+    S_by_time : list[np.ndarray]
+        Samples aligned with the time grid, length M+1 (including t0), each (N_paths,).
+    n : int
+        Price discretization level (N = 2**n bins).
+    n_sigma : float, optional
+        Truncation width in terminal std devs.
+
+    Returns
+    -------
+    edges : np.ndarray
+        Bin edges, shape (N+1,).
+    s_mid : np.ndarray
+        Bin midpoints, shape (N,).
+    P_s_t : np.ndarray
+        Probability matrix, shape (M+1, N).
+    """
+    N = 2 ** int(n)
+
+    X = np.asarray(S_by_time[-1], dtype=float)
+    muhat = float(X.mean())
+    sighat = float(X.std(ddof=1))
+    s0 = max(muhat - float(n_sigma) * sighat, 0.0)
+    sN = muhat + float(n_sigma) * sighat
+
+    edges = np.linspace(s0, sN, N + 1, dtype=float)
+    s_mid = 0.5 * (edges[:-1] + edges[1:])
+
+    P_rows = []
+    for Si in S_by_time:
+        counts, _ = np.histogram(np.asarray(Si, dtype=float), bins=edges)
+        tot = int(counts.sum())
+        if tot == 0:
+            raise ValueError("No samples in range for at least one time; widen [s0, sN] or increase n_sigma.")
+        P_rows.append(counts / tot)
+
+    P_s_t = np.asarray(P_rows, dtype=float)  # (M+1, N)
+    return edges, s_mid, P_s_t
+
+
+def build_p_target_from_samples(
+    S_by_time: list[np.ndarray],
+    *,
+    n: int,
+    n_sigma: float = 3.0,
+    order: str = "time_major",
+    drop_t0: bool = False,
+    time_weights: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Build quantum-ready joint target p_target over (time, price-bin) from samples.
+
+    Inputs
+    ------
+    S_by_time:
+        Samples aligned with the time grid, length len(t) (includes t0 if present).
+    n:
+        Price register bits (N = 2**n).
+    drop_t0:
+        If True, removes the first time row (t0) from the target.
+        (Only use this if the remaining #times is still a power of two.)
+    time_weights:
+        Optional P(t_i). If None -> uniform over the kept time points.
+
+    Returns
+    -------
+    p_target:
+        Flattened joint probability vector of length M_used * N (quantum-ready).
+    P_s_t:
+        Conditional table P(s_j | t_i), shape (M_used, N).
+    s_grid:
+        Representative price grid (midpoints), shape (N,).
+    w_t:
+        Time weights, shape (M_used,), sums to 1.
+    """
+    # Build grid + conditional probability rows from histograms
+    edges, s_grid, P_full = grid_and_prob_matrix(S_by_time, n=int(n), n_sigma=float(n_sigma))
+    # P_full is row-stochastic by construction (each row sums to 1)
+
+    if drop_t0:
+        P = P_full[1:, :]
+    else:
+        P = P_full
+
+    M_used, N = P.shape
+
+    # Require powers of two for quantum registers
+    if (M_used & (M_used - 1)) != 0 or (N & (N - 1)) != 0:
+        raise ValueError(f"M_used={M_used} and N={N} must be powers of two for quantum registers.")
+
+    # Time weights
+    if time_weights is None:
+        w_t = np.full(M_used, 1.0 / M_used, dtype=float)
+    else:
+        w_t = np.asarray(time_weights, dtype=float).ravel()
+        if w_t.shape != (M_used,):
+            raise ValueError("time_weights must have shape (M_used,)")
+        s = float(w_t.sum())
+        if not np.isfinite(s) or s <= 0:
+            raise ValueError("time_weights must have a positive finite sum.")
+        w_t = w_t / s
+
+    # Joint = P(t_i) * P(s_j|t_i)
+    joint = w_t[:, None] * P  # (M_used, N)
+
+    # Flatten
+    if order == "time_major":
+        p_target = joint.reshape(M_used * N)
+    elif order == "price_major":
+        p_target = joint.T.reshape(M_used * N)
+    else:
+        raise ValueError("order must be 'time_major' or 'price_major'.")
+
+    # Final sanitize/normalize (numerical safety)
+    p_target = np.clip(p_target, 0.0, None)
+    p_target = p_target / float(p_target.sum())
+
+    return p_target, P, s_grid, w_t
+
+def payoff_matrix_forward_call(
+    edges: np.ndarray,
+    t: np.ndarray,
+    *,
+    K: float,
+    r: float,
+    T: float,
+    payoff_repr: str = "mid",
+) -> np.ndarray:
+    """
+    Build payoff matrix v(s_j, t_i) on full time grid using representative bin prices.
+
+    Parameters
+    ----------
+    edges : np.ndarray
+        Bin edges, shape (N+1,).
+    t : np.ndarray
+        Time grid, shape (M+1,), including t0.
+    K, r, T : float
+        Contract/payoff parameters.
+    payoff_repr : str, optional
+        Representative price per bin: "left", "right", or "mid" (default "mid").
+
+    Returns
+    -------
+    np.ndarray
+        Payoff matrix v_s_t, shape (M+1, N).
+    """
+    edges = np.asarray(edges, dtype=float)
+    t = np.asarray(t, dtype=float)
+
+    left = edges[:-1]
+    right = edges[1:]
+    mid = 0.5 * (left + right)
+
+    pr = payoff_repr.lower()
+    if pr in ("left", "l"):
+        s_rep = left
+    elif pr in ("right", "r"):
+        s_rep = right
+    elif pr in ("mid", "midpoint", "m"):
+        s_rep = mid
+    else:
+        raise ValueError("payoff_repr must be one of {'left','right','midpoint'}")
+
+    fwd_strike = K * np.exp(-r * (T - t))                       # (M+1,)
+    v_s_t = np.maximum(s_rep[None, :] - fwd_strike[:, None], 0.0)  # (M+1, N)
+    return v_s_t
+
+
+def cva_discrete_from_blocks(
+    P_s_t: np.ndarray,   # (M+1, N)
+    v_s_t: np.ndarray,   # (M+1, N)
+    p_t: np.ndarray,     # (M+1,)
+    q_t: np.ndarray,     # (M+1,) with q_t[0]=0
+    *,
+    LGD: float,
+    C_v: float = 1.0,
+    C_p: float = 1.0,
+    C_q: float = 1.0,
+) -> float:
+    """
+    Compute discrete-price CVA from precomputed blocks on the full time grid.
+
+    Parameters
+    ----------
+    P_s_t : np.ndarray
+        Probability matrix, shape (M+1, N), aligned with t[0..M].
+    v_s_t : np.ndarray
+        Payoff matrix, shape (M+1, N), aligned with t[0..M].
+    p_t : np.ndarray
+        Discount factors, shape (M+1,), aligned with t[0..M].
+    q_t : np.ndarray
+        Default increments, shape (M+1,), aligned with t[0..M], with q_t[0]=0.
+    LGD : float
+        Loss-given-default.
+    C_v, C_p, C_q : float, optional
+        Scaling constants (amplitude-encoding style). Default 1.0.
+
+    Returns
+    -------
+    float
+        CVA value computed from the blocks.
+    """
+    P_s_t = np.asarray(P_s_t, dtype=float)
+    v_s_t = np.asarray(v_s_t, dtype=float)
+    p_t = np.asarray(p_t, dtype=float)
+    q_t = np.asarray(q_t, dtype=float)
+
+    if P_s_t.shape != v_s_t.shape:
+        raise ValueError("P_s_t and v_s_t must have the same shape (M+1, N).")
+    if p_t.shape != (P_s_t.shape[0],) or q_t.shape != (P_s_t.shape[0],):
+        raise ValueError("p_t and q_t must have shape (M+1,) aligned with P_s_t.")
+    if float(q_t[0]) != 0.0:
+        raise ValueError("q_t[0] must be 0.0 so t0 contributes nothing.")
+
+    p_tilde = p_t / C_p
+    q_tilde = q_t / C_q
+    v_tilde = v_s_t / C_v
+
+    E_tilde = np.sum(P_s_t * v_tilde, axis=1)          # (M+1,)
+    bracket = float(np.sum(E_tilde * p_tilde * q_tilde))
+    return float(LGD * C_v * C_p * C_q * bracket)
+
+# ===========================
+# LEGACY FUNCTIONS
+# ===========================
 def price_grid_from_samples(
     S_samples_by_time: list[np.ndarray],
     n: int,
@@ -410,265 +879,3 @@ def discrete_probs_from_samples(
     if in_range == 0:
         raise ValueError("No samples in range; widen [s0, sN].")
     return counts / in_range
-
-#%%
-#------------------------------
-# Continuous-underlying-distribution CVA estimator 
-#------------------------------
-def classical_continuous_cva_MC(
-    S0: float,
-    mu: float,
-    sigma: float,
-    t: np.ndarray,
-    K: float,
-    r: float,
-    T: float,
-    LGD: float,
-    P0_func: Callable[[float], float],
-    q_interval: Callable[[float, float], float],
-    Z: np.ndarray | None = None
-) -> tuple[float, float]:
-    """
-    Classical Monte Carlo estimator of CVA with a continuous distribution
-    of the underlying (no price discretization). This function computes the CVA
-    contribution for a single Monte Carlo run using marginal sampling of a 
-    geometric Brownian motion at each exposure date. It returns both the 
-    CVA estimate and the Monte Carlo standard error for that run.
-
-    Parameters
-    ----------
-    S0 : float
-        Initial underlying price.
-    mu : float
-        Drift of the geometric Brownian motion.
-    sigma : float
-        Volatility of the geometric Brownian motion.
-    t : np.ndarray
-        Time grid of length ``M+1`` with ``t[0] = 0`` and exposure dates
-        ``t[1], …, t[M]``.
-    K : float
-        Strike parameter of the forward-like exposure.
-    r : float
-        Flat continuously compounded risk-free rate used for discounting
-        and for the forward strike adjustment.
-    T : float
-        Maturity of the contract.
-    LGD : float
-        Loss-given-default (typically ``1 - recovery``).
-    P0_func : callable
-        Discount factor function. Must accept a single maturity ``u`` and
-        return ``P(0,u)``.
-    q_interval : callable
-        Incremental default probability function ``q(a,b)`` for the interval
-        ``(a,b]``.
-    Z : np.ndarray
-        Standard normal shocks with shape ``(N_paths, M)``, where each column
-        corresponds to the normal variates used to sample ``S(t_i)``.
-
-    Returns
-    -------
-    cva : float
-        Monte Carlo estimate of CVA for this run.
-    std_err : float
-        Monte Carlo standard error of the estimator for this run,
-        computed from the sample variance of the pathwise CVA contributions.
-
-    Examples
-    --------
-    Single Monte Carlo run:
-
-    >>> rng = np.random.default_rng(42)
-    >>> Z = rng.standard_normal(size=(100_000, M))
-    >>> cva, std = classical_continuous_cva_MC(
-    ...     S0=S0,
-    ...     mu=mu,
-    ...     sigma=sigma,
-    ...     t=t,
-    ...     K=K,
-    ...     r=r,
-    ...     T=T,
-    ...     LGD=1.0,
-    ...     P0_func=P0_flat,
-    ...     q_interval=q_interval,
-    ...     Z=Z,
-    ... )
-    >>> cva, std
-    (5.6e-05, 1.2e-06)
-    """
-    
-    N_paths, M = Z.shape
-
-    # Precompute time scalars
-    dq = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
-    p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
-    fwd_strike = np.array([K * np.exp(-r * (T - t[i])) for i in range(1, M + 1)], dtype=float)
-
-    cva_path = np.zeros(N_paths, dtype=float)
-
-    for i in range(1, M + 1):
-        ti = float(t[i])
-        Si = S0 * np.exp((mu - 0.5 * sigma**2) * ti + sigma * np.sqrt(ti) * Z[:, i - 1])
-        Vpos = np.maximum(Si - fwd_strike[i - 1], 0.0)
-        cva_path += Vpos * p[i - 1] * dq[i - 1]
-
-    cva = float(LGD * cva_path.mean())
-    std_err = float(np.sqrt((LGD**2) * cva_path.var(ddof=1) / N_paths))
-    return cva, std_err
-
-#%%
-# -----------------------------
-# Discrete-underlying-distribution CVA estimator    
-# -----------------------------
-def classical_discrete_cva_MC(
-    S_by_time: list[np.ndarray],
-    t: np.ndarray,
-    K: float,
-    r: float,
-    T: float,
-    LGD: float,
-    P0_func,
-    q_interval,
-    n: int | np.ndarray,
-    n_sigma: float = 3.0,
-    C_v: float = 1.0,
-    C_p: float = 1.0,
-    C_q: float = 1.0,
-    payoff_repr: str = "left",   # "left" | "right" | "midpoint"
-) -> np.ndarray | float:
-    """
-    Discrete-time, discrete-price CVA estimator with explicit
-    scaling constants introduced to rescale the payoff, 
-    discount factor and default probability to 
-    the unit interval [0,1] for amplitude encoding, and to recover and
-    amplify small variations when rescaling back to the original magnitude.
-    Designed to be run in quantum registers.
-
-    Parameters
-    ----------
-    S_by_time : list[np.ndarray]
-        Monte Carlo samples of the underlying price at each exposure date
-        \\([S(t_1), \\dots, S(t_M)]\\). Each array has shape ``(N_paths,)``.
-    t : np.ndarray
-        Time grid of length ``M+1`` with ``t[0] = 0`` and exposure dates
-        ``t[1], …, t[M]``.
-    K : float
-        Strike parameter of the forward-like exposure payoff. The effective
-        strike at time ``t_i`` is ``K * exp(-r * (T - t_i))``.
-    r : float
-        Flat continuously compounded risk-free rate used in the forward
-        strike adjustment.
-    T : float
-        Maturity of the deal (in years).
-    LGD : float
-        Loss-given-default (typically ``1 - recovery``).
-    P0_func : callable
-        Discount factor function. Must accept a single maturity ``u`` and
-        return the discount factor ``P(0,u)``.
-    q_interval : callable
-        Incremental default probability function ``q(a, b)`` for the interval
-        ``(a, b]``.
-    n : int or array-like of int
-        Price discretization level(s). For a given ``n``, the price grid has
-        ``N = 2**n`` bins. If an array is provided, CVA is computed for all
-        values in one call.
-    n_sigma : float, optional
-        Width of the global price truncation interval expressed in standard
-        deviations of the terminal price distribution ``S(T)``.
-    C_v : float, optional
-        Scaling constant for the exposure/payoff function ``v``.
-    C_p : float, optional
-        Scaling constant for the discount factor ``p``.
-    C_q : float, optional
-        Scaling constant for the default probability ``q``.
-
-    Returns
-    -------
-    float or np.ndarray
-        If ``n`` is a scalar, returns ``CVA(n)`` as a float.
-        If ``n`` is array-like, returns an array of ``CVA(n)`` values with
-        the same shape as ``n``.
-
-    Examples
-    --------
-    Compute CVA for a single discretization level:
-
-    >>> cva_4 = discrete_cva(
-    ...     S_by_time=S_by_time,
-    ...     t=t,
-    ...     K=K,
-    ...     r=r,
-    ...     T=T,
-    ...     LGD=1.0,
-    ...     P0_func=P0_flat,
-    ...     q_interval=q_interval,
-    ...     n=4,
-    ...     n_sigma=3.0,
-    ... )
-
-    Compute CVA for several discretization levels in one call:
-
-    >>> ns = np.arange(2, 10)
-    >>> cva_ns = discrete_cva(
-    ...     S_by_time=S_by_time,
-    ...     t=t,
-    ...     K=K,
-    ...     r=r,
-    ...     T=T,
-    ...     LGD=1.0,
-    ...     P0_func=P0_flat,
-    ...     q_interval=q_interval,
-    ...     n=ns,
-    ...     n_sigma=3.0,
-    ... )
-    >>> cva_ns.shape
-    (8,)
-    """
-    n_arr = np.atleast_1d(n).astype(int)
-    M = len(S_by_time)
-
-    p = np.array([P0_func(t[i]) for i in range(1, M + 1)], dtype=float)
-    dq = np.array([q_interval(t[i - 1], t[i]) for i in range(1, M + 1)], dtype=float)
-    p_tilde = p / C_p
-    dq_tilde = dq / C_q
-
-    out = np.zeros(len(n_arr), dtype=float)
-
-    pr = payoff_repr.lower()
-
-    for k, ni in enumerate(n_arr):
-        edges, _ = price_grid_from_samples(S_by_time, n=int(ni), n_sigma=n_sigma)
-
-        left_edges  = edges[:-1]
-        right_edges = edges[1:]
-        mid_edges   = 0.5 * (left_edges + right_edges)
-
-        if pr in ("left", "l"):
-            s_rep = left_edges
-
-        elif pr in ("right", "r"):
-            s_rep = right_edges
-
-        elif pr in ("mid", "midpoint", "m"):
-            s_rep = mid_edges
-
-        else:
-            raise ValueError(
-                "payoff_repr must be one of {'left','right','midpoint'}"
-            )
-
-        bracket_sum = 0.0
-        for i in range(1, M + 1):
-            P_bin_given_t = discrete_probs_from_samples(S_by_time[i - 1], edges)
-
-            ti = t[i]
-            forward_strike = K * np.exp(-r * (T - ti))
-
-            payoff = np.maximum(s_rep - forward_strike, 0.0)
-            payoff_tilde = payoff / C_v
-
-            E_tilde_ti = np.dot(P_bin_given_t, payoff_tilde)
-            bracket_sum += E_tilde_ti * p_tilde[i - 1] * dq_tilde[i - 1]
-
-        out[k] = LGD * C_v * C_p * C_q * bracket_sum
-
-    return float(out[0]) if np.isscalar(n) else out
