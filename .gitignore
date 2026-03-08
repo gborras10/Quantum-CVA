@@ -55,6 +55,8 @@ data/
 *.parquet
 *.h5
 
+.vscode/
+
 # Figures / outputs
 figures/
 plots/
