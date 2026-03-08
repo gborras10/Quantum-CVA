@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
 # quantum_cva utils
-from quantum_cva.single_asset.state_prep.qcbm.qcbm_circuit import MLQcbmCircuit
+from quantum_cva.multi_asset.quantum.training.state_prep_qcbm.qcbm_circuit import MLQcbmCircuit
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import (
     minimize_with_cost_history,
     plot_training_diagnostics,
