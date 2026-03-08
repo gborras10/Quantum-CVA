@@ -1,9 +1,61 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-.ipynb_checkpoints/
+*.py[cod]
+*$py.class
 
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg
 *.egg-info/
+.eggs/
+pip-wheel-metadata/
 
+# Virtual environments
 .venv/
 venv/
 env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+
+# Data (si no quieres subir datasets grandes)
+data/
+*.npz
+*.npy
+*.csv
+*.parquet
+*.h5
+
+# Figures / outputs
+figures/
+plots/
+results/
