@@ -126,7 +126,7 @@ def plot_joint_and_marginals(
     plt.show()
 
 
-def plot_training_diagnostics(
+def plot_training_diagnostics_multi_asset(
     *,
     target: np.ndarray,
     before: np.ndarray,
@@ -144,17 +144,30 @@ def plot_training_diagnostics(
     cost_xlabel: str = "Optimization Step",
     cost_ylabel: str = "Rescaled Cost Function",
     bar_width: float = 0.85,
-    figsize_dist: tuple[float, float] = (10, 4),
+    figsize_dist: tuple[float, float] = (16, 5),
     figsize_cost: tuple[float, float] = (8, 4),
     max_states: int | None = None,
     cost_log_x: bool = False,
     cost_log_y: bool = True,
 ) -> tuple[plt.Figure, plt.Figure]:
     """
-    Plot training diagnostics: distributions comparison and cost evolution.
+    Plot training diagnostics:
+      - Figure 1: target vs trained distribution (single histogram)
+      - Figure 2: cost evolution
+
+    Notes
+    -----
+    - The argument `before` is kept for interface compatibility, but it is not
+      used in the distribution plot.
+    - For large discrete spaces (e.g. 256 states), the x-axis shows sparse ticks
+      for readability while still plotting all states.
     """
+    import numpy as np
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
     target = np.asarray(target, dtype=float).ravel()
-    before = np.asarray(before, dtype=float).ravel()
+    before = np.asarray(before, dtype=float).ravel()  # kept for compatibility
     after = np.asarray(after, dtype=float).ravel()
     cost_history = np.asarray(cost_history, dtype=float).ravel()
 
@@ -183,41 +196,36 @@ def plot_training_diagnostics(
         best_idx = np.asarray(best_idx, dtype=int).ravel()
 
     # ============================================================
-    # Scenario detection: Price-only vs Time+Price
+    # Scenario detection: Price-only vs generic basis states
     # ============================================================
     if grid_info is not None and "s_mid" in grid_info:
-        scenario = "price_only"
-        s_mid = np.asarray(grid_info["s_mid"], dtype=float)
+        s_mid = np.asarray(grid_info["s_mid"], dtype=float).ravel()
         if s_mid.shape[0] != dim:
             raise ValueError(
                 f"grid_info['s_mid'] must have length {dim}; got {s_mid.shape[0]}."
             )
         use_price_values = True
     else:
-        scenario = "time_price"
         use_price_values = False
 
     if xlabel is None:
         xlabel = (
             "Underlying Price"
             if use_price_values
-            else r"Computational basis state"
+            else "Computational basis state"
         )
 
-    if title_before is None:
-        title_before = (
-            "S(T) Distribution - Before Training"
-            if use_price_values
-            else "Before Training"
-        )
-
+    # `title_before` is intentionally unused; kept for API compatibility.
     if title_after is None:
         title_after = (
-            "S(T) Distribution - After Training"
+            "Target vs trained S(T) distribution"
             if use_price_values
-            else "After Training"
+            else "Target vs trained distribution"
         )
 
+    # ============================================================
+    # Slice for plotting
+    # ============================================================
     if max_states is not None and dim > int(max_states):
         dim_plot = int(max_states)
         sl = slice(0, dim_plot)
@@ -225,6 +233,7 @@ def plot_training_diagnostics(
         dim_plot = dim
         sl = slice(None)
 
+    # x-axis values and tick labels
     if use_price_values:
         x = s_mid[sl]
         ticklabels = [f"{val:.3g}" for val in x]
@@ -257,11 +266,14 @@ def plot_training_diagnostics(
             )
         ticklabels = labels[sl]
 
+    # Histogram widths
     if use_x_values and dim_plot > 1:
-        spacing = np.diff(x).mean()
-        bar_width_actual = spacing * bar_width
+        spacing = float(np.diff(x).mean())
+        width_target = spacing * min(0.95, max(0.05, bar_width))
+        width_after = width_target * 0.60
     else:
-        bar_width_actual = bar_width
+        width_target = min(0.95, max(0.05, bar_width))
+        width_after = width_target * 0.60
 
     rc = {
         "font.size": 11,
@@ -277,116 +289,87 @@ def plot_training_diagnostics(
         "legend.frameon": True,
     }
 
-    col_target = "steelblue"
-    col_meas = "darkorange"
+    col_target = "lightgray"
+    col_after = "darkorange"
     col_cost_pts = "#b94d95"
     col_best = "steelblue"
 
     target_alpha = 0.85
-    meas_alpha = 0.90
-    bar_edge = (0, 0, 0, 0.28)
-    bar_lw = 0.35
-    meas_width_factor = 0.55
+    after_alpha = 0.95
+    bar_edge = (0, 0, 0, 0.20)
+    bar_lw = 0.25
 
     with mpl.rc_context(rc):
-
-        # High-Quality histogram
         mpl.rcParams["figure.dpi"] = 100
         mpl.rcParams["path.simplify"] = False
         mpl.rcParams["patch.antialiased"] = True
 
         # ============================================================
-        # Figure 1: Distribution Comparison
+        # Figure 1: Distribution comparison (target vs after only)
         # ============================================================
-        fig_dist, (ax_before, ax_after) = plt.subplots(
-            1, 2, figsize=figsize_dist
+        fig_dist, ax_dist = plt.subplots(figsize=figsize_dist)
+
+        ax_dist.bar(
+            x,
+            target[sl],
+            width=width_target,
+            alpha=target_alpha,
+            label="target",
+            zorder=2,
+            color=col_target,
+            edgecolor=bar_edge,
+            linewidth=bar_lw,
+        )
+        ax_dist.bar(
+            x,
+            after[sl],
+            width=width_after,
+            alpha=after_alpha,
+            label="trained",
+            zorder=3,
+            color=col_after,
+            edgecolor=bar_edge,
+            linewidth=bar_lw,
         )
 
-        # Common tick strategy for continuous x: sparse + rotated
+        ax_dist.set_title(title_after)
+        ax_dist.set_ylabel(ylabel)
+        ax_dist.set_xlabel(xlabel)
+        ax_dist.grid(True, axis="y")
+        ax_dist.legend(loc="upper right")
+
+        # Sparse ticks for readability
         if use_x_values:
             n_ticks = min(10, dim_plot)
             tick_indices = np.linspace(0, dim_plot - 1, n_ticks, dtype=int)
             xticks = x[tick_indices]
             xticklabels = [ticklabels[i] for i in tick_indices]
-
-        # ---- Before training ----
-        ax_before.bar(
-            x,
-            target[sl],
-            width=bar_width_actual,
-            alpha=target_alpha,
-            label="target",
-            zorder=3,
-            color=col_target,
-            edgecolor=bar_edge,
-            linewidth=bar_lw,
-        )
-        ax_before.bar(
-            x,
-            before[sl],
-            width=bar_width_actual * meas_width_factor,
-            alpha=meas_alpha,
-            label="measured",
-            zorder=2,
-            color=col_meas,
-            edgecolor=bar_edge,
-            linewidth=bar_lw,
-        )
-        ax_before.set_title(title_before)
-        ax_before.set_ylabel(ylabel)
-        ax_before.set_xlabel(xlabel)
-        ax_before.grid(True, axis="y")
-        ax_before.legend(loc="upper right")
-
-        if use_x_values:
-            ax_before.set_xticks(xticks)
-            ax_before.set_xticklabels(
+            ax_dist.set_xticks(xticks)
+            ax_dist.set_xticklabels(
                 xticklabels, rotation=45, ha="right", fontsize=9
             )
         else:
-            ax_before.set_xticks(x)
-            ax_before.set_xticklabels(ticklabels, rotation=90, fontsize=8)
+            if dim_plot <= 16:
+                xticks = x
+                xticklabels_sparse = ticklabels
+                rotation = 90
+                fontsize = 8
+            else:
+                tick_step = max(1, dim_plot // 8)  # e.g. 256 -> 32
+                xticks = np.arange(0, dim_plot, tick_step)
+                if xticks[-1] != dim_plot - 1:
+                    xticks = np.r_[xticks, dim_plot - 1]
+                xticklabels_sparse = [str(i) for i in xticks]
+                rotation = 0
+                fontsize = 9
 
-        # ---- After training ----
-        ax_after.bar(
-            x,
-            target[sl],
-            width=bar_width_actual,
-            alpha=target_alpha,
-            label="target",
-            zorder=3,
-            color=col_target,
-            edgecolor=bar_edge,
-            linewidth=bar_lw,
-        )
-        ax_after.bar(
-            x,
-            after[sl],
-            width=bar_width_actual * meas_width_factor,
-            alpha=meas_alpha,
-            label="measured",
-            zorder=2,
-            color=col_meas,
-            edgecolor=bar_edge,
-            linewidth=bar_lw,
-        )
-        ax_after.set_title(title_after)
-        ax_after.set_ylabel(ylabel)
-        ax_after.set_xlabel(xlabel)
-        ax_after.grid(True, axis="y")
-        ax_after.legend(loc="upper right")
-
-        if use_x_values:
-            ax_after.set_xticks(xticks)
-            ax_after.set_xticklabels(
-                xticklabels, rotation=45, ha="right", fontsize=9
+            ax_dist.set_xticks(xticks)
+            ax_dist.set_xticklabels(
+                xticklabels_sparse, rotation=rotation, fontsize=fontsize
             )
-        else:
-            ax_after.set_xticks(x)
-            ax_after.set_xticklabels(ticklabels, rotation=90, fontsize=8)
 
         if max_states is not None and dim > dim_plot:
-            ax_after.annotate(
+            ax_dist.annotate(
                 f"Showing first {dim_plot} of {dim} states",
                 xy=(0.99, 0.02),
                 xycoords="axes fraction",
@@ -399,7 +382,7 @@ def plot_training_diagnostics(
         fig_dist.tight_layout()
 
         # ============================================================
-        # Figure 2: Cost Evolution
+        # Figure 2: Cost evolution
         # ============================================================
         fig_cost, ax_cost = plt.subplots(figsize=figsize_cost)
 

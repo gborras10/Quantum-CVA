@@ -113,16 +113,35 @@ qc = quantum_cva_circuit.build_cva_circuit(
     crca_discount_params=discount_factors_parameters,
 )
 
-#fig = qc.draw(
-#    output="mpl",
-#    style={
-#        "fontsize": 8,
-#        "subfontsize": 6,
-#        "figwidth": 18,
-#       "dpi": 300,
-#    },
-#    fold=120,
-#)
+plt.rcParams.update({
+    "font.family": "serif",
+    "mathtext.fontset": "cm",
+    "text.usetex": False,
+})
+
+fig = qc.draw(
+    output="mpl",
+    style={
+        "name": "bw",
+        "fontsize": 8,
+        "subfontsize": 6,
+        "figwidth": 36,
+        "dpi": 300,
+        "linecolor": "#1a1a1a",
+        "textcolor": "#000000",
+        "gatetextcolor": "#000000",
+        "barrierfacecolor": "#cccccc",
+        "backgroundcolor": "#FFFFFF",
+    },
+    fold=-1,
+    scale=0.62,
+    plot_barriers=True,
+    initial_state=False,
+    cregbundle=False,
+)
+fig.patch.set_facecolor("white")
+fig.tight_layout(pad=0.8)
+plt.show()
 
 # =============================================================================
 #           Ideal (algebraic) CVA value: <ξ|111><111|ξ>

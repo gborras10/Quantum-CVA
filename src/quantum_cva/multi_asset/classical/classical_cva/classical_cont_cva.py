@@ -81,8 +81,8 @@ class ContinuousUnderlyingCvaEngine:
                     )
 
                 S = S_ti[:, asset_index]
-                v_long = inst.mtm_at_t(S, r=float(self.r), t=float(ti))
-                V_ti += float(inst.position) * v_long
+                npv = inst.mtm_at_t(S, r=float(self.r), t=float(ti))
+                V_ti += npv
 
             V[:, i] = V_ti
 

@@ -156,8 +156,8 @@ class DiscreteUnderlyingCvaEngine:
                 S = S_rep_joint[:, asset_index]  # (N_joint,)
 
                 # inst.mtm_at_t is MTM of a LONG instrument
-                v_long = inst.mtm_at_t(S, r=float(self.r), t=float(ti))
-                V += float(inst.position) * np.asarray(v_long, dtype=float)
+                npv = inst.mtm_at_t(S, r=float(self.r), t=float(ti))
+                V += np.asarray(npv, dtype=float)
 
             V_joint_t[i, :] = V
 
@@ -188,8 +188,8 @@ class DiscreteUnderlyingCvaEngine:
         p_t = self.discount_factors_on_grid(t)          # (M,)
         q_t = self.default_increments_on_grid(t)        # (M,)
 
-        P_joint_t = np.asarray(P_joint_t, dtype=float)
-        v_joint_t = np.asarray(v_joint_t, dtype=float)
+        P_joint_t = np.asarray(P_joint_t, dtype=np.float32)
+        v_joint_t = np.asarray(v_joint_t, dtype=np.float32)
 
         if P_joint_t.ndim != 2 or v_joint_t.ndim != 2:
             raise ValueError("P_joint_t and v_joint_t must be 2D arrays.")
