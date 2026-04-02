@@ -10,7 +10,7 @@ from qiskit.primitives import StatevectorSampler
 # quantum_cva utils
 from quantum_cva.multi_asset.quantum.amplitude_estimation.cva_circuit import QuantumCVACircuit
 from quantum_cva.multi_asset.quantum.training.state_prep_qcbm.qcbm_circuit import MLQcbmCircuit
-from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca_circuit import CrcaCircuit
+from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import CrcaCircuit
 
 # ----- Data from classical computation loading -----
 data_dir: str = "data"

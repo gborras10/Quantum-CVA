@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 from quantum_cva.multi_asset.quantum.training.state_prep_qcbm.qcbm_circuit import MLQcbmCircuit
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import (
     minimize_with_cost_history,
-    plot_training_diagnostics,
+    plot_training_diagnostics_multi_asset,
 )
 
 # from quantum_cva.cross_validation_utils import SPSAHyperparamCV
@@ -48,56 +48,56 @@ num_qubits = num_qubits_price + num_qubits_time
 qcbm: MLQcbmCircuit = MLQcbmCircuit(
     n_qubits=num_qubits, 
     n_layers=2, 
-    name="G_p_statevector"
+    name="G_p_statevector",
+    entangler="rxx",
+    topology="all-to-all",
+    simulation_method="statevector",
 )
 qc, theta = qcbm.qc, qcbm.theta
 
 # -------------------------- Statevector training ----------------------------
 # Hyperparameters
-epsilon_cost: int = 1e-12
-theta_seed: int = 355
-n_iters: int = 7000
-rhobeg: float = 0.5
-method: str = "COBYLA"
+EPS_COST: int = 1e-12
+theta_seed = 355
+N_ITERS = 7000
+RHOBEG = 0.5
+METHOD = "COBYLA"
 
 rng = np.random.default_rng(theta_seed)
-x0: np.ndarray = rng.standard_normal(qcbm.n_params).astype(float)
+x0 = rng.standard_normal(len(theta)).astype(float)
 
-cost_statevector: callable = qcbm.cost_fn(
-    target_probability_distribution_flatten,
-    eps=epsilon_cost,
-)
+# Define cost function
+cost = qcbm.cost_fn(target_probability_distribution_flatten, eps=EPS_COST)
 
-# Perform the QCBM training in the statevector backend
-t0: float = time.perf_counter()
-statevector_result, cost_history = minimize_with_cost_history(
-    cost_statevector,
+# Run the optimization
+res, cost_history = minimize_with_cost_history(
+    cost,
     x0=x0,
     minimize_fn=minimize,
-    method=method,
-    options={"maxiter": int(n_iters), "rhobeg": rhobeg, "disp": True},
-)
-t1: float = time.perf_counter()
-elapsed_time: float = t1 - t0
-
-theta_best_sv: np.ndarray = np.asarray(
-    statevector_result.x,
-    dtype=float,
+    method=METHOD,
+    options={"maxiter": int(N_ITERS), 
+             "rhobeg": RHOBEG,
+             "disp": True},
 )
 
-initial_probabilities: np.ndarray = qcbm.probabilities(
-    rng.standard_normal(len(theta)).astype(float)
-)
-trained_probabilities_statevector: np.ndarray = qcbm.probabilities(
-    theta_best_sv
-)  # sample(seed)
+theta_star = np.asarray(res.x, dtype=float)
+
+# ------ Probabilities: p0 -> before training, p_star -> after training ------ 
+p0 = qcbm.probabilities(x0)
+p_star = qcbm.probabilities(theta_star)
+# ----------------------------------------------------------------------------
+
+print("success:", res.success)
+print("message:", res.message)
+print("nfev:", getattr(res, "nfev", None), "nit:", getattr(res, "nit", None))
+print("final cost:", float(res.fun))
 
 after_train_cost_statevector = -np.sum(
     target_probability_distribution_flatten
     * np.log(
         np.maximum(
             target_probability_distribution_flatten,
-            epsilon_cost,
+            EPS_COST,
         )
     )
 )
@@ -109,10 +109,10 @@ best_idx = np.flatnonzero(
     np.r_[True, best_so_far[1:] < best_so_far[:-1] - 1e-15]
 )
 
-fig_dist, fig_cost = plot_training_diagnostics(
+fig_dist, fig_cost = plot_training_diagnostics_multi_asset(
     target=target_probability_distribution_flatten,
-    before=initial_probabilities,
-    after=trained_probabilities_statevector,
+    before=p0,
+    after=p_star,
     cost_history=statevector_result_reescaled_plot,
     best_so_far=best_so_far,
     best_idx=best_idx,
@@ -122,25 +122,24 @@ plt.show()
 
 statevector_metrics = qcbm.metrics(
     target_probability_distribution_flatten,
-    trained_probabilities_statevector,
+    p_star,
 )
 
 # ------------------------ Save training results ----------------------
 np.savez(
     out_path,
     # Parameters — theta_star is what run_cva_statevector.py expects
-    theta_star=theta_best_sv,
+    theta_star=theta_star,
     theta_init=x0,
     # Training dynamics
     best_so_far=best_so_far,
     best_idx=best_idx,
     # Probability distributions
     p_target=target_probability_distribution_flatten,
-    p_init=initial_probabilities,
-    p_star=trained_probabilities_statevector,
+    p_init=p0,
+    p_star=p_star,
     # Scalar metadata
-    elapsed_time=np.float64(elapsed_time),
-    n_iters=np.int64(n_iters),
+    n_iters=np.int64(N_ITERS),
     theta_seed=np.int64(theta_seed),
     # Metrics dict (allow_pickle=True required when loading)
     metrics=np.array(statevector_metrics, dtype=object),

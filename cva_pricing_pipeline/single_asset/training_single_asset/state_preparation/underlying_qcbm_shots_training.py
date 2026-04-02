@@ -8,7 +8,7 @@ from qiskit_algorithms.optimizers import SPSA
 # quantum_cva utils
 from quantum_cva.multi_asset.quantum.training.state_prep_qcbm.qcbm_circuit import MLQcbmCircuit
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import (
-    plot_training_diagnostics,
+    plot_training_diagnostics_multi_asset,
 )
 
 # ------------------ Loading target probability distribution ------------------
@@ -42,25 +42,23 @@ qc, theta = qcbm.qc, qcbm.theta
 
 # ----------------------- Shots-based SPSA training ---------------------------
 # Hyperparameters
-theta_seed: int = 111
+theta_seed: int = 42
 probability_seed: int = 105 # for reproducibility of probability estimation 
-n_iters: int = 1000
-shots: int = 2000
-learning_rate: float = 0.26
-perturbation: float = 0.05
+n_iters: int = 200
+shots: int = 10000
 epsilon: float = 1e-9
 
 rng = np.random.default_rng(theta_seed)
-x0: np.ndarray = rng.standard_normal(qcbm.n_params).astype(float)
-p0_shots: np.ndarray = qcbm.probabilities(x0, shots=shots, seed=probability_seed)
+x0 = np.zeros(qcbm.n_params)
+p0_shots: np.ndarray = 0.1 * qcbm.probabilities(x0, shots=shots, seed=probability_seed)
 
 cost_shots = qcbm.cost_fn(
     ptg,
-    eps=epsilon,
     shots=shots,
     seed=None,
-    rescaled=True,
     smoothing="dirichlet",
+    alpha=1.0,
+    metric="l2",
 )
 
 cost_history: list[float] = []
@@ -73,17 +71,22 @@ def cb(nfev, x, fx, dx, accept):
         best["fx"] = fx
         best["x"] = np.asarray(x, dtype=float).copy()
 
+lr, pert = SPSA.calibrate(
+    cost_shots,
+    x0,
+)
+
 shots_optimizer = SPSA(
     maxiter=int(n_iters),
-    learning_rate=learning_rate,
-    perturbation=perturbation,
-    second_order=True,    # Hessian preconditioning → escapes flat plateaus
-    resamplings=3,        # average over 5 gradient samples → less shot noise
-    blocking=True,
-    allowed_increase=0.005,
+    learning_rate=lr,
+    perturbation=pert,
+    resamplings={0: 1, 200: 3, 600: 5},
+    last_avg=20,
+    blocking=False,
+    trust_region=False,
+    second_order=False,
+    perturbation_dims=None,
     callback=cb,
-    trust_region=True,
-    regularization=0.2,
 )
 
 # Training in the shots-based framework
@@ -110,7 +113,7 @@ best_idx = np.flatnonzero(
 )
 
 labels = [format(i, f"0{qcbm.n_qubits}b") for i in range(qcbm.dim)]
-fig_dist, fig_cost = plot_training_diagnostics(
+fig_dist, fig_cost = plot_training_diagnostics_multi_asset(
     target=ptg,
     before=p0_shots,
     after=p_star_best,
@@ -121,8 +124,7 @@ fig_dist, fig_cost = plot_training_diagnostics(
     xlabel="Computational basis state |x⟩",
     ylabel="Probability",
     cost_ylabel=(
-        f"Rescaled CE  (SPSA, LR={learning_rate:.4g},"
-        f" PERT={perturbation:.4g}, shots={shots})"
+        f"Rescaled CE"
     ),
     title_before="Before training  (QCBM, SPSA shots)",
     title_after="After training  (best-iter, QCBM, SPSA shots)",
@@ -151,8 +153,6 @@ np.savez(
     best_cost=np.float64(best["fx"]),
     n_iters=np.int64(n_iters),
     shots=np.int64(shots),
-    learning_rate=np.float64(learning_rate),
-    perturbation=np.float64(perturbation),
     epsilon=np.float64(epsilon),
     theta_seed=np.int64(theta_seed),
     # Metrics dict (allow_pickle=True required when loading)

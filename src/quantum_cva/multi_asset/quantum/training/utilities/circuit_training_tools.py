@@ -1,4 +1,3 @@
-# src/quantum_cva/circuit_training_tools.py
 from __future__ import annotations
 import numpy as np
 import json
@@ -6,6 +5,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Any
+from matplotlib.ticker import LogLocator, NullFormatter
 
 
 def minimize_with_cost_history(
@@ -17,22 +17,16 @@ def minimize_with_cost_history(
     options,
 ):
     cost_history: list[float] = []
-    last_val: float | None = None
 
     def wrapped(x):
-        nonlocal last_val
-        last_val = float(cost_fn(x))
-        return last_val
-
-    def callback(xk):
-        if last_val is not None:
-            cost_history.append(last_val)
+        val = float(cost_fn(x))
+        cost_history.append(val)
+        return val
 
     res = minimize_fn(
         wrapped,
         x0=x0,
         method=method,
-        callback=callback,
         options=options,
     )
 
@@ -425,3 +419,127 @@ def plot_training_diagnostics_multi_asset(
         fig_cost.tight_layout()
 
     return fig_dist, fig_cost
+
+def plot_cost_evolution_cases(
+    *,
+    results: list[dict[str, Any]],
+    y_key: str = "rescaled_cost_history",
+    title: str = "QCBM Training Convergence Comparison",
+    ylabel: str = "CE - H(ptg)",
+    figsize: tuple[float, float] = (11.5, 6.5),
+    dpi: int = 150,
+    smooth: bool = False,
+    smooth_alpha: float = 0.18,
+    marker_every: int | None = None,
+    save_path: str | Path | None = None,
+) -> plt.Figure:
+    if not results:
+        raise ValueError("results must be a non-empty list.")
+    if not (0.0 < float(smooth_alpha) < 1.0):
+        raise ValueError("smooth_alpha must be in (0, 1).")
+    if marker_every is not None and int(marker_every) <= 0:
+        raise ValueError("marker_every must be a positive integer or None.")
+
+    palette = [
+        "#0072B2",
+        "#D55E00",
+        "#009E73",
+        "#CC79A7",
+        "#E69F00",
+        "#56B4E9",
+        "#000000",
+        "#F0E442",
+    ]
+    marker_cycle = ["o", "s", "^", "D", "v", "P", "X", "h"]
+    linestyle_cycle = ["-", "--", "-.", ":", "-", "--", "-.", ":"]
+
+    rc = {
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+        "savefig.facecolor": "white",
+        "axes.edgecolor": "#333333",
+        "axes.linewidth": 0.9,
+        "axes.titlesize": 16,
+        "axes.titleweight": "semibold",
+        "axes.labelsize": 12,
+        "font.family": "DejaVu Sans",
+        "font.size": 11,
+        "legend.frameon": True,
+        "legend.framealpha": 0.96,
+        "legend.edgecolor": "#C8C8C8",
+    }
+
+    def ema(y: np.ndarray, alpha: float) -> np.ndarray:
+        out = np.empty_like(y, dtype=float)
+        out[0] = y[0]
+        for k in range(1, y.size):
+            out[k] = alpha * y[k] + (1.0 - alpha) * out[k - 1]
+        return out
+
+    ordered = sorted(
+        results,
+        key=lambda r: float(np.asarray(r[y_key], dtype=float).ravel()[-1]),
+    )
+
+    with mpl.rc_context(rc):
+        fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+
+        for i, r in enumerate(ordered):
+            if "name" not in r or y_key not in r:
+                raise KeyError(f"Each result must include 'name' and '{y_key}'.")
+
+            y = np.asarray(r[y_key], dtype=float).ravel()
+            if y.size == 0:
+                raise ValueError(f"Curve '{r['name']}' is empty.")
+            if np.any(y <= 0):
+                raise ValueError(f"Curve '{r['name']}' contains non-positive values.")
+
+            if smooth and y.size > 2:
+                y = ema(y, smooth_alpha)
+
+            x = np.arange(y.size)
+            color = palette[i % len(palette)]
+
+            ax.plot(x, y, color=color, linewidth=1.6, alpha=0.5, zorder=2)
+            ax.scatter(
+                x,
+                y,
+                s=26,
+                color=color,
+                alpha=0.85,
+                edgecolors="none",
+                label=str(r["name"]),
+                zorder=3,
+            )
+
+        ax.set_yscale("log")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, pad=12)
+
+        ax.yaxis.set_major_locator(LogLocator(base=10, numticks=10))
+        ax.yaxis.set_minor_locator(
+            LogLocator(base=10, subs=np.arange(2, 10) * 0.1, numticks=100)
+        )
+        ax.yaxis.set_minor_formatter(NullFormatter())
+
+        ax.grid(which="major", linestyle="--", linewidth=0.75, alpha=0.35)
+        ax.grid(which="minor", axis="y", linestyle=":", linewidth=0.55, alpha=0.18)
+
+        ax.legend(
+            loc="upper left",
+            bbox_to_anchor=(1.01, 1.0),
+            borderaxespad=0.0,
+            fontsize=10,
+            handlelength=2.8,
+        )
+
+        ax.margins(x=0.015, y=0.08)
+        fig.tight_layout()
+
+        if save_path is not None:
+            save_path = Path(save_path)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
+
+    return fig

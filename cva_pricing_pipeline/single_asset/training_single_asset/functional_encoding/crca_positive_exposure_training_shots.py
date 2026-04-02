@@ -6,7 +6,7 @@ import pathlib
 from qiskit_algorithms.optimizers import SPSA
 
 # quantum_cva utils
-from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca_circuit import CrcaCircuit
+from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import CrcaCircuit
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import plot_training_diagnostics
 
 # ------------------ Loading target function values ------------------

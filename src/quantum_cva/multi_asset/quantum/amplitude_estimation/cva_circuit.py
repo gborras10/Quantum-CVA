@@ -4,7 +4,7 @@ import numpy as np
 
 # Quantum - CVA utils
 from quantum_cva.multi_asset.quantum.training.state_prep_qcbm.qcbm_circuit import MLQcbmCircuit
-from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca_circuit import CrcaCircuit
+from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import CrcaCircuit
 
 # Qiskit utils
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile

@@ -6,8 +6,8 @@ import pathlib
 from qiskit_algorithms.optimizers import SPSA
 
 # quantum_cva utils
-from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca_circuit import CrcaCircuit
-from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import plot_training_diagnostics
+from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import CrcaCircuit
+from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import plot_training_diagnostics_multi_asset
 
 # ------------------ Loading target function values ------------------
 benchmark = np.load(
@@ -96,7 +96,7 @@ best_idx = np.flatnonzero(
 )
 
 time_labels = [format(i, f"0{m_time}b") for i in range(2**m_time)]
-fig_dist, fig_cost = plot_training_diagnostics(
+fig_dist, fig_cost = plot_training_diagnostics_multi_asset(
     target=f_target,
     before=f0_shots,
     after=f_star_shots,

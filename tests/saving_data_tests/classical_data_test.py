@@ -31,7 +31,6 @@ for npz_path in npz_files:
     payload = {}
     for key in data.files:
         val = data[key]
-        # allow_pickle can produce 0-d object arrays wrapping dicts/lists
         if isinstance(val, np.ndarray) and val.ndim == 0:
             val = val.item()
         payload[key] = _to_serializable(val)
