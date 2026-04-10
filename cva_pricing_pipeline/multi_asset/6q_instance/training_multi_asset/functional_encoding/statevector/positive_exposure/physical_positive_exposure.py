@@ -3,7 +3,9 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+from qiskit import transpile
 from scipy.optimize import minimize
+from qiskit_ibm_runtime import QiskitRuntimeService
 
 from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import (
     CrcaCircuit,
@@ -11,31 +13,37 @@ from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import (
     plot_training_diagnostics_multi_asset,
 )
-from quantum_cva.quantum_hardware_utilities.layout_utils import summarize_circuit
+from quantum_cva.quantum_hardware_utilities.layout_utils import select_best_layout, summarize_circuit
 
 from exposure_utils import build_support_aware_cost
 
 # ===================== Global Configuration =====================
+BACKEND_NAME = "ibm_basquecountry"
+LOGICAL_TOPOLOGY = "crca_comb"
+TRANSPILATION_OPT_LEVEL = 3
+SEED_TRANSPILER = 1234
+
 M_TIME = 2
 N_PRICE = 6
-N_LAYERS = 2
-THETA_SEED = 12
-INIT_SCALE = 0.01
+N_QUBITS = M_TIME + N_PRICE
+N_LAYERS = 4
+THETA_SEED = 42
+INIT_SCALE = 1.0
 
-LOSS_MODE = "support_aware"  # Options: "l2", "support_aware"
+LOSS_MODE = "support_aware"  
 TARGET_THRESHOLD = 1e-10
 RELATIVE_EPS = 1e-4  
-LAMBDA_POS = 13.0
-LAMBDA_ZERO = 20.0
+LAMBDA_POS = 15.0
+LAMBDA_ZERO = 100.0
 
 # Stage 1: COBYLA
-STAGE1_MAXITER = 1000
+STAGE1_MAXITER = 3000
 STAGE1_TOL = 1e-6
 STAGE1_RHOBEG = 0.30
 
 # Stage 2: L-BFGS-B
-STAGE2_MAXITER = 10000 
-STAGE2_MAXFUN = 30000
+STAGE2_MAXITER = 10000
+STAGE2_MAXFUN = 500000
 STAGE2_FTOL = 1e-12
 STAGE2_GTOL = 1e-10 
 
@@ -60,7 +68,7 @@ def main() -> None:
         / "training"
         / "crca"
         / "positive_exposure"
-        / "training_heavy_hex_star.npz"
+        / "positive_exposure_native_comb_logical_statevector.npz"
     )
     saving_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -69,19 +77,53 @@ def main() -> None:
     f_target_2d = np.asarray(v_t / c_v, dtype=float)
     f_target = f_target_2d.reshape(-1)
 
-
+    # ===================== CRCA Configuration =====================
     crca = CrcaCircuit(
-    m_time=M_TIME,
-    n_price=N_PRICE,
-    n_layers=N_LAYERS,
-    ansatz_type="standard",
-    native_1q_order=("rx",),
-    ctrl_order=("rx","ry","rz"),
+        m_time=M_TIME,
+        n_price=N_PRICE,
+        n_layers=N_LAYERS,
+        ansatz_type="native_comb",
+        name="crca_positive_exposure_native_tv_logical",
     )
-    
-    summarize_circuit(crca.qc)
-    summarize_circuit(crca.qc_eval)
 
+    # =================== Backend & Layout ====================
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    real_backend = service.backend(BACKEND_NAME, use_fractional_gates=True)
+
+    chosen_layout, layout_score, layout_meta = select_best_layout(
+        real_backend,
+        topology=LOGICAL_TOPOLOGY,
+        length=N_QUBITS,
+        readout_quantile=0.95,
+        local_2q_quantile=0.95,
+    )
+
+    effective_topology = layout_meta["selected_topology"]
+
+    tqc_ansatz = transpile(
+        crca.qc,
+        backend=real_backend,
+        initial_layout=chosen_layout,
+        optimization_level=TRANSPILATION_OPT_LEVEL,
+        layout_method="trivial",
+        routing_method="none",
+        seed_transpiler=SEED_TRANSPILER,
+    )
+
+    tqc_eval = transpile(
+        crca.qc_eval,
+        backend=real_backend,
+        initial_layout=chosen_layout,
+        optimization_level=TRANSPILATION_OPT_LEVEL,
+        layout_method="trivial",
+        routing_method="none",
+        seed_transpiler=SEED_TRANSPILER,
+    )
+
+    summarize_circuit(tqc_ansatz, label="CRCA ansatz transpiled for hardware")
+    summarize_circuit(tqc_eval, label="CRCA eval transpiled for hardware")
+
+    # ===================== Training =====================
     rng = np.random.default_rng(THETA_SEED)
     theta = INIT_SCALE * rng.standard_normal(crca.n_params)
     theta_init = theta.copy()
@@ -297,7 +339,7 @@ def main() -> None:
         "best_eval_cost_observed": float(np.min(eval_cost_history_arr)) if eval_cost_history_arr.size else float(initial_loss),
         "best_iter_cost_observed": float(best_loss),
         "note": (
-            "CRCA positive exposure training with standard logical ansatz, "
+            "CRCA positive exposure training with native_tv logical ansatz, "
             "no transpilation, exact statevector. "
             "2-stage optimization: COBYLA (global search) + L-BFGS-B (refinement)."
         ),

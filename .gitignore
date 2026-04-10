@@ -61,3 +61,6 @@ data/
 figures/
 plots/
 results/
+
+# Github
+.github/

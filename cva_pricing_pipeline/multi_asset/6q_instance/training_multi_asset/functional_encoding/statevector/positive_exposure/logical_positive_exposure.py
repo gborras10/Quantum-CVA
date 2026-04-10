@@ -17,25 +17,25 @@ from exposure_utils import build_support_aware_cost
 
 # ===================== Global Configuration =====================
 M_TIME = 2
-N_PRICE = 6
+N_PRICE = 4
 N_LAYERS = 2
 THETA_SEED = 12
-INIT_SCALE = 0.01
+INIT_SCALE = 1.0
 
-LOSS_MODE = "support_aware"  # Options: "l2", "support_aware"
+LOSS_MODE = "l2"  # Options: "l2", "support_aware"
 TARGET_THRESHOLD = 1e-10
 RELATIVE_EPS = 1e-4  
-LAMBDA_POS = 13.0
-LAMBDA_ZERO = 20.0
+LAMBDA_POS = 10.0
+LAMBDA_ZERO = 15.0
 
 # Stage 1: COBYLA
-STAGE1_MAXITER = 1000
+STAGE1_MAXITER = 5000
 STAGE1_TOL = 1e-6
-STAGE1_RHOBEG = 0.30
+STAGE1_RHOBEG = 0.20
 
 # Stage 2: L-BFGS-B
 STAGE2_MAXITER = 10000 
-STAGE2_MAXFUN = 30000
+STAGE2_MAXFUN = 50000
 STAGE2_FTOL = 1e-12
 STAGE2_GTOL = 1e-10 
 
@@ -47,7 +47,7 @@ def main() -> None:
     )
 
     data = np.load(
-        repo_root / "data" / "multi_asset" / "8q_instance" / "benchmark" / "three_asset_instance.npz",
+        repo_root / "data" / "multi_asset" / "6q_instance" / "benchmark" / "three_asset_instance.npz",
         allow_pickle=True,
     )
 
@@ -55,7 +55,7 @@ def main() -> None:
         repo_root
         / "data"
         / "multi_asset"
-        / "8q_instance"
+        / "6q_instance"
         / "quantum"
         / "training"
         / "crca"
@@ -73,10 +73,8 @@ def main() -> None:
     crca = CrcaCircuit(
     m_time=M_TIME,
     n_price=N_PRICE,
-    n_layers=N_LAYERS,
-    ansatz_type="standard",
-    native_1q_order=("rx",),
-    ctrl_order=("rx","ry","rz"),
+    n_layers=2,
+    ansatz_type="heavy_hex_star",
     )
     
     summarize_circuit(crca.qc)
@@ -87,10 +85,11 @@ def main() -> None:
     theta_init = theta.copy()
 
     f0_statevector = np.asarray(crca.function_values(theta, shots=None), dtype=float).reshape(-1)
+    l2_objective = crca.cost_fn(f_target, shots=None)
 
     if LOSS_MODE == "l2":
         objective = crca.cost_fn(f_target, shots=None)
-        cost_label = "L2 loss"
+        train_cost_label = "L2 loss"
         metadata_loss = {
             "loss_name": "l2",
         }
@@ -103,7 +102,7 @@ def main() -> None:
             LAMBDA_ZERO, 
             crca, 
             f_target)
-        cost_label = "Support-aware loss"
+        train_cost_label = "Support-aware loss"
         metadata_loss = {
             "loss_name": "support_aware_relative_plus_zero_penalty",
             "target_threshold": TARGET_THRESHOLD,
@@ -149,13 +148,26 @@ def main() -> None:
         history.append(fx)
         print(f"[iter {offset + len(history)-1:04d}][{stage}] iter_cost = {fx:.8e}")
 
+    def record_iter_l2(xk: np.ndarray, history: list[float], stage: str, offset: int = 0) -> None:
+        xk = np.asarray(xk, dtype=float)
+        fx_l2 = float(l2_objective(xk))
+        history.append(fx_l2)
+        print(f"[iter {offset + len(history)-1:04d}][{stage}] iter_l2_cost = {fx_l2:.8e}")
+
+    def callback_stage1(xk: np.ndarray) -> None:
+        record_iter(xk, stage1_iter_cost_history, "COBYLA")
+        record_iter_l2(xk, stage1_iter_l2_history, "COBYLA")
+
     initial_loss = float(objective(theta))
+    initial_l2_loss = float(l2_objective(theta))
     stage1_iter_cost_history: list[float] = [initial_loss]
+    stage1_iter_l2_history: list[float] = [initial_l2_loss]
     stage2_iter_cost_history: list[float] = []
+    stage2_iter_l2_history: list[float] = []
     best_loss = initial_loss
     best_theta = theta.copy()
 
-    print(f"Initial {cost_label.lower()} = {initial_loss:.8e}")
+    print(f"Initial {train_cost_label.lower()} = {initial_loss:.8e}")
     print("Starting Stage 1 (Global optimization with COBYLA)")
 
     t0 = time.perf_counter()
@@ -164,7 +176,7 @@ def main() -> None:
         lambda x: eval_cost(x, "COBYLA"),
         x0=theta,
         method="COBYLA",
-        callback=lambda xk: record_iter(xk, stage1_iter_cost_history, "COBYLA"),
+        callback=callback_stage1,
         options={
             "maxiter": STAGE1_MAXITER,
             "tol": STAGE1_TOL,
@@ -175,32 +187,46 @@ def main() -> None:
 
     theta_stage1_last = np.asarray(res_stage1.x, dtype=float)
     stage1_final_loss = float(objective(theta_stage1_last))
+    stage1_final_l2_loss = float(l2_objective(theta_stage1_last))
     stage1_iter_cost_history.append(stage1_final_loss)
+    stage1_iter_l2_history.append(stage1_final_l2_loss)
 
     if stage1_final_loss < best_loss:
         best_loss = stage1_final_loss
         best_theta = theta_stage1_last.copy()
 
     print(f"Stage 1 finished | success = {res_stage1.success} | message = {res_stage1.message}")
-    print(f"Stage 1 final {cost_label.lower()} = {stage1_final_loss:.8e}")
+    print(f"Stage 1 final {train_cost_label.lower()} = {stage1_final_loss:.8e}")
 
     theta_stage2_init = best_theta.copy()
     stage2_init_loss = float(objective(theta_stage2_init))
+    stage2_init_l2_loss = float(l2_objective(theta_stage2_init))
     stage2_iter_cost_history.append(stage2_init_loss)
+    stage2_iter_l2_history.append(stage2_init_l2_loss)
 
     print("Starting Stage 2 (Refinement with L-BFGS-B)")
 
     stage1_effective_len = len(stage1_iter_cost_history)
-    res_stage2 = minimize(
-        lambda x: eval_cost(x, "L-BFGS-B"),
-        x0=theta_stage2_init,
-        method="L-BFGS-B",
-        callback=lambda xk: record_iter(
+
+    def callback_stage2(xk: np.ndarray) -> None:
+        record_iter(
             xk,
             stage2_iter_cost_history,
             "L-BFGS-B",
             offset=stage1_effective_len - 1,
-        ),
+        )
+        record_iter_l2(
+            xk,
+            stage2_iter_l2_history,
+            "L-BFGS-B",
+            offset=stage1_effective_len - 1,
+        )
+
+    res_stage2 = minimize(
+        lambda x: eval_cost(x, "L-BFGS-B"),
+        x0=theta_stage2_init,
+        method="L-BFGS-B",
+        callback=callback_stage2,
         options={
             "maxiter": STAGE2_MAXITER,
             "maxfun": STAGE2_MAXFUN,
@@ -214,7 +240,9 @@ def main() -> None:
 
     theta_last = np.asarray(res_stage2.x, dtype=float)
     final_loss = float(objective(theta_last))
+    final_l2_loss = float(l2_objective(theta_last))
     stage2_iter_cost_history.append(final_loss)
+    stage2_iter_l2_history.append(final_l2_loss)
 
     if final_loss < best_loss:
         best_loss = final_loss
@@ -225,6 +253,8 @@ def main() -> None:
 
     stage1_cost_history_arr = np.array(stage1_iter_cost_history, dtype=float)
     stage2_cost_history_arr = np.array(stage2_iter_cost_history, dtype=float)
+    stage1_l2_history_arr = np.array(stage1_iter_l2_history, dtype=float)
+    stage2_l2_history_arr = np.array(stage2_iter_l2_history, dtype=float)
 
     # Avoid duplicate point if stage2 starts exactly at the stage1 endpoint.
     if np.isclose(stage1_cost_history_arr[-1], stage2_cost_history_arr[0], rtol=1e-12, atol=1e-15):
@@ -232,25 +262,30 @@ def main() -> None:
     else:
         cost_history_arr = np.r_[stage1_cost_history_arr, stage2_cost_history_arr]
 
+    if np.isclose(stage1_l2_history_arr[-1], stage2_l2_history_arr[0], rtol=1e-12, atol=1e-15):
+        plot_l2_history_arr = np.r_[stage1_l2_history_arr, stage2_l2_history_arr[1:]]
+    else:
+        plot_l2_history_arr = np.r_[stage1_l2_history_arr, stage2_l2_history_arr]
+
     eval_cost_history_arr = np.array(eval_cost_history, dtype=float)
 
-    best_so_far = np.minimum.accumulate(cost_history_arr)
+    best_so_far = np.minimum.accumulate(plot_l2_history_arr)
     best_idx = np.flatnonzero(np.r_[True, best_so_far[1:] < best_so_far[:-1]])
 
     print(f"Stage 2 finished | success = {res_stage2.success} | message = {res_stage2.message}")
-    print(f"Stage 2 final {cost_label.lower()} = {final_loss:.8e}")
-    print(f"Best {cost_label.lower()} observed = {best_loss:.8e}")
+    print(f"Stage 2 final {train_cost_label.lower()} = {final_loss:.8e}")
+    print(f"Best {train_cost_label.lower()} observed = {best_loss:.8e}")
 
     plot_training_diagnostics_multi_asset(
         target=f_target,
         before=f0_statevector,
         after=f_star_statevector,
-        cost_history=cost_history_arr,
+        cost_history=plot_l2_history_arr,
         best_so_far=best_so_far,
         best_idx=best_idx,
         xlabel="Control basis state |i>",
         ylabel="f(i)",
-        cost_ylabel=cost_label,
+        cost_ylabel="L2 loss",
         title_before="Before training",
         title_after="After training",
         cost_log_x=False,

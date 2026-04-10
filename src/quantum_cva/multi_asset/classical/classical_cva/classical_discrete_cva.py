@@ -217,41 +217,122 @@ class DiscreteUnderlyingCvaEngine:
     # -------------------------------------------------
     # Full pipeline convenience method
     # -------------------------------------------------
+    def _states_on_output_grid(
+        self,
+        *,
+        S_by_time: np.ndarray,   # (N_paths, M_in, d)
+        t_input: np.ndarray,     # (M_in,)
+        t_output: np.ndarray,    # (M_out,)
+    ) -> list[np.ndarray]:
+        """
+        Return path states evaluated on t_output.
+
+        If t_output is not aligned with t_input, linear interpolation is applied
+        path-wise between adjacent time points.
+        """
+        t_input = np.asarray(t_input, dtype=float).ravel()
+        t_output = np.asarray(t_output, dtype=float).ravel()
+        S_by_time = np.asarray(S_by_time, dtype=float)
+
+        if S_by_time.ndim != 3:
+            raise ValueError("S_by_time must have shape (N_paths, M_in, d).")
+
+        _, M_in, _ = S_by_time.shape
+
+        if t_input.size != M_in:
+            raise ValueError("S_by_time.shape[1] must match len(t_input).")
+        if t_input.size < 1 or t_output.size < 1:
+            raise ValueError("Need at least one time point in t_input and t_output.")
+        if not np.all(np.diff(t_input) > 0.0):
+            raise ValueError("t_input must be strictly increasing and > 0.")
+        if not np.all(np.diff(t_output) > 0.0):
+            raise ValueError("t_output must be strictly increasing and > 0.")
+
+        tol = 1e-12
+        if float(t_output[0]) < float(t_input[0]) - tol or float(t_output[-1]) > float(t_input[-1]) + tol:
+            raise ValueError("t_output must lie within [t_input[0], t_input[-1]] for interpolation.")
+
+        S_list_out: list[np.ndarray] = []
+
+        for tau in t_output:
+            j = int(np.searchsorted(t_input, tau, side="left"))
+
+            if j < M_in and np.isclose(t_input[j], tau, atol=tol, rtol=0.0):
+                S_tau = S_by_time[:, j, :]
+                S_list_out.append(np.asarray(S_tau, dtype=float))
+                continue
+
+            if j > 0 and np.isclose(t_input[j - 1], tau, atol=tol, rtol=0.0):
+                S_tau = S_by_time[:, j - 1, :]
+                S_list_out.append(np.asarray(S_tau, dtype=float))
+                continue
+
+            if j <= 0 or j >= M_in:
+                raise ValueError("Found t_output outside interpolation bounds after numerical alignment.")
+
+            t0 = float(t_input[j - 1])
+            t1 = float(t_input[j])
+            alpha = (float(tau) - t0) / (t1 - t0)
+
+            S_tau = (1.0 - alpha) * S_by_time[:, j - 1, :] + alpha * S_by_time[:, j, :]
+            S_list_out.append(np.asarray(S_tau, dtype=float))
+
+        return S_list_out
+
     def cva_from_paths_discretized(
             self,
             *,
-            S_by_time: np.ndarray,   # (N_paths, M, d)   <-- antes list[np.ndarray]
-            t: np.ndarray,           # (M,)
+            S_by_time: np.ndarray,   # (N_paths, M_in, d)
+            t: np.ndarray,           # input time grid (M_in,)
+            t_output: np.ndarray | None = None,  # output time grid (M_out,)
             C_v: float = 1.0,
             C_p: float = 1.0,
             C_q: float = 1.0,
             return_blocks: bool = False,
         ) -> float | tuple[float, GridSpec, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Compute CVA from paths using distinct input/output time grids if needed.
 
-        t = np.asarray(t, dtype=float).ravel()
+        Parameters
+        ----------
+        S_by_time : np.ndarray
+            Path tensor with shape (N_paths, M_in, d), aligned with ``t``.
+        t : np.ndarray
+            Input time grid used by ``S_by_time``.
+        t_output : np.ndarray | None
+            Output time grid for P_joint_t, v_joint_t, p_target and CVA aggregation.
+            If None, output grid equals input grid (backward-compatible behavior).
+        """
+
+        t_input = np.asarray(t, dtype=float).ravel()
+        t_out = t_input if t_output is None else np.asarray(t_output, dtype=float).ravel()
         S_by_time = np.asarray(S_by_time, dtype=float)
 
         if S_by_time.ndim != 3:
-            raise ValueError("S_by_time must have shape (N_paths, M, d).")
-        N_paths, M, d = S_by_time.shape
+            raise ValueError("S_by_time must have shape (N_paths, M_in, d).")
+        _, M_in, _ = S_by_time.shape
 
-        if M != t.size:
+        if M_in != t_input.size:
             raise ValueError("S_by_time.shape[1] must match len(t).")
-        if t.size < 1:
-            raise ValueError("Need at least one exposure date.")
-        if not np.all(np.diff(t) > 0.0):
+        if t_input.size < 1:
+            raise ValueError("Need at least one time point in t.")
+        if not np.all(np.diff(t_input) > 0.0):
             raise ValueError("t must be strictly increasing and > 0.")
 
-        # Si tus funciones internas esperan list[np.ndarray], conviértelo aquí (vista, sin copies grandes)
-        S_list = [S_by_time[:, i, :] for i in range(M)]  # len M, each (N_paths, d)
+        # If t_output is omitted, output grid equals input grid (backward-compatible behavior).
+        S_list_out = self._states_on_output_grid(
+            S_by_time=S_by_time,
+            t_input=t_input,
+            t_output=t_out,
+        )
 
-        grid, P_joint_t = self.fit_discrete_distribution(S_by_time=S_list)
-        v_joint_t = self.payoff_matrix_portfolio_on_grid(grid=grid, t=t)
+        grid, P_joint_t = self.fit_discrete_distribution(S_by_time=S_list_out)
+        v_joint_t = self.payoff_matrix_portfolio_on_grid(grid=grid, t=t_out)
 
         cva = self.cva_from_discrete_blocks(
             P_joint_t=P_joint_t,
             v_joint_t=v_joint_t,
-            t=t,
+            t=t_out,
             C_v=C_v,
             C_p=C_p,
             C_q=C_q,

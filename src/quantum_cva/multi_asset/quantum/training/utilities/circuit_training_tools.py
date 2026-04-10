@@ -264,10 +264,10 @@ def plot_training_diagnostics_multi_asset(
     if use_x_values and dim_plot > 1:
         spacing = float(np.diff(x).mean())
         width_target = spacing * min(0.95, max(0.05, bar_width))
-        width_after = width_target * 0.60
+        width_after = width_target * 0.55
     else:
         width_target = min(0.95, max(0.05, bar_width))
-        width_after = width_target * 0.60
+        width_after = width_target * 0.55
 
     rc = {
         "font.size": 11,
@@ -283,12 +283,12 @@ def plot_training_diagnostics_multi_asset(
         "legend.frameon": True,
     }
 
-    col_target = "lightgray"
+    col_target = "royalblue"
     col_after = "darkorange"
     col_cost_pts = "#b94d95"
     col_best = "steelblue"
 
-    target_alpha = 0.85
+    target_alpha = 0.50
     after_alpha = 0.95
     bar_edge = (0, 0, 0, 0.20)
     bar_lw = 0.25
@@ -305,23 +305,23 @@ def plot_training_diagnostics_multi_asset(
 
         ax_dist.bar(
             x,
-            target[sl],
-            width=width_target,
-            alpha=target_alpha,
-            label="target",
+            after[sl],
+            width=width_after,
+            alpha=after_alpha,
+            label="trained",
             zorder=2,
-            color=col_target,
+            color=col_after,
             edgecolor=bar_edge,
             linewidth=bar_lw,
         )
         ax_dist.bar(
             x,
-            after[sl],
-            width=width_after,
-            alpha=after_alpha,
-            label="trained",
+            target[sl],
+            width=width_target,
+            alpha=target_alpha,
+            label="target",
             zorder=3,
-            color=col_after,
+            color=col_target,
             edgecolor=bar_edge,
             linewidth=bar_lw,
         )

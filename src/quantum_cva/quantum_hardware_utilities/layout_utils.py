@@ -198,9 +198,6 @@ def find_best_chain(
     max_starts=40,
     edge_scores=None,
 ):
-    """
-    Busca una cadena simple de 'length' qubits físicos.
-    """
     avoided_qubits = set(avoided_qubits)
 
     def node_score(q):
@@ -248,9 +245,7 @@ def find_best_chain(
                 stack.append((nb, path + [nb]))
 
     if best_path is None:
-        raise RuntimeError(
-            "No se ha encontrado una cadena conectada con las restricciones dadas."
-        )
+        raise RuntimeError("No se ha encontrado una cadena conectada con las restricciones dadas.")
 
     return best_path, float(best_score)
 
@@ -264,10 +259,6 @@ def find_best_cycle(
     max_starts=40,
     edge_scores=None,
 ):
-    """
-    Busca un ciclo simple de 'length' qubits físicos.
-    Útil para topologías lógicas circulares.
-    """
     avoided_qubits = set(avoided_qubits)
 
     def node_score(q):
@@ -316,40 +307,17 @@ def find_best_cycle(
                 stack.append((nb, path + [nb]))
 
     if best_cycle is None:
-        raise RuntimeError(
-            "No se ha encontrado un ciclo conectado con las restricciones dadas."
-        )
+        raise RuntimeError("No se ha encontrado un ciclo conectado con las restricciones dadas.")
 
     return best_cycle, float(best_score)
 
-def find_best_crca2(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-    Busca la topología mínima de CRCA para 2 controles:
 
-        c0 - a - c1
-
-    Layout devuelto:
-        [c0, c1, a]
-    """
+def find_best_crca2(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     avoided_qubits = set(avoided_qubits)
-
     T = nx.Graph()
-    # logical indices:
-    # 0=c0, 1=c1, 2=a
-    T.add_edges_from([
-        (0, 2),
-        (1, 2),
-    ])
-
+    T.add_edges_from([(0, 2), (1, 2)])
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
 
     best_layout = None
@@ -357,20 +325,11 @@ def find_best_crca2(
 
     for mapping in GM.subgraph_isomorphisms_iter():
         inv_map = {v: k for k, v in mapping.items()}
-
-        node_term = sum(
-            preferred_scores.get(inv_map[q], default_score)
-            for q in T.nodes
-        )
-
+        node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
         edge_term = 0.0
         if edge_scores is not None:
-            edges_physical = [
-                tuple(sorted((inv_map[u], inv_map[v])))
-                for u, v in T.edges
-            ]
+            edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
         score = float(1.0 * node_term + 0.35 * edge_term)
 
         if score > best_score:
@@ -378,437 +337,186 @@ def find_best_crca2(
             best_layout = [inv_map[0], inv_map[1], inv_map[2]]
 
     if best_layout is None:
-        raise RuntimeError(
-            "No se ha encontrado la topología 'crca2' con las restricciones dadas."
-        )
-
+        raise RuntimeError("No se ha encontrado la topología 'crca2'.")
     return best_layout, float(best_score)
 
-def find_best_tree_bus(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-        Search for a specific topology for a 10-qubit QCBM:
-        - A central time bus (4 qubits: B0-B1-B2-B3)
-        - 3 branches (underlyings S1, S2, S3 with 2 qubits each)
-            connected to B0, B1, and B3.
-    """
+
+def find_best_tree_bus(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     avoided_qubits = set(avoided_qubits)
-
-        # 1. Define the theoretical graph (template) of the ansatz
     T = nx.Graph()
-        # Time bus (logical nodes 0, 1, 2, 3)
-    T.add_edges_from([(0, 1), (1, 2), (2, 3)])
-    
-        # Underlying branches
-        # Branch 1 (connected to bus node 0): logical nodes 4, 5
-    T.add_edges_from([(5, 4), (4, 0)])
-        # Branch 2 (connected to bus node 1): logical nodes 6, 7
-    T.add_edges_from([(7, 6), (6, 1)])
-        # Branch 3 (connected to bus node 3): logical nodes 8, 9
-    T.add_edges_from([(9, 8), (8, 3)])
-
-        # Filter the physical graph G by removing avoided nodes to speed up search
+    T.add_edges_from([(0, 1), (1, 2), (2, 3), (5, 4), (4, 0), (7, 6), (6, 1), (9, 8), (8, 3)])
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
-    
-    best_layout = None
-    best_score = -np.inf
+    best_layout, best_score = None, -np.inf
 
-    # Iterate over all isomorphisms found (all ways the comb fits on the chip)
     for mapping in GM.subgraph_isomorphisms_iter():
-        # mapping is {physical_node: logical_node}
-        # Invert to iterate over the logical structure easily: {logical_node: physical_node}
         inv_map = {v: k for k, v in mapping.items()}
-        
-        # Compute node score
         node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
-        
-        # Compute edge score
         edge_term = 0.0
         if edge_scores is not None:
             edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
-        # Use the same weights as in _path_score (node_weight=1.0, edge_weight=0.35)
         score = float(1.0 * node_term + 0.35 * edge_term)
-
         if score > best_score:
             best_score = score
-            # Returned layout is an ordered list of physical nodes:
-            # [Bus0-3, Branch1_0-1, Branch2_0-1, Branch3_0-1]
             best_layout = [inv_map[i] for i in range(10)]
 
     if best_layout is None:
-        raise RuntimeError("No se ha encontrado la topología 'tree_bus' con las restricciones dadas.")
-
+        raise RuntimeError("No se ha encontrado la topología 'tree_bus'.")
     return best_layout, best_score
 
-def find_best_snowflake(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-    Busca la topología 'snowflake' (Copo de Nieve) para un QCBM de 10 qubits:
-    - Hub central de tiempo (qubit 0).
-    - 3 Puntas de tiempo conectadas al Hub (qubits 1, 2, 3).
-    - 3 Ramas de subyacentes colgando de las puntas (4-5 cuelga del 1, etc.).
-    """
+
+def find_best_snowflake(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     avoided_qubits = set(avoided_qubits)
-
-    # Definimos el grafo lógico del Snowflake
     T = nx.Graph()
-    # Hub y Puntas de Tiempo
-    T.add_edges_from([(0, 1), (0, 2), (0, 3)])
-    # Rama Subyacente 1 (conecta a la punta 1)
-    T.add_edges_from([(1, 4), (4, 5)])
-    # Rama Subyacente 2 (conecta a la punta 2)
-    T.add_edges_from([(2, 6), (6, 7)])
-    # Rama Subyacente 3 (conecta a la punta 3)
-    T.add_edges_from([(3, 8), (8, 9)])
-
-    # Filtrar nodos malos para acelerar isomorfismo
+    T.add_edges_from([(0, 1), (0, 2), (0, 3), (1, 4), (4, 5), (2, 6), (6, 7), (3, 8), (8, 9)])
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
-    
-    best_layout = None
-    best_score = -np.inf
+    best_layout, best_score = None, -np.inf
 
     for mapping in GM.subgraph_isomorphisms_iter():
-        # Invertir mapeo para tener {nodo_logico: nodo_fisico}
         inv_map = {v: k for k, v in mapping.items()}
-        
-        # Calcular Score (Nodos)
         node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
-        
-        # Calcular Score (Aristas)
         edge_term = 0.0
         if edge_scores is not None:
             edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
         score = float(1.0 * node_term + 0.35 * edge_term)
-
         if score > best_score:
             best_score = score
             best_layout = [inv_map[i] for i in range(10)]
 
     if best_layout is None:
-        raise RuntimeError("No se ha encontrado la topología 'snowflake' con las restricciones dadas.")
-
+        raise RuntimeError("No se ha encontrado la topología 'snowflake'.")
     return best_layout, float(best_score)
 
 
-def find_best_qcbm_heavyhex8(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-    Busca la topología lógica heavy-hex-friendly para un QCBM de 8 qubits.
-
-    Grafo lógico:
-      - ciclo hexagonal: 0-1-2-3-4-5-0
-      - hojas: 6 unida a 1, 7 unida a 4
-
-    Layout devuelto:
-      [q0, q1, q2, q3, q4, q5, q6, q7]
-    """
+def find_best_qcbm_heavyhex8(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     avoided_qubits = set(avoided_qubits)
-
     T = nx.Graph()
-    T.add_edges_from([
-        (0, 1),
-        (1, 2),
-        (2, 3),
-        (3, 4),
-        (4, 5),
-        (2, 6),
-        (4, 7),
-    ])
-
+    T.add_edges_from([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (2, 6), (4, 7)])
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
-
-    best_layout = None
-    best_score = -np.inf
+    best_layout, best_score = None, -np.inf
 
     for mapping in GM.subgraph_isomorphisms_iter():
         inv_map = {v: k for k, v in mapping.items()}
-
-        node_term = sum(
-            preferred_scores.get(inv_map[q], default_score)
-            for q in T.nodes
-        )
-
+        node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
         edge_term = 0.0
         if edge_scores is not None:
-            edges_physical = [
-                tuple(sorted((inv_map[u], inv_map[v])))
-                for u, v in T.edges
-            ]
+            edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
         score = float(1.0 * node_term + 0.35 * edge_term)
-
         if score > best_score:
             best_score = score
             best_layout = [inv_map[i] for i in range(8)]
 
     if best_layout is None:
-        raise RuntimeError(
-            "No se ha encontrado la topología 'qcbm_heavyhex8' con las restricciones dadas."
-        )
-
+        raise RuntimeError("No se ha encontrado la topología 'qcbm_heavyhex8'.")
     return best_layout, float(best_score)
 
-def find_best_time_tree4(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-    Busca la topología para CRCA native con 4 controles temporales:
-        t0,t1 -> h0
-        t2,t3 -> h1
-        h0 - a - h1
-    Layout devuelto:
-        [t0, t1, t2, t3, h0, h1, a]
-    """
+
+def find_best_time_tree4(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     avoided_qubits = set(avoided_qubits)
-
     T = nx.Graph()
-    # logical indices:
-    # 0=t0, 1=t1, 2=t2, 3=t3, 4=h0, 5=h1, 6=a
-    T.add_edges_from([
-        (0, 4),
-        (1, 4),
-        (4, 6),
-        (6, 5),
-        (5, 2),
-        (5, 3),
-    ])
-
+    T.add_edges_from([(0, 4), (1, 4), (4, 6), (6, 5), (5, 2), (5, 3)])
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
-
-    best_layout = None
-    best_score = -np.inf
+    best_layout, best_score = None, -np.inf
 
     for mapping in GM.subgraph_isomorphisms_iter():
         inv_map = {v: k for k, v in mapping.items()}
-
-        node_term = sum(
-            preferred_scores.get(inv_map[q], default_score)
-            for q in T.nodes
-        )
-
+        node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
         edge_term = 0.0
         if edge_scores is not None:
-            edges_physical = [
-                tuple(sorted((inv_map[u], inv_map[v])))
-                for u, v in T.edges
-            ]
+            edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
         score = float(1.0 * node_term + 0.35 * edge_term)
-
         if score > best_score:
             best_score = score
             best_layout = [inv_map[i] for i in range(7)]
 
     if best_layout is None:
-        raise RuntimeError(
-            "No se ha encontrado la topología 'time_tree4' con las restricciones dadas."
-        )
-
+        raise RuntimeError("No se ha encontrado la topología 'time_tree4'.")
     return best_layout, float(best_score)
 
-
-def find_best_crca_heavyhex8(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
+def find_best_qcbm_heavyhex6(G, preferred_scores, avoided_qubits, default_score=0.15, edge_scores=None):
     """
-    Busca la topología lógica heavy-hex-friendly del CRCA native para 8 controles.
-
-    Layout devuelto:
-      [c0, c1, c2, c3, c4, c5, c6, c7,
-       h0, h1, h2, h3,
-       b0, b1, b2, b3,
-       g0, g1, a]
+    Busca una topología óptima para 6 qubits en Heavy Hex.
+    Estructura ramificada: un nodo central (0) conectado a 3 ramas (1, 2, 3),
+    y dos de esas ramas se extienden un nivel más (a 4 y 5).
     """
     avoided_qubits = set(avoided_qubits)
-
     T = nx.Graph()
-
-    # logical labels:
-    # 0..7   = controles
-    # 8..11  = h0..h3
-    # 12..15 = b0..b3
-    # 16..17 = g0..g1
-    # 18     = a
-    T.add_edges_from([
-        (0, 8), (1, 8),
-        (2, 9), (3, 9),
-        (4, 10), (5, 10),
-        (6, 11), (7, 11),
-
-        (8, 12),
-        (9, 13),
-        (10, 14),
-        (11, 15),
-
-        (12, 16), (13, 16),
-        (14, 17), (15, 17),
-
-        (16, 18), (17, 18),
-    ])
-
+    # Grafo estrella ramificado ideal para minimizar distancias en 6 qubits
+    T.add_edges_from([(0, 1), (0, 2), (0, 3), (1, 4), (2, 5)])
+    
     valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
     G_sub = G.subgraph(valid_nodes)
-
     GM = isomorphism.GraphMatcher(G_sub, T)
-
-    best_layout = None
-    best_score = -np.inf
+    best_layout, best_score = None, -np.inf
 
     for mapping in GM.subgraph_isomorphisms_iter():
         inv_map = {v: k for k, v in mapping.items()}
-
-        node_term = sum(
-            preferred_scores.get(inv_map[q], default_score)
-            for q in T.nodes
-        )
-
+        node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
         edge_term = 0.0
         if edge_scores is not None:
-            edges_physical = [
-                tuple(sorted((inv_map[u], inv_map[v])))
-                for u, v in T.edges
-            ]
+            edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
             edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
+        score = float(1.0 * node_term + 0.35 * edge_term)
+        if score > best_score:
+            best_score = score
+            # Guardamos el layout manteniendo el orden de los nodos lógicos 0 a 5
+            best_layout = [inv_map[i] for i in range(6)]
 
+    if best_layout is None:
+        raise RuntimeError("No se ha encontrado la topología 'qcbm_heavyhex6'.")
+    return best_layout, float(best_score)
+
+
+def find_best_heavy_hex_star(
+    G, preferred_scores, avoided_qubits, n_price, default_score=0.15, edge_scores=None
+):
+    avoided_qubits = set(avoided_qubits)
+    T = nx.Graph()
+
+    a = n_price + 2
+    T.add_edges_from([
+        (a, 0),
+        (a, 1),
+        (a, 2)
+    ])
+    for i in range(2, n_price + 1):
+        T.add_edge(i, i + 1)
+
+    valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
+    G_sub = G.subgraph(valid_nodes)
+    GM = isomorphism.GraphMatcher(G_sub, T)
+
+    best_layout, best_score = None, -np.inf
+
+    for mapping in GM.subgraph_isomorphisms_iter():
+        inv_map = {v: k for k, v in mapping.items()}
+        node_term = sum(preferred_scores.get(inv_map[q], default_score) for q in T.nodes)
+        edge_term = 0.0
+        if edge_scores is not None:
+            edges_physical = [tuple(sorted((inv_map[u], inv_map[v]))) for u, v in T.edges]
+            edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
         score = float(1.0 * node_term + 0.35 * edge_term)
 
         if score > best_score:
             best_score = score
-            best_layout = [inv_map[i] for i in range(19)]
+            best_layout = [inv_map[i] for i in range(n_price + 3)]
 
     if best_layout is None:
-        raise RuntimeError(
-            "No se ha encontrado la topología 'crca_heavyhex8' con las restricciones dadas."
-        )
+        raise RuntimeError("No se encontró la topología 'heavy_hex_star'.")
 
     return best_layout, float(best_score)
 
-def find_best_crca_heavyhex10(
-    G,
-    preferred_scores,
-    avoided_qubits,
-    default_score=0.15,
-    edge_scores=None,
-):
-    """
-    Busca la topología lógica heavy-hex-friendly del CRCA native para 10 controles.
-
-    Layout devuelto:
-      [t0, t1, t2, t3, s0, s1, s2, s3, s4, s5,
-       h0, h1, h2, h3, h4,
-       b0, b1, b2, b3, b4,
-       g0, g1, b5, b6, a]
-    """
-    avoided_qubits = set(avoided_qubits)
-
-    T = nx.Graph()
-
-    # logical labels:
-    # 0=t0, 1=t1, 2=t2, 3=t3,
-    # 4=s0, 5=s1, 6=s2, 7=s3, 8=s4, 9=s5,
-    # 10=h0, 11=h1, 12=h2, 13=h3, 14=h4,
-    # 15=b0, 16=b1, 17=b2, 18=b3, 19=b4,
-    # 20=g0, 21=g1, 22=b5, 23=b6, 24=a
-
-    T.add_edges_from([
-        (0, 10), (1, 10),
-        (2, 11), (3, 11),
-        (4, 12), (5, 12),
-        (6, 13), (7, 13),
-        (8, 14), (9, 14),
-
-        (10, 15),
-        (11, 16),
-        (12, 17),
-        (13, 18),
-        (14, 19),
-
-        (15, 20), (16, 20),
-        (17, 21), (18, 21),
-
-        (20, 22),
-        (21, 23),
-
-        (22, 24), (23, 24), (19, 24),
-    ])
-
-    valid_nodes = [n for n in G.nodes if n not in avoided_qubits]
-    G_sub = G.subgraph(valid_nodes)
-
-    GM = isomorphism.GraphMatcher(G_sub, T)
-
-    best_layout = None
-    best_score = -np.inf
-
-    for mapping in GM.subgraph_isomorphisms_iter():
-        inv_map = {v: k for k, v in mapping.items()}
-
-        node_term = sum(
-            preferred_scores.get(inv_map[q], default_score)
-            for q in T.nodes
-        )
-
-        edge_term = 0.0
-        if edge_scores is not None:
-            edges_physical = [
-                tuple(sorted((inv_map[u], inv_map[v])))
-                for u, v in T.edges
-            ]
-            edge_term = sum(edge_scores.get(e, 0.0) for e in edges_physical)
-
-        score = float(1.0 * node_term + 0.35 * edge_term)
-
-        if score > best_score:
-            best_score = score
-            best_layout = [inv_map[i] for i in range(25)]
-
-    if best_layout is None:
-        raise RuntimeError(
-            "No se ha encontrado la topología 'crca_heavyhex10' con las restricciones dadas."
-        )
-
-    return best_layout, float(best_score)
 
 def select_best_layout(
     backend,
@@ -826,18 +534,15 @@ def select_best_layout(
         "circular",
         "tree_bus",
         "snowflake",
+        "qcbm_heavyhex6",
         "qcbm_heavyhex8",
         "time_tree4",
         "crca2",
-        "crca_tree10",
-        "crca_heavyhex8",
-        "crca_heavyhex10",
+        "heavy_hex_star",
     }
 
     if topology not in valid_topologies:
-        raise ValueError(
-            f"topology must be one of {valid_topologies}. Got: '{topology}'"
-        )
+        raise ValueError(f"topology must be one of {valid_topologies}. Got: '{topology}'")
 
     coupling_map = backend.configuration().coupling_map
     G = build_undirected_coupling_graph(coupling_map)
@@ -853,490 +558,147 @@ def select_best_layout(
     tried = []
 
     def _try_cycle(current_avoided):
-        return find_best_cycle(
-            G,
-            preferred_scores,
-            current_avoided,
-            length,
-            default_score=default_score,
-            max_starts=max_starts,
-            edge_scores=edge_scores,
-        )
+        return find_best_cycle(G, preferred_scores, current_avoided, length, default_score=default_score, max_starts=max_starts, edge_scores=edge_scores)
 
     def _try_chain(current_avoided):
-        return find_best_chain(
-            G,
-            preferred_scores,
-            current_avoided,
-            length,
-            default_score=default_score,
-            max_starts=max_starts,
-            edge_scores=edge_scores,
-        )
+        return find_best_chain(G, preferred_scores, current_avoided, length, default_score=default_score, max_starts=max_starts, edge_scores=edge_scores)
     
     def _try_crca2(current_avoided):
-        return find_best_crca2(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+        return find_best_crca2(G, preferred_scores, current_avoided, default_score=default_score, edge_scores=edge_scores)
 
     def _try_tree_bus(current_avoided):
-        return find_best_tree_bus(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+        return find_best_tree_bus(G, preferred_scores, current_avoided, default_score=default_score, edge_scores=edge_scores)
 
     def _try_snowflake(current_avoided):
-        return find_best_snowflake(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+        return find_best_snowflake(G, preferred_scores, current_avoided, default_score=default_score, edge_scores=edge_scores)
 
     def _try_qcbm_heavyhex8(current_avoided):
-        return find_best_qcbm_heavyhex8(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+        return find_best_qcbm_heavyhex8(G, preferred_scores, current_avoided, default_score=default_score, edge_scores=edge_scores)
 
-    def _try_crca_heavyhex8(current_avoided):
-        return find_best_crca_heavyhex8(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+    def _try_qcbm_heavyhex6(current_avoided):
+        return find_best_qcbm_heavyhex6(G, preferred_scores, current_avoided, default_score=default_score, edge_scores=edge_scores)
 
-    def _try_crca_heavyhex10(current_avoided):
-        return find_best_crca_heavyhex10(
-            G,
-            preferred_scores,
-            current_avoided,
-            default_score=default_score,
-            edge_scores=edge_scores,
-        )
+    def _try_heavy_hex_star(current_avoided):
+        n_price = length - 3
+        if n_price < 1:
+            raise ValueError("length debe ser al menos 4 para heavy_hex_star (2 time + >=1 price + 1 ancilla)")
+        return find_best_heavy_hex_star(G, preferred_scores, current_avoided, n_price, default_score=default_score, edge_scores=edge_scores)
 
     if topology == "linear":
         layout, score = _try_chain(avoided_qubits)
         metadata = {
-            "graph": G,
-            "preferred_scores": preferred_scores,
-            "avoided_qubits": avoided_qubits,
-            "edge_scores": edge_scores,
-            "diagnostics": diagnostics,
-            "selected_topology": "linear",
-            "fallback_used": False,
-            "tried": tried,
+            "graph": G, "preferred_scores": preferred_scores,
+            "avoided_qubits": avoided_qubits, "edge_scores": edge_scores,
+            "diagnostics": diagnostics, "selected_topology": "linear",
+            "fallback_used": False, "tried": tried,
         }
         return layout, score, metadata
     
-    if topology == "crca2":
+    if topology == "heavy_hex_star":
         try:
-            layout, score = _try_crca2(avoided_qubits)
+            layout, score = _try_heavy_hex_star(avoided_qubits)
             metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "crca2",
-                "fallback_used": False,
-                "tried": tried,
+                "graph": G, "preferred_scores": preferred_scores,
+                "avoided_qubits": avoided_qubits, "edge_scores": edge_scores,
+                "diagnostics": diagnostics, "selected_topology": "heavy_hex_star",
+                "fallback_used": False, "tried": tried,
             }
             return layout, score, metadata
         except RuntimeError:
-            tried.append("strict crca2 failed")
+            tried.append("strict heavy_hex_star failed")
 
         if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
+            avoided_sorted = sorted(avoided_qubits, key=lambda q: preferred_scores.get(q, -1e9))
             relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
             try:
-                layout, score = _try_crca2(relaxed_avoided)
+                layout, score = _try_heavy_hex_star(relaxed_avoided)
                 metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "crca2",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed crca2 succeeded"],
+                    "graph": G, "preferred_scores": preferred_scores,
+                    "avoided_qubits": relaxed_avoided, "edge_scores": edge_scores,
+                    "diagnostics": diagnostics, "selected_topology": "heavy_hex_star",
+                    "fallback_used": True, "tried": tried + ["relaxed heavy_hex_star succeeded"],
                 }
                 return layout, score, metadata
             except RuntimeError:
-                tried.append("relaxed crca2 failed")
-
-    if topology == "tree_bus":
-        try:
-            layout, score = _try_tree_bus(avoided_qubits)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "tree_bus",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict tree_bus failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
+                tried.append("relaxed heavy_hex_star failed")
+                
+    for t_name, t_func in [
+        ("crca2", _try_crca2), ("tree_bus", _try_tree_bus), ("snowflake", _try_snowflake),
+        ("qcbm_heavyhex8", _try_qcbm_heavyhex8), ("qcbm_heavyhex6", _try_qcbm_heavyhex6)
+    ]:
+        if topology == t_name:
             try:
-                layout, score = _try_tree_bus(relaxed_avoided)
+                layout, score = t_func(avoided_qubits)
                 metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "tree_bus",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed tree_bus succeeded"],
+                    "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": avoided_qubits,
+                    "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": t_name,
+                    "fallback_used": False, "tried": tried,
                 }
                 return layout, score, metadata
             except RuntimeError:
-                tried.append("relaxed tree_bus failed")
+                tried.append(f"strict {t_name} failed")
 
-            layout, score = _try_chain(relaxed_avoided)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": relaxed_avoided,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "linear",
-                "fallback_used": True,
-                "tried": tried + ["fallback to linear"],
-            }
-            return layout, score, metadata
-
-    if topology == "snowflake":
-        try:
-            layout, score = _try_snowflake(avoided_qubits)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "snowflake",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict snowflake failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
-            try:
-                layout, score = _try_snowflake(relaxed_avoided)
-                metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "snowflake",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed snowflake succeeded"],
-                }
-                return layout, score, metadata
-            except RuntimeError:
-                tried.append("relaxed snowflake failed")
-
-            layout, score = _try_chain(relaxed_avoided)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": relaxed_avoided,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "linear",
-                "fallback_used": True,
-                "tried": tried + ["fallback to linear"],
-            }
-            return layout, score, metadata
-
-    if topology == "qcbm_heavyhex8":
-        try:
-            layout, score = _try_qcbm_heavyhex8(avoided_qubits)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "qcbm_heavyhex8",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict qcbm_heavyhex8 failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
-            try:
-                layout, score = _try_qcbm_heavyhex8(relaxed_avoided)
-                metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "qcbm_heavyhex8",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed qcbm_heavyhex8 succeeded"],
-                }
-                return layout, score, metadata
-            except RuntimeError:
-                tried.append("relaxed qcbm_heavyhex8 failed")
-
-            layout, score = _try_chain(relaxed_avoided)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": relaxed_avoided,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "linear",
-                "fallback_used": True,
-                "tried": tried + ["fallback to linear"],
-            }
-            return layout, score, metadata
+            if relax_if_needed:
+                avoided_sorted = sorted(avoided_qubits, key=lambda q: preferred_scores.get(q, -1e9))
+                relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
+                try:
+                    layout, score = t_func(relaxed_avoided)
+                    metadata = {
+                        "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": relaxed_avoided,
+                        "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": t_name,
+                        "fallback_used": True, "tried": tried + [f"relaxed {t_name} succeeded"],
+                    }
+                    return layout, score, metadata
+                except RuntimeError:
+                    tried.append(f"relaxed {t_name} failed")
 
     if topology == "time_tree4":
         try:
-            layout, score = find_best_time_tree4(
-                G,
-                preferred_scores,
-                avoided_qubits,
-                default_score=default_score,
-                edge_scores=edge_scores,
-            )
+            layout, score = find_best_time_tree4(G, preferred_scores, avoided_qubits, default_score=default_score, edge_scores=edge_scores)
             metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "time_tree4",
-                "fallback_used": False,
-                "tried": tried,
+                "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": avoided_qubits,
+                "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "time_tree4",
+                "fallback_used": False, "tried": tried,
             }
             return layout, score, metadata
         except RuntimeError:
             tried.append("strict time_tree4 failed")
 
         if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
+            avoided_sorted = sorted(avoided_qubits, key=lambda q: preferred_scores.get(q, -1e9))
             relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
             try:
-                layout, score = find_best_time_tree4(
-                    G,
-                    preferred_scores,
-                    relaxed_avoided,
-                    default_score=default_score,
-                    edge_scores=edge_scores,
-                )
+                layout, score = find_best_time_tree4(G, preferred_scores, relaxed_avoided, default_score=default_score, edge_scores=edge_scores)
                 metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "time_tree4",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed time_tree4 succeeded"],
+                    "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": relaxed_avoided,
+                    "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "time_tree4",
+                    "fallback_used": True, "tried": tried + ["relaxed time_tree4 succeeded"],
                 }
                 return layout, score, metadata
             except RuntimeError:
                 tried.append("relaxed time_tree4 failed")
 
-    if topology == "crca_tree10":
-        try:
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "crca_tree10",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict crca_tree10 failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
-            try:
-                metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "crca_tree10",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed crca_tree10 succeeded"],
-                }
-                return layout, score, metadata
-            except RuntimeError:
-                tried.append("relaxed crca_tree10 failed")
-
-    if topology == "crca_heavyhex8":
-        try:
-            layout, score = _try_crca_heavyhex8(avoided_qubits)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "crca_heavyhex8",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict crca_heavyhex8 failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
-            try:
-                layout, score = _try_crca_heavyhex8(relaxed_avoided)
-                metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "crca_heavyhex8",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed crca_heavyhex8 succeeded"],
-                }
-                return layout, score, metadata
-            except RuntimeError:
-                tried.append("relaxed crca_heavyhex8 failed")
-
-    if topology == "crca_heavyhex10":
-        try:
-            layout, score = _try_crca_heavyhex10(avoided_qubits)
-            metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "crca_heavyhex10",
-                "fallback_used": False,
-                "tried": tried,
-            }
-            return layout, score, metadata
-        except RuntimeError:
-            tried.append("strict crca_heavyhex10 failed")
-
-        if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
-            relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
-            try:
-                layout, score = _try_crca_heavyhex10(relaxed_avoided)
-                metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "crca_heavyhex10",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed crca_heavyhex10 succeeded"],
-                }
-                return layout, score, metadata
-            except RuntimeError:
-                tried.append("relaxed crca_heavyhex10 failed")
-
     if topology == "circular":
         try:
             layout, score = _try_cycle(avoided_qubits)
             metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": avoided_qubits,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "circular",
-                "fallback_used": False,
-                "tried": tried,
+                "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": avoided_qubits,
+                "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "circular",
+                "fallback_used": False, "tried": tried,
             }
             return layout, score, metadata
         except RuntimeError:
             tried.append("strict circular failed")
 
         if relax_if_needed:
-            avoided_sorted = sorted(
-                avoided_qubits,
-                key=lambda q: preferred_scores.get(q, -1e9),
-            )
+            avoided_sorted = sorted(avoided_qubits, key=lambda q: preferred_scores.get(q, -1e9))
             relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
             try:
                 layout, score = _try_cycle(relaxed_avoided)
                 metadata = {
-                    "graph": G,
-                    "preferred_scores": preferred_scores,
-                    "avoided_qubits": relaxed_avoided,
-                    "edge_scores": edge_scores,
-                    "diagnostics": diagnostics,
-                    "selected_topology": "circular",
-                    "fallback_used": True,
-                    "tried": tried + ["relaxed circular succeeded"],
+                    "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": relaxed_avoided,
+                    "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "circular",
+                    "fallback_used": True, "tried": tried + ["relaxed circular succeeded"],
                 }
                 return layout, score, metadata
             except RuntimeError:
@@ -1344,34 +706,32 @@ def select_best_layout(
 
             layout, score = _try_chain(relaxed_avoided)
             metadata = {
-                "graph": G,
-                "preferred_scores": preferred_scores,
-                "avoided_qubits": relaxed_avoided,
-                "edge_scores": edge_scores,
-                "diagnostics": diagnostics,
-                "selected_topology": "linear",
-                "fallback_used": True,
-                "tried": tried + ["fallback to linear"],
+                "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": relaxed_avoided,
+                "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "linear",
+                "fallback_used": True, "tried": tried + ["fallback to linear"],
             }
             return layout, score, metadata
 
-    raise RuntimeError(
-        "No se ha encontrado ninguna topología válida con las restricciones dadas."
-    )
+    if relax_if_needed and topology not in ["linear"]:
+        avoided_sorted = sorted(avoided_qubits, key=lambda q: preferred_scores.get(q, -1e9))
+        relaxed_avoided = set(avoided_sorted[: len(avoided_sorted) // 2])
+        try:
+            layout, score = _try_chain(relaxed_avoided)
+            metadata = {
+                "graph": G, "preferred_scores": preferred_scores, "avoided_qubits": relaxed_avoided,
+                "edge_scores": edge_scores, "diagnostics": diagnostics, "selected_topology": "linear",
+                "fallback_used": True, "tried": tried + ["fallback to linear"],
+            }
+            return layout, score, metadata
+        except:
+            pass
+
+    raise RuntimeError("No se ha encontrado ninguna topología válida con las restricciones dadas.")
+
+
 def draw_local_subgraph(G, layout, topology="linear", figsize=(8, 5)):
     """
     Dibuja el layout elegido y sus vecinos inmediatos.
-
-    Topologías soportadas:
-      - linear
-      - circular
-      - tree_bus
-      - snowflake
-      - qcbm_heavyhex8
-      - time_tree4
-      - crca_tree10
-      - crca_heavyhex8
-      - crca_heavyhex10
     """
     nodes = set(layout)
     for q in layout:
@@ -1393,198 +753,62 @@ def draw_local_subgraph(G, layout, topology="linear", figsize=(8, 5)):
     layout_edges = set()
 
     if topology == "linear":
-        layout_edges = {
-            tuple(sorted((layout[i], layout[i + 1])))
-            for i in range(len(layout) - 1)
-        }
+        layout_edges = {tuple(sorted((layout[i], layout[i + 1]))) for i in range(len(layout) - 1)}
 
     elif topology == "circular":
-        layout_edges = {
-            tuple(sorted((layout[i], layout[i + 1])))
-            for i in range(len(layout) - 1)
-        }
+        layout_edges = {tuple(sorted((layout[i], layout[i + 1]))) for i in range(len(layout) - 1)}
         if len(layout) >= 3:
             layout_edges.add(tuple(sorted((layout[-1], layout[0]))))
 
     elif topology == "crca2":
-        if len(layout) != 3:
-            raise ValueError(
-                "crca2 expects layout of length 3: [c0, c1, a]"
-            )
-
-        layout_edges = {
-            tuple(sorted((layout[0], layout[2]))),
-            tuple(sorted((layout[1], layout[2]))),
-        }
+        layout_edges = {tuple(sorted((layout[0], layout[2]))), tuple(sorted((layout[1], layout[2])))}
 
     elif topology == "tree_bus":
         layout_edges = {
-            tuple(sorted((layout[0], layout[1]))),
-            tuple(sorted((layout[1], layout[2]))),
-            tuple(sorted((layout[2], layout[3]))),
-            tuple(sorted((layout[5], layout[4]))),
-            tuple(sorted((layout[4], layout[0]))),
-            tuple(sorted((layout[7], layout[6]))),
-            tuple(sorted((layout[6], layout[1]))),
-            tuple(sorted((layout[9], layout[8]))),
-            tuple(sorted((layout[8], layout[3]))),
+            tuple(sorted((layout[0], layout[1]))), tuple(sorted((layout[1], layout[2]))), tuple(sorted((layout[2], layout[3]))),
+            tuple(sorted((layout[5], layout[4]))), tuple(sorted((layout[4], layout[0]))), tuple(sorted((layout[7], layout[6]))),
+            tuple(sorted((layout[6], layout[1]))), tuple(sorted((layout[9], layout[8]))), tuple(sorted((layout[8], layout[3]))),
         }
 
     elif topology == "snowflake":
         layout_edges = {
-            tuple(sorted((layout[0], layout[1]))),
-            tuple(sorted((layout[0], layout[2]))),
-            tuple(sorted((layout[0], layout[3]))),
-            tuple(sorted((layout[1], layout[4]))),
-            tuple(sorted((layout[4], layout[5]))),
-            tuple(sorted((layout[2], layout[6]))),
-            tuple(sorted((layout[6], layout[7]))),
-            tuple(sorted((layout[3], layout[8]))),
-            tuple(sorted((layout[8], layout[9]))),
+            tuple(sorted((layout[0], layout[1]))), tuple(sorted((layout[0], layout[2]))), tuple(sorted((layout[0], layout[3]))),
+            tuple(sorted((layout[1], layout[4]))), tuple(sorted((layout[4], layout[5]))), tuple(sorted((layout[2], layout[6]))),
+            tuple(sorted((layout[6], layout[7]))), tuple(sorted((layout[3], layout[8]))), tuple(sorted((layout[8], layout[9]))),
         }
 
-    elif topology == "qcbm_heavyhex8":
-        if len(layout) != 8:
-            raise ValueError(
-                "qcbm_heavyhex8 expects layout of length 8: "
-                "[q0, q1, q2, q3, q4, q5, q6, q7]"
-            )
-
+    elif topology == "qcbm_heavyhex6":
         layout_edges = {
-            tuple(sorted((layout[0], layout[1]))),
-            tuple(sorted((layout[1], layout[2]))),
-            tuple(sorted((layout[2], layout[3]))),
-            tuple(sorted((layout[3], layout[4]))),
-            tuple(sorted((layout[4], layout[5]))),
-            tuple(sorted((layout[2], layout[6]))),
+            tuple(sorted((layout[0], layout[1]))), tuple(sorted((layout[0], layout[2]))),
+            tuple(sorted((layout[0], layout[3]))), tuple(sorted((layout[1], layout[4]))),
+            tuple(sorted((layout[2], layout[5])))
+        }
+        
+    elif topology == "qcbm_heavyhex8":
+        layout_edges = {
+            tuple(sorted((layout[0], layout[1]))), tuple(sorted((layout[1], layout[2]))), tuple(sorted((layout[2], layout[3]))),
+            tuple(sorted((layout[3], layout[4]))), tuple(sorted((layout[4], layout[5]))), tuple(sorted((layout[2], layout[6]))),
             tuple(sorted((layout[4], layout[7]))),
         }
 
     elif topology == "time_tree4":
-        if len(layout) != 7:
-            raise ValueError(
-                "time_tree4 expects layout of length 7: "
-                "[t0, t1, t2, t3, h0, h1, a]"
-            )
-
         layout_edges = {
-            tuple(sorted((layout[0], layout[4]))),
-            tuple(sorted((layout[1], layout[4]))),
-            tuple(sorted((layout[4], layout[6]))),
-            tuple(sorted((layout[6], layout[5]))),
-            tuple(sorted((layout[5], layout[2]))),
-            tuple(sorted((layout[5], layout[3]))),
+            tuple(sorted((layout[0], layout[4]))), tuple(sorted((layout[1], layout[4]))), tuple(sorted((layout[4], layout[6]))),
+            tuple(sorted((layout[6], layout[5]))), tuple(sorted((layout[5], layout[2]))), tuple(sorted((layout[5], layout[3]))),
         }
 
-    elif topology == "crca_tree10":
-        if len(layout) != 18:
-            raise ValueError(
-                "crca_tree10 expects layout of length 18: "
-                "[t0, t1, t2, t3, s0, s1, s2, s3, s4, s5, "
-                "h0, h1, h2, h3, h4, g0, g1, a]"
-            )
-
+    elif topology == "heavy_hex_star":
+        a = len(layout) - 1
         layout_edges = {
-            tuple(sorted((layout[0], layout[10]))),
-            tuple(sorted((layout[1], layout[10]))),
-            tuple(sorted((layout[2], layout[11]))),
-            tuple(sorted((layout[3], layout[11]))),
-            tuple(sorted((layout[4], layout[12]))),
-            tuple(sorted((layout[5], layout[12]))),
-            tuple(sorted((layout[6], layout[13]))),
-            tuple(sorted((layout[7], layout[13]))),
-            tuple(sorted((layout[8], layout[14]))),
-            tuple(sorted((layout[9], layout[14]))),
-            tuple(sorted((layout[10], layout[15]))),
-            tuple(sorted((layout[11], layout[15]))),
-            tuple(sorted((layout[12], layout[16]))),
-            tuple(sorted((layout[13], layout[16]))),
-            tuple(sorted((layout[15], layout[17]))),
-            tuple(sorted((layout[16], layout[17]))),
-            tuple(sorted((layout[14], layout[17]))),
+            tuple(sorted((layout[a], layout[0]))),
+            tuple(sorted((layout[a], layout[1]))),
+            tuple(sorted((layout[a], layout[2]))),
         }
-
-    elif topology == "crca_heavyhex8":
-        if len(layout) != 19:
-            raise ValueError(
-                "crca_heavyhex8 expects layout of length 19: "
-                "[c0, c1, c2, c3, c4, c5, c6, c7, "
-                "h0, h1, h2, h3, "
-                "b0, b1, b2, b3, "
-                "g0, g1, a]"
-            )
-
-        layout_edges = {
-            tuple(sorted((layout[0], layout[8]))),
-            tuple(sorted((layout[1], layout[8]))),
-            tuple(sorted((layout[2], layout[9]))),
-            tuple(sorted((layout[3], layout[9]))),
-            tuple(sorted((layout[4], layout[10]))),
-            tuple(sorted((layout[5], layout[10]))),
-            tuple(sorted((layout[6], layout[11]))),
-            tuple(sorted((layout[7], layout[11]))),
-
-            tuple(sorted((layout[8], layout[12]))),
-            tuple(sorted((layout[9], layout[13]))),
-            tuple(sorted((layout[10], layout[14]))),
-            tuple(sorted((layout[11], layout[15]))),
-
-            tuple(sorted((layout[12], layout[16]))),
-            tuple(sorted((layout[13], layout[16]))),
-            tuple(sorted((layout[14], layout[17]))),
-            tuple(sorted((layout[15], layout[17]))),
-
-            tuple(sorted((layout[16], layout[18]))),
-            tuple(sorted((layout[17], layout[18]))),
-        }
-
-    elif topology == "crca_heavyhex10":
-        if len(layout) != 25:
-            raise ValueError(
-                "crca_heavyhex10 expects layout of length 25: "
-                "[t0, t1, t2, t3, s0, s1, s2, s3, s4, s5, "
-                "h0, h1, h2, h3, h4, "
-                "b0, b1, b2, b3, b4, "
-                "g0, g1, b5, b6, a]"
-            )
-
-        layout_edges = {
-            tuple(sorted((layout[0], layout[10]))),
-            tuple(sorted((layout[1], layout[10]))),
-            tuple(sorted((layout[2], layout[11]))),
-            tuple(sorted((layout[3], layout[11]))),
-            tuple(sorted((layout[4], layout[12]))),
-            tuple(sorted((layout[5], layout[12]))),
-            tuple(sorted((layout[6], layout[13]))),
-            tuple(sorted((layout[7], layout[13]))),
-            tuple(sorted((layout[8], layout[14]))),
-            tuple(sorted((layout[9], layout[14]))),
-
-            tuple(sorted((layout[10], layout[15]))),
-            tuple(sorted((layout[11], layout[16]))),
-            tuple(sorted((layout[12], layout[17]))),
-            tuple(sorted((layout[13], layout[18]))),
-            tuple(sorted((layout[14], layout[19]))),
-
-            tuple(sorted((layout[15], layout[20]))),
-            tuple(sorted((layout[16], layout[20]))),
-            tuple(sorted((layout[17], layout[21]))),
-            tuple(sorted((layout[18], layout[21]))),
-
-            tuple(sorted((layout[20], layout[22]))),
-            tuple(sorted((layout[21], layout[23]))),
-
-            tuple(sorted((layout[22], layout[24]))),
-            tuple(sorted((layout[23], layout[24]))),
-            tuple(sorted((layout[19], layout[24]))),
-        }
+        for i in range(2, a - 1):
+            layout_edges.add(tuple(sorted((layout[i], layout[i + 1]))))
 
     else:
-        raise ValueError(
-            "topology must be 'linear', 'circular', 'tree_bus', "
-            "'snowflake', 'qcbm_heavyhex8', 'time_tree4', 'crca_tree10', "
-            "'crca_heavyhex8' or 'crca_heavyhex10'."
-        )
+        raise ValueError(f"Topology {topology} not recognized in drawing function.")
 
     edge_colors = []
     edge_widths = []
@@ -1608,9 +832,11 @@ def draw_local_subgraph(G, layout, topology="linear", figsize=(8, 5)):
         width=edge_widths,
         font_size=10,
     )
-    plt.title("Subgrafo local alrededor del layout elegido")
+    plt.title(f"Subgrafo local alrededor del layout elegido ({topology})")
     plt.axis("off")
     plt.show()
+
+
 def circuit_metrics(qc):
     """
     Devuelve métricas simples pero útiles del circuito.

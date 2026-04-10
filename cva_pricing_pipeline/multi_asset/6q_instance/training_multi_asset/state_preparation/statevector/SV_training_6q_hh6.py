@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_aer import AerSimulator
+from qiskit import qpy
 
 # quantum_cva imports
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import plot_training_diagnostics_multi_asset
@@ -14,23 +15,23 @@ from qcbm_training_utils import (
     run_stage1,
     run_stage2,
     select_checkpoint_indices,
-    plot_training_dynamics,
     save_experiment
 )
 
 # ===================== Global Configuration =====================
 BACKEND_NAME = "ibm_basquecountry"
-LOGICAL_TOPOLOGY = "qcbm_heavyhex8"  
+LOGICAL_TOPOLOGY = "qcbm_heavyhex6"  
 
-N_LAYERS = 8
-EPS_COST = 1e-12
-INIT_SCALE = 1.0
+N_LAYERS = 10
+EPS_COST = 1e-9
+INIT_SCALE = 0.01
 SEED = 42
 
-STAGE1_MAXITER = 3000
-STAGE1_RHOBEG = 0.30
+STAGE1_MAXITER = 600
+STAGE1_RHOBEG = 0.25
+STAGE1_TOL = 1e-6
 STAGE2_MAXITER = 10000
-STAGE2_MAXFUN = 500000
+STAGE2_MAXFUN = 100000
     
 CHECKPOINT_EVERY = 25
 CHECKPOINT_TOP_K = 20
@@ -44,7 +45,7 @@ def main():
     )
 
     data = np.load(
-        repo_root / "data" / "multi_asset"/ "8q_instance" / "benchmark" / "three_asset_instance.npz",
+        repo_root / "data" / "multi_asset"/ "6q_instance" / "benchmark" / "three_asset_instance.npz",
         allow_pickle=True,
     )
 
@@ -52,11 +53,12 @@ def main():
         repo_root 
         / "data" 
         / "multi_asset" 
-        / "8q_instance"
+        / "6q_instance"
         / "quantum" 
         / "training" 
         / "qcbm" 
-        / "training_qcbm_heavyhex8.npz"
+        / "statevector"
+        / "training_qcbm_heavyhex6_10lay.npz"
     )
     saving_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint_path = saving_path.with_name(saving_path.stem + "_checkpoints.npz")
@@ -120,6 +122,7 @@ def main():
     best_run = run_stage1(
         x0, maxiter=STAGE1_MAXITER, rhobeg=STAGE1_RHOBEG,
         cost_fn=cost_statevector, qcbm=qcbm, target_entropy=target_entropy,
+        tol=STAGE1_TOL,
     )
     best_run.update({"theta_init": x0, "seed": SEED})
 
@@ -186,6 +189,12 @@ def main():
     )
     plt.show()
 
+    # ===================== Save Physicial Circuit =====================
+    circuit_save_path = saving_path.with_name("trained_qcbm_circuit8lay.qpy")
+    with open(circuit_save_path, "wb") as f:
+        qpy.dump(qcbm._tqc, f)
+    print(f"\n[OK] Transpiled circuit saved to: {circuit_save_path}")
+    
     # ===================== Results saving =====================
     main_save_data = {
         "theta_star": theta_star, "theta_init": best_run["theta_init"],
@@ -231,7 +240,6 @@ def main():
     }
 
     save_experiment(saving_path, checkpoint_path, main_save_data, checkpoint_save_data)
-
 
 if __name__ == "__main__":
     main()

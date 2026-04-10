@@ -56,7 +56,8 @@ def main() -> None:
         / "quantum"
         / "training"
         / "crca"
-        / "default_probabilities_crca2_statevector.npz"
+        / "default_probabilities"
+        / "training_crca2.npz"
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 

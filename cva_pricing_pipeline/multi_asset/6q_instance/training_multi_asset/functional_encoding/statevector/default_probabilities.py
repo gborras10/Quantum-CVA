@@ -4,18 +4,22 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from qiskit import transpile
-from qiskit_aer import AerSimulator
-from qiskit_algorithms.optimizers import SPSA
+from qiskit_ibm_runtime import QiskitRuntimeService
+from scipy.optimize import minimize
 
 from quantum_cva.multi_asset.quantum.training.functional_encoding_crca.crca.crca_circuit import CrcaCircuit
 from quantum_cva.multi_asset.quantum.training.utilities.circuit_training_tools import (
     plot_training_diagnostics_multi_asset,
 )
-from quantum_cva.quantum_hardware_utilities.layout_utils import summarize_circuit
+from quantum_cva.quantum_hardware_utilities.layout_utils import (
+    select_best_layout,
+    summarize_circuit,
+)
 
 
 # ===================== Global Configuration =====================
-SIMULATOR_METHOD = "automatic"
+BACKEND_NAME = "ibm_basquecountry"
+SEARCH_TOPOLOGY = "crca2"
 TRANSPILATION_OPT_LEVEL = 3
 SEED_TRANSPILER = 1234
 
@@ -23,13 +27,9 @@ M_TIME = 2
 N_PRICE = 0
 N_LAYERS = 1
 
-THETA_SEED = 355
-N_ITERS = 1000
-SHOTS = 10000 # sube a 80000
-RESAMPLINGS = 1
-BLOCKING = False
-TRUST_REGION = False
-SHOT_SEED = 355
+THETA_SEED = 42
+N_ITERS = 150
+RHOBEG = 0.40
 
 
 def main() -> None:
@@ -41,7 +41,7 @@ def main() -> None:
     )
 
     benchmark = np.load(
-        repo_root / "data" / "multi_asset" / "8q_instance" / "benchmark" / "three_asset_instance.npz",
+        repo_root / "data" / "multi_asset" / "6q_instance" / "benchmark" / "three_asset_instance.npz",
         allow_pickle=True,
     )
     q_t: np.ndarray = benchmark["q_t"]
@@ -52,12 +52,12 @@ def main() -> None:
         repo_root
         / "data"
         / "multi_asset"
+        / "6q_instance"
         / "quantum"
         / "training"
         / "crca"
         / "default_probabilities"
-        / "shots_ideal"
-        / "default_probabilities_time_tree4_shots_spsa.npz"
+        / "training_crca2.npz"
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -68,67 +68,82 @@ def main() -> None:
         n_layers=N_LAYERS,
         ansatz_type="native_tree",
         native_1q_order=("rx", "rz"),
-        name="crca_default_probabilities_time_tree4_shots",
+        name="crca_default_probabilities_crca2",
     )
 
-    # ===================== Simulator & Transpilation =====================
-    sim_backend = AerSimulator(method=SIMULATOR_METHOD)
+    # ===================== Backend & Layout =====================
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    real_backend = service.backend(BACKEND_NAME, use_fractional_gates=True)
 
-    print("simulator_backend =", sim_backend.name)
-    print("simulator_method  =", SIMULATOR_METHOD)
-    print("shots             =", SHOTS)
+    n_logical_qubits = crca.qc.num_qubits
+    chosen_layout, layout_score, layout_meta = select_best_layout(
+        real_backend,
+        topology=SEARCH_TOPOLOGY,
+        length=n_logical_qubits,
+        readout_quantile=0.95,
+        local_2q_quantile=0.95,
+        relax_if_needed=True,
+    )
+
+    print("backend_name      =", BACKEND_NAME)
+    print("search_topology   =", SEARCH_TOPOLOGY)
+    print("chosen_layout     =", chosen_layout)
+    print("layout_score      =", layout_score)
+    print("fallback_used     =", layout_meta["fallback_used"])
+    print("tried             =", layout_meta["tried"])
 
     tqc_ansatz = transpile(
         crca.qc,
-        backend=sim_backend,
+        backend=real_backend,
+        initial_layout=chosen_layout,
         optimization_level=TRANSPILATION_OPT_LEVEL,
+        layout_method="trivial",
+        routing_method="none",
         seed_transpiler=SEED_TRANSPILER,
     )
 
     tqc_eval = transpile(
         crca.qc_eval,
-        backend=sim_backend,
+        backend=real_backend,
+        initial_layout=chosen_layout,
         optimization_level=TRANSPILATION_OPT_LEVEL,
+        layout_method="trivial",
+        routing_method="none",
         seed_transpiler=SEED_TRANSPILER,
     )
 
-    summarize_circuit(tqc_ansatz, label="CRCA ansatz transpiled for AerSimulator")
-    summarize_circuit(tqc_eval, label="CRCA eval transpiled for AerSimulator")
+    summarize_circuit(tqc_ansatz, label="CRCA ansatz transpiled for hardware")
+    summarize_circuit(tqc_eval, label="CRCA eval transpiled for hardware")
 
-    # ===================== Training (shots + SPSA) =====================
+    # ===================== Training =====================
     rng = np.random.default_rng(THETA_SEED)
-    #x0: np.ndarray = 0.5 * rng.standard_normal(crca.n_params).astype(float)
-    x0: np.ndarray = 0.1 * rng.standard_normal(crca.n_params).astype(float)
-    f0_shots: np.ndarray = crca.function_values(x0, shots=SHOTS, seed=SHOT_SEED)
+    x0: np.ndarray = 0.5 * rng.standard_normal(crca.n_params).astype(float)
+    f0_statevector: np.ndarray = crca.function_values(x0, shots=None, seed=None)
 
-    cost_shots = crca.cost_fn(
+    cost_statevector = crca.cost_fn(
         f_target,
-        shots=SHOTS,
-        seed=SHOT_SEED,
+        shots=None,
+        seed=None,
     )
 
     cost_history: list[float] = []
     theta_history: list[np.ndarray] = []
 
-    lr, pert = SPSA.calibrate(cost_shots, x0)
-
-    shots_optimizer = SPSA(
-        maxiter=int(N_ITERS),
-        learning_rate=lr,
-        perturbation=pert,
-        resamplings={0: 1, 50: 2, 150: 4},
-        last_avg=25,
-        second_order=True,
-        blocking=True,
-        trust_region=True,
-        callback=lambda nfev, x, fx, step, accepted: (
-            cost_history.append(float(fx)),
+    t0: float = time.perf_counter()
+    res = minimize(
+        fun=cost_statevector,
+        x0=x0,
+        method="COBYLA",
+        options={
+            "maxiter": int(N_ITERS),
+            "rhobeg": float(RHOBEG),
+            "disp": False,
+        },
+        callback=lambda x: (
+            cost_history.append(float(cost_statevector(x))),
             theta_history.append(np.asarray(x, dtype=float).copy()),
         ),
     )
-
-    t0: float = time.perf_counter()
-    res = shots_optimizer.minimize(fun=cost_shots, x0=x0)
     elapsed_time: float = time.perf_counter() - t0
 
     cost_history_arr = np.asarray(cost_history, dtype=float)
@@ -145,7 +160,7 @@ def main() -> None:
     print(f"Best L2 cost observed: {best_fx:.8f}")
 
     theta_last: np.ndarray = np.asarray(res.x, dtype=float)
-    f_star_shots: np.ndarray = crca.function_values(theta_best, shots=SHOTS, seed=SHOT_SEED)
+    f_star_statevector: np.ndarray = crca.function_values(theta_best, shots=None, seed=None)
 
     # ===================== Plots =====================
     best_so_far = np.minimum.accumulate(cost_history_arr)
@@ -156,18 +171,18 @@ def main() -> None:
     time_labels = [format(i, f"0{M_TIME}b") for i in range(2**M_TIME)]
     plot_training_diagnostics_multi_asset(
         target=f_target,
-        before=f0_shots,
-        after=f_star_shots,
+        before=f0_statevector,
+        after=f_star_statevector,
         cost_history=cost_history_arr,
         best_so_far=best_so_far,
         best_idx=best_idx,
         labels=time_labels,
         xlabel="Time register |t>",
         ylabel="f(t)",
-        cost_ylabel=("L2 loss"),
-        title_before="Before training  (CRCA default probability, SPSA shots)",
-        title_after="After training  (best-iter, CRCA default probability, SPSA shots)",
-        cost_log_x=True,
+        cost_ylabel=f"L2 loss  (COBYLA, rhobeg={RHOBEG:.4g}, statevector)",
+        title_before="Before training  (CRCA default probability, COBYLA statevector)",
+        title_after="After training  (best-iter, CRCA default probability, COBYLA statevector)",
+        cost_log_x=False,
         cost_log_y=True,
     )
     plt.show()
@@ -182,24 +197,24 @@ def main() -> None:
         "n_controls": crca.n_controls,
         "n_layers": N_LAYERS,
         "n_parameters": crca.n_params,
-        "optimizer": "SPSA",
-        "optimizer_library": "qiskit-algorithms",
+        "optimizer": "COBYLA",
+        "optimizer_library": "scipy",
+        "rhobeg": RHOBEG,
         "maxiter": N_ITERS,
-        "resamplings": RESAMPLINGS,
-        "blocking": BLOCKING,
-        "trust_region": TRUST_REGION,
         "cost_function": "L2",
-        "shots": SHOTS,
-        "stochastic_cost": True,
-        "shot_seed": SHOT_SEED,
+        "shots": None,
+        "stochastic_cost": False,
+        "shot_seed": None,
         "best_iter_cost_observed": best_fx,
         "stopping_criterion": "maxiter",
-        "simulator_backend": sim_backend.name,
-        "simulator_method": SIMULATOR_METHOD,
+        "backend_name": BACKEND_NAME,
+        "requested_topology": SEARCH_TOPOLOGY,
+        "layout_score": float(layout_score),
+        "fallback_used": bool(layout_meta["fallback_used"]),
         "transpile_optimization_level": TRANSPILATION_OPT_LEVEL,
         "seed_transpiler": SEED_TRANSPILER,
         "note": (
-            "CRCA default-probability training via shots-only SPSA on AerSimulator. "
+            "CRCA default-probability training via statevector-only COBYLA. "
             "theta_star = best-iteration parameters."
         ),
     }
@@ -213,15 +228,20 @@ def main() -> None:
         best_so_far=best_so_far,
         best_idx=best_idx,
         f_target=f_target,
-        f_init_shots=f0_shots,
-        f_star_shots=f_star_shots,
+        f_init_statevector=f0_statevector,
+        f_star_statevector=f_star_statevector,
         elapsed_time=np.float64(elapsed_time),
         best_cost=np.float64(best_fx),
         C_q=np.float64(c_q),
         n_iters=np.int64(N_ITERS),
-        shots=np.int64(SHOTS),
-        resamplings=np.int64(RESAMPLINGS),
+        rhobeg=np.float64(RHOBEG),
         theta_seed=np.int64(THETA_SEED),
+        backend_name=np.array(BACKEND_NAME),
+        requested_topology=np.array(SEARCH_TOPOLOGY),
+        chosen_layout=np.array(chosen_layout, dtype=int),
+        layout_score=np.float64(layout_score),
+        fallback_used=np.bool_(layout_meta["fallback_used"]),
+        tried_layout_search=np.array(layout_meta["tried"], dtype=object),
         transpiled_ansatz_depth=np.int64(tqc_ansatz.depth()),
         transpiled_ansatz_size=np.int64(tqc_ansatz.size()),
         transpiled_ansatz_ops=np.array(dict(tqc_ansatz.count_ops()), dtype=object),

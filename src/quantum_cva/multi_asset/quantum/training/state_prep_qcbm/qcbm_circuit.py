@@ -20,7 +20,7 @@ class MLQcbmCircuit:
       - construction of a parameterized QCBM ansatz with `n_layers`,
       - selectable two-qubit entangler: `rxx`, `rzz` or `cz`,
       - selectable topology: "all-to-all", "linear", "circular",
-        "tree_bus", "snowflake", "optimized_snowflake", or "qcbm_heavyhex8",
+        "tree_bus", "snowflake", "optimized_snowflake", "qcbm_heavyhex8" or "qcbm_heavyhex6"
       - parameter binding,
       - probability evaluation (exact statevector or shot-based sampling),
       - (clipped) cross-entropy / negative log-likelihood cost,
@@ -333,6 +333,24 @@ class MLQcbmCircuit:
                 (2, 3),
                 (4, 5),
             ]
+        
+        if topology == "qcbm_heavyhex6":
+            if n_qubits != 6:
+                raise ValueError(
+                    "qcbm_heavyhex6 topology is only supported for 6 qubits."
+                )
+
+            # Grafo en estrella ramificada para maximizar el entrelazamiento
+            # en 6 qubits sobre topología Heavy Hex.
+            # Hub central en q0, ramas primarias en q1, q2, q3.
+            # Extensiones en q4 (desde q1) y q5 (desde q2).
+            return [
+                (0, 1),
+                (0, 2),
+                (0, 3),
+                (1, 4),
+                (2, 5),
+            ]
 
         # circular
         if n_qubits == 1:
@@ -401,7 +419,9 @@ class MLQcbmCircuit:
 
     @property
     def topology(self) -> str:
-        """Entangling topology: 'all-to-all', 'linear', 'circular', 'tree_bus', 'snowflake', 'optimized_snowflake' or 'qcbm_heavyhex8'."""
+        """Entangling topology: 'all-to-all', 'linear', 'circular', 'tree_bus',
+          'snowflake', 'optimized_snowflake', 'qcbm_heavyhex8' or 
+          'qcbm_heavyhex6'."""
         return self._topology
 
     @property
@@ -494,7 +514,12 @@ class MLQcbmCircuit:
             )
 
             qc_run = tqc_bound.copy()
-            active_qubits = self._active_qubit_indices(tqc_bound)
+
+            if self._initial_layout is not None:
+                active_qubits = self._initial_layout
+            else:
+                active_qubits = list(range(self.n_qubits))
+            
             qc_run.save_probabilities(qubits=active_qubits)
 
             run_kwargs: dict[str, object] = {}

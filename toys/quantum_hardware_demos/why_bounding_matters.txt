@@ -1,0 +1,25 @@
+# Por qué baja tanto la profundidad al asignar parámetros
+
+## Idea clave
+La profundidad alta en el circuito paramétrico no implica que el circuito ejecutado vaya a ser igual de profundo.  
+Cuando el transpiler ve parámetros simbólicos, conserva una forma general válida para cualquier valor y aplica menos simplificaciones agresivas.
+
+Cuando se asignan valores numéricos, el compilador puede optimizar para ese caso concreto y aparecen muchas reducciones.
+
+## Qué pasa técnicamente
+1. Simplificación numérica de rotaciones: con valores concretos se pueden fusionar secuencias de rotaciones.
+2. Cancelaciones algebraicas: puertas consecutivas pueden anularse o compactarse.
+3. Mejor síntesis de bloques controlados: con parámetros fijos, algunos bloques se reexpresan con menos coste.
+4. Optimización de una qubit más fuerte: al no haber símbolos, se simplifican mejor cadenas largas de puertas de una qubit.
+5. Coste conservador del circuito simbólico: la versión paramétrica actúa como una cota alta estructural.
+
+## Evidencia observada en la prueba
+1. Profundidad lógica: 46
+2. Profundidad transpileada paramétrica: 146
+3. Profundidad transpileada con parámetros asignados: 47
+4. Operaciones de dos qubits (caso asignado): 11
+5. SWAP (caso asignado): 0
+
+## Interpretación práctica
+Para estimar el coste real de ejecución, la métrica relevante es la del circuito con parámetros asignados.  
+La profundidad del circuito paramétrico sirve sobre todo como referencia estructural/conservadora.
