@@ -52,8 +52,8 @@ def main() -> None:
     positive_exposure_sabre_seeds = [1, 42, 202, 404, 1234]
     cva_aggregate_sabre_seeds = [1, 7, 8, 17, 18, 22, 42, 73, 101, 202, 404, 777, 1234]
 
-    readout_quantile = 0.95
-    local_2q_quantile = 0.95
+    readout_quantile = 0.92
+    local_2q_quantile = 0.85
     relax_if_needed = True
     approximation_degree = 1.0
 
@@ -424,13 +424,20 @@ def main() -> None:
     transpiled_cva_text_snapshot_path = (
         data_root / "quantum" / "cva_pricing" / "transpiled_cva_circuit_text_snapshot.txt"
     )
+
+    # Keep the snapshot aligned with the current improved fixed layout shown above.
+    snapshot_circuit = qc_cva_isa_fixed
+    snapshot_method = "fixed_layout_current"
+    snapshot_seed = seed_transpiler
+    snapshot_metrics = cva_fixed_metrics
+
     _write_transpiled_cva_circuit_text_snapshot(
-        circuit=qc_cva_isa,
+        circuit=snapshot_circuit,
         output_path=transpiled_cva_text_snapshot_path,
         backend_name=backend_name,
-        transpilation_method=cva_aggregate_method,
-        selected_seed=cva_selected_seed,
-        selected_metrics=cva_selected_metrics,
+        transpilation_method=snapshot_method,
+        selected_seed=snapshot_seed,
+        selected_metrics=snapshot_metrics,
     )
 
     print("\n=== CVA Aggregate Transpilation Selection ===")
@@ -454,7 +461,10 @@ def main() -> None:
         f"two_qubit_gates={cva_selected_metrics['two_qubit_gates']}, "
         f"size={cva_selected_metrics['size']}"
     )
-    print(f"transpiled CVA text snapshot saved to: {transpiled_cva_text_snapshot_path}")
+    print(
+        "transpiled CVA text snapshot saved from current fixed-layout circuit: "
+        f"{transpiled_cva_text_snapshot_path}"
+    )
 
     _print_layout_summary(
         qcbm_requested_topology=qcbm_requested_topology,

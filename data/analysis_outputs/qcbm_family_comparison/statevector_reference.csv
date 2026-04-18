@@ -1,0 +1,5 @@
+checkpoint_name,checkpoint_file,n_layers,exact_statevector_kl
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,0.37961700870336723
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,0.01058930076314725
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,0.0005989540195489465
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,0.00010687985912399069

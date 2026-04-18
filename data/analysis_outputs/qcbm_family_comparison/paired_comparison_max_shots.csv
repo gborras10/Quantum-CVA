@@ -1,0 +1,5 @@
+checkpoint_name,checkpoint_file,n_layers,shots,mean_kl_shots_ideal,mean_kl_shots_noise,median_kl_shots_ideal,median_kl_shots_noise,mean_difference_noise_minus_ideal,wilcoxon_statistic,wilcoxon_pvalue_greater
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,8192,0.38415230405800993,0.434501301543116,0.38415230405800993,0.434501301543116,0.05034899748510607,3.0,0.25
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,8192,0.014269240670090935,0.07019044218677636,0.014269240670090935,0.07019044218677636,0.05592120151668542,3.0,0.25
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,8192,0.008143142071482617,0.06751080360083855,0.008143142071482617,0.06751080360083855,0.059367661529355936,3.0,0.25
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,8192,0.009662643231658805,0.06600993862550159,0.009662643231658805,0.06600993862550159,0.05634729539384278,3.0,0.25

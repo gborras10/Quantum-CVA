@@ -553,7 +553,7 @@ def _write_transpiled_cva_circuit_text_snapshot(
         "CVA transpiled circuit textual snapshot",
         "======================================",
         "",
-        "Este fichero describe el circuito CVA transpilado final seleccionado (`qc_cva_isa`).",
+        "Este fichero describe el circuito CVA transpilado exportado en esta ejecucion.",
         "",
         "Resumen general",
         "---------------",

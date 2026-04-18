@@ -28,7 +28,7 @@ from quantum_cva.quantum_hardware_utilities.layout_utils import (
 BACKEND_NAME = "ibm_basquecountry"
 LOGICAL_TOPOLOGY = "qcbm_heavyhex6"
 
-N_LAYERS = 10 
+N_LAYERS = 6 
 EPS_COST = 1e-9
 INIT_SCALE = 0.01
 SEED = 42
@@ -88,7 +88,7 @@ def main() -> None:
         / "training"
         / "qcbm"
         / "shots"
-        / "training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz"
+        / "6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz"
     )
     saving_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -189,7 +189,7 @@ def main() -> None:
         / "training"
         / "qcbm"
         / "statevector"
-        / "training_qcbm_heavyhex6_10lay.npz"
+        / "training_qcbm_heavyhex6_6lay.npz"
     )
     statevector_training = np.load(statevector_training_path, allow_pickle=True)
     if "theta_star" not in statevector_training:

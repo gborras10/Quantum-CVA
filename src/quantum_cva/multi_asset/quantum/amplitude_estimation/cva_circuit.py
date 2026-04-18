@@ -1,5 +1,5 @@
 # Python Utils
-from typing import Mapping
+from collections.abc import Mapping
 import numpy as np
 
 # Quantum - CVA utils
@@ -63,7 +63,7 @@ class QuantumCVACircuit:
         crca_default_params: np.ndarray[float],
         crca_discount_params: np.ndarray[float],
         measured: bool = False,
-    ) -> float:
+    ) -> QuantumCircuit:
         """Build CVA circuit with fixed parameters"""
         qc_qcbm = self.qcbm_circuit.bind(qcbm_params, measured=False)
         qc_exposure = self.crca_circuit_exposure.bind(
@@ -148,7 +148,7 @@ class QuantumCVACircuit:
             self._aer_backend,
         )
 
-        run_kwargs: dict[str, object] = int(seed)
+        run_kwargs: dict[str, object] = {"shots": integer_shots}
         if seed is not None:
             run_kwargs["seed_simulator"] = int(seed)
 

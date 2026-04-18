@@ -1,0 +1,5 @@
+checkpoint_name,checkpoint_file,n_layers,topology,n_qubits,entangler,logical_or_transpiled_depth_noiseless,logical_or_transpiled_size_noiseless,logical_or_transpiled_width_noiseless,two_qubit_gates_noiseless,swap_count_noiseless,logical_or_transpiled_depth_noisy,logical_or_transpiled_size_noisy,logical_or_transpiled_width_noisy,two_qubit_gates_noisy,swap_count_noisy
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,6,rzz,11.0,40.0,6.0,10.0,0.0,11.0,40.0,6.0,10.0,0.0
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,6,qcbm_heavyhex6,6,rzz,16.0,57.0,6.0,15.0,0.0,16.0,57.0,6.0,15.0,0.0
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,6,rzz,16.0,57.0,6.0,15.0,0.0,16.0,57.0,6.0,15.0,0.0
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,6,rzz,21.0,74.0,6.0,20.0,0.0,21.0,74.0,6.0,20.0,0.0

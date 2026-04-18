@@ -47,14 +47,6 @@ Thumbs.db
 .env
 .env.*
 
-# Data (si no quieres subir datasets grandes)
-data/
-*.npz
-*.npy
-*.csv
-*.parquet
-*.h5
-
 .vscode/
 
 # Figures / outputs

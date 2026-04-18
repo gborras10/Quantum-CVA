@@ -1,0 +1,37 @@
+checkpoint_name,checkpoint_file,n_layers,topology,scenario,scenario_label,shots,repetition,seed,kl
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,statevector,Statevector (ideal),,0,1234,0.37961700870336723
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,0,246034,0.39551786552121193
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,0,246034,0.45350035824835966
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,1,246035,0.39063674512789137
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,1,246035,0.4372418723951847
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,0,860434,0.3865792948433101
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,0,860434,0.43240254844143045
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,1,860435,0.38172531327270975
+training_qcbm_heavyhex6_4lay,training_qcbm_heavyhex6_4lay.npz,4,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,1,860435,0.43660005464480156
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,statevector,Statevector (ideal),,0,1234,0.01058930076314725
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,0,266034,0.020853618564440693
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,0,266034,0.07489830460760134
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,1,266035,0.031214334779635363
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,1,266035,0.10234753831779975
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,0,880434,0.013428040052420629
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,0,880434,0.06980892684085925
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,1,880435,0.01511044128776124
+training_qcbm_heavyhex6_6lay,training_qcbm_heavyhex6_6lay.npz,6,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,1,880435,0.07057195753269346
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,statevector,Statevector (ideal),,0,1234,0.0005989540195489465
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,0,286034,0.06278049426046732
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,0,286034,0.07284507787154904
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,1,286035,0.031486409636023165
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,1,286035,0.07705691920435045
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,0,900434,0.009571441880497338
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,0,900434,0.06491594539256187
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,1,900435,0.006714842262467895
+training_qcbm_heavyhex6_8lay,training_qcbm_heavyhex6_8lay.npz,8,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,1,900435,0.07010566180911523
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,statevector,Statevector (ideal),,0,1234,0.00010687985912399069
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,0,306034,0.05009943499846294
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,0,306034,0.07613268106038601
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),2048.0,1,306035,0.03595532925537176
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,2048.0,1,306035,0.07264336004597718
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,0,920434,0.010941589440987602
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,0,920434,0.06618900858248034
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_ideal,Finite shots (noiseless),8192.0,1,920435,0.008383697022330008
+training_qcbm_heavyhex6_10lay,training_qcbm_heavyhex6_10lay.npz,10,qcbm_heavyhex6,shots_noise,Finite shots + backend noise model,8192.0,1,920435,0.06583086866852284

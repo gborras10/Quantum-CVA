@@ -1,0 +1,2 @@
+backend_name,noise_model_basis_gates,real_backend_name,shots_grid,repetitions
+ibm_basquecountry,"cz,delay,id,if_else,measure,reset,rx,rz,rzz,sx,x",ibm_basquecountry,"2048,8192",2

@@ -1,0 +1,1018 @@
+CVA transpiled circuit textual snapshot
+======================================
+
+Este fichero describe el circuito CVA transpilado exportado en esta ejecucion.
+
+Resumen general
+---------------
+backend_name: ibm_basquecountry
+transpilation_method: fixed_layout_current
+selected_seed: 1234
+depth: 103
+two_qubit_gates: 69
+size: 247
+num_qubits_transpiled_circuit: 156
+num_clbits_transpiled_circuit: 0
+
+Qubits fisicos usados en el circuito final
+------------------------------------------
+active_physical_qubits: [3, 16, 21, 22, 23, 24, 25, 26, 37]
+num_active_physical_qubits: 9
+
+Mapeo logico -> fisico al inicio de la transpilacion
+----------------------------------------------------
+a_default[0] -> q26
+a_discount[0] -> q37
+a_exposure[0] -> q3
+s[0] -> q22
+s[1] -> q16
+s[2] -> q25
+s[3] -> q21
+t[0] -> q23
+t[1] -> q24
+
+Mapeo logico -> fisico al final de la transpilacion
+---------------------------------------------------
+a_default[0] -> q23
+a_discount[0] -> q25
+a_exposure[0] -> q16
+s[0] -> q22
+s[1] -> q3
+s[2] -> q26
+s[3] -> q21
+t[0] -> q24
+t[1] -> q37
+
+Conteo de puertas
+-----------------
+cz: 36
+rx: 52
+rz: 59
+rzz: 33
+sx: 59
+x: 8
+
+Conexiones fisicas usadas por puertas de 2 qubits
+-------------------------------------------------
+q3 <-> q16: 9 puertas de 2 qubits
+q16 <-> q23: 13 puertas de 2 qubits
+q21 <-> q22: 9 puertas de 2 qubits
+q22 <-> q23: 6 puertas de 2 qubits
+q23 <-> q24: 11 puertas de 2 qubits
+q24 <-> q25: 14 puertas de 2 qubits
+q25 <-> q26: 3 puertas de 2 qubits
+q25 <-> q37: 4 puertas de 2 qubits
+
+Secuencia completa de instrucciones sobre qubits fisicos
+-------------------------------------------------------
+0000: gate=rz | qubits_fisicos=[q3] | params=1.5214291
+0001: gate=rx | qubits_fisicos=[q3] | params=0.86240852
+0002: gate=rz | qubits_fisicos=[q3] | params=0.71213139
+0003: gate=rx | qubits_fisicos=[q16] | params=1.572268
+0004: gate=rz | qubits_fisicos=[q16] | params=2.035789
+0005: gate=rx | qubits_fisicos=[q21] | params=0.5616793
+0006: gate=rz | qubits_fisicos=[q21] | params=2.5222667
+0007: gate=rx | qubits_fisicos=[q22] | params=1.3039868
+0008: gate=rz | qubits_fisicos=[q22] | params=-0.20690937
+0009: gate=rx | qubits_fisicos=[q23] | params=1.5940339
+0010: gate=rz | qubits_fisicos=[q23] | params=-0.22658366
+0011: gate=rx | qubits_fisicos=[q24] | params=0.46964867
+0012: gate=rz | qubits_fisicos=[q24] | params=-0.89489066
+0013: gate=rzz | qubits_fisicos=[q23, q24] | params=0.79734916 | conexion=q23<->q24
+0014: gate=rzz | qubits_fisicos=[q23, q22] | params=1.4723481 | conexion=q23<->q22
+0015: gate=rzz | qubits_fisicos=[q22, q21] | params=0.77629995 | conexion=q22<->q21
+0016: gate=rx | qubits_fisicos=[q21] | params=1.0992054
+0017: gate=rz | qubits_fisicos=[q21] | params=-2.4638365
+0018: gate=rx | qubits_fisicos=[q22] | params=1.5695621
+0019: gate=rz | qubits_fisicos=[q22] | params=1.5877976
+0020: gate=rz | qubits_fisicos=[q23] | params=3.1415927
+0021: gate=x | qubits_fisicos=[q23] | params=-
+0022: gate=rzz | qubits_fisicos=[q23, q16] | params=1.4799641 | conexion=q23<->q16
+0023: gate=rx | qubits_fisicos=[q16] | params=-0.85740885
+0024: gate=rz | qubits_fisicos=[q16] | params=-1.0016227
+0025: gate=rx | qubits_fisicos=[q23] | params=-1.9627204
+0026: gate=rz | qubits_fisicos=[q23] | params=-0.13061732
+0027: gate=rz | qubits_fisicos=[q24] | params=3.1415927
+0028: gate=x | qubits_fisicos=[q24] | params=-
+0029: gate=rx | qubits_fisicos=[q25] | params=0.31105645
+0030: gate=rz | qubits_fisicos=[q25] | params=-2.6578626
+0031: gate=rzz | qubits_fisicos=[q24, q25] | params=1.3605933 | conexion=q24<->q25
+0032: gate=rx | qubits_fisicos=[q24] | params=-1.7966997
+0033: gate=rz | qubits_fisicos=[q24] | params=-1.4973072
+0034: gate=rzz | qubits_fisicos=[q23, q24] | params=1.3160036 | conexion=q23<->q24
+0035: gate=rzz | qubits_fisicos=[q23, q22] | params=1.1956506 | conexion=q23<->q22
+0036: gate=x | qubits_fisicos=[q22] | params=-
+0037: gate=rzz | qubits_fisicos=[q22, q21] | params=0.061081877 | conexion=q22<->q21
+0038: gate=rx | qubits_fisicos=[q21] | params=2.0454812
+0039: gate=rz | qubits_fisicos=[q21] | params=0.82944649
+0040: gate=rx | qubits_fisicos=[q22] | params=-2.1348193
+0041: gate=rz | qubits_fisicos=[q22] | params=-0.3693787
+0042: gate=rzz | qubits_fisicos=[q23, q16] | params=0.68988483 | conexion=q23<->q16
+0043: gate=rx | qubits_fisicos=[q16] | params=2.9921717
+0044: gate=rz | qubits_fisicos=[q16] | params=-0.8194642
+0045: gate=rx | qubits_fisicos=[q23] | params=0.63148237
+0046: gate=rz | qubits_fisicos=[q23] | params=0.24153214
+0047: gate=x | qubits_fisicos=[q24] | params=-
+0048: gate=rx | qubits_fisicos=[q25] | params=0.23430475
+0049: gate=rz | qubits_fisicos=[q25] | params=0.2632603
+0050: gate=rzz | qubits_fisicos=[q24, q25] | params=0.393261 | conexion=q24<->q25
+0051: gate=rx | qubits_fisicos=[q24] | params=-0.98992702
+0052: gate=rz | qubits_fisicos=[q24] | params=0.097977728
+0053: gate=rzz | qubits_fisicos=[q23, q24] | params=0.38295368 | conexion=q23<->q24
+0054: gate=x | qubits_fisicos=[q23] | params=-
+0055: gate=rzz | qubits_fisicos=[q23, q22] | params=0.29952435 | conexion=q23<->q22
+0056: gate=x | qubits_fisicos=[q22] | params=-
+0057: gate=rzz | qubits_fisicos=[q22, q21] | params=0.23821018 | conexion=q22<->q21
+0058: gate=sx | qubits_fisicos=[q21] | params=-
+0059: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+0060: gate=rzz | qubits_fisicos=[q23, q16] | params=0.029359518 | conexion=q23<->q16
+0061: gate=sx | qubits_fisicos=[q16] | params=-
+0062: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0063: gate=sx | qubits_fisicos=[q3] | params=-
+0064: gate=sx | qubits_fisicos=[q16] | params=-
+0065: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0066: gate=sx | qubits_fisicos=[q3] | params=-
+0067: gate=sx | qubits_fisicos=[q16] | params=-
+0068: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0069: gate=sx | qubits_fisicos=[q3] | params=-
+0070: gate=rz | qubits_fisicos=[q16] | params=-1.5816497
+0071: gate=rx | qubits_fisicos=[q16] | params=2.3806697
+0072: gate=rz | qubits_fisicos=[q16] | params=-1.5857825
+0073: gate=rz | qubits_fisicos=[q23] | params=-0.67047129
+0074: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+0075: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+0076: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+0077: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+0078: gate=rz | qubits_fisicos=[q16] | params=-3.1415927
+0079: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+0080: gate=rz | qubits_fisicos=[q23] | params=-3.1415927
+0081: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+0082: gate=rz | qubits_fisicos=[q16] | params=-1.5707963
+0083: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+0084: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+0085: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+0086: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.14344446 | conexion=q16<->q23
+0087: gate=rz | qubits_fisicos=[q16] | params=0.90032503
+0088: gate=rx | qubits_fisicos=[q16] | params=1.5707963
+0089: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0090: gate=sx | qubits_fisicos=[q3] | params=-
+0091: gate=sx | qubits_fisicos=[q16] | params=-
+0092: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0093: gate=sx | qubits_fisicos=[q3] | params=-
+0094: gate=sx | qubits_fisicos=[q16] | params=-
+0095: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0096: gate=sx | qubits_fisicos=[q3] | params=-
+0097: gate=rz | qubits_fisicos=[q23] | params=-2.8399465
+0098: gate=rx | qubits_fisicos=[q23] | params=0.71558026
+0099: gate=rz | qubits_fisicos=[q23] | params=-2.2518071
+0100: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.24974991 | conexion=q22<->q23
+0101: gate=rx | qubits_fisicos=[q22] | params=1.5707963
+0102: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0103: gate=sx | qubits_fisicos=[q21] | params=-
+0104: gate=sx | qubits_fisicos=[q22] | params=-
+0105: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0106: gate=sx | qubits_fisicos=[q21] | params=-
+0107: gate=sx | qubits_fisicos=[q22] | params=-
+0108: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0109: gate=sx | qubits_fisicos=[q21] | params=-
+0110: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+0111: gate=rz | qubits_fisicos=[q23] | params=1.6812953
+0112: gate=rx | qubits_fisicos=[q23] | params=0.93175032
+0113: gate=rz | qubits_fisicos=[q23] | params=2.5624681
+0114: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.99106598 | conexion=q16<->q23
+0115: gate=rx | qubits_fisicos=[q16] | params=3.1415927
+0116: gate=rz | qubits_fisicos=[q23] | params=-0.7283842
+0117: gate=rx | qubits_fisicos=[q23] | params=1.3887751
+0118: gate=rz | qubits_fisicos=[q23] | params=-0.4294791
+0119: gate=x | qubits_fisicos=[q24] | params=-
+0120: gate=rx | qubits_fisicos=[q25] | params=1.5797585
+0121: gate=rz | qubits_fisicos=[q25] | params=-0.16197354
+0122: gate=rzz | qubits_fisicos=[q24, q25] | params=0.21317748 | conexion=q24<->q25
+0123: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4172527 | conexion=q23<->q24
+0124: gate=rz | qubits_fisicos=[q23] | params=2.4859143
+0125: gate=rx | qubits_fisicos=[q23] | params=1.6214569
+0126: gate=rz | qubits_fisicos=[q23] | params=-2.4530389
+0127: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+0128: gate=sx | qubits_fisicos=[q25] | params=-
+0129: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0130: gate=sx | qubits_fisicos=[q24] | params=-
+0131: gate=sx | qubits_fisicos=[q25] | params=-
+0132: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0133: gate=sx | qubits_fisicos=[q24] | params=-
+0134: gate=sx | qubits_fisicos=[q25] | params=-
+0135: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0136: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.64174504 | conexion=q23<->q24
+0137: gate=rz | qubits_fisicos=[q23] | params=1.0422421
+0138: gate=rx | qubits_fisicos=[q23] | params=3.1270413
+0139: gate=rz | qubits_fisicos=[q23] | params=0.68770969
+0140: gate=rzz | qubits_fisicos=[q22, q23] | params=-1.3005221 | conexion=q22<->q23
+0141: gate=rx | qubits_fisicos=[q22] | params=-1.5707963
+0142: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0143: gate=sx | qubits_fisicos=[q21] | params=-
+0144: gate=sx | qubits_fisicos=[q22] | params=-
+0145: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0146: gate=sx | qubits_fisicos=[q21] | params=-
+0147: gate=sx | qubits_fisicos=[q22] | params=-
+0148: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+0149: gate=rz | qubits_fisicos=[q23] | params=-2.7067015
+0150: gate=rx | qubits_fisicos=[q23] | params=3.1325684
+0151: gate=rz | qubits_fisicos=[q23] | params=-0.75454666
+0152: gate=rx | qubits_fisicos=[q24] | params=3.1415927
+0153: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.63333444 | conexion=q23<->q24
+0154: gate=rz | qubits_fisicos=[q23] | params=1.9937326
+0155: gate=rx | qubits_fisicos=[q23] | params=1.6298881
+0156: gate=rz | qubits_fisicos=[q23] | params=-2.9564854
+0157: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+0158: gate=sx | qubits_fisicos=[q25] | params=-
+0159: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0160: gate=sx | qubits_fisicos=[q24] | params=-
+0161: gate=sx | qubits_fisicos=[q25] | params=-
+0162: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0163: gate=sx | qubits_fisicos=[q24] | params=-
+0164: gate=sx | qubits_fisicos=[q25] | params=-
+0165: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0166: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4188828 | conexion=q23<->q24
+0167: gate=rz | qubits_fisicos=[q23] | params=0.56429427
+0168: gate=rx | qubits_fisicos=[q23] | params=0.98210573
+0169: gate=rz | qubits_fisicos=[q23] | params=-0.15475976
+0170: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.58658386 | conexion=q16<->q23
+0171: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+0172: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0173: gate=sx | qubits_fisicos=[q3] | params=-
+0174: gate=sx | qubits_fisicos=[q16] | params=-
+0175: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0176: gate=sx | qubits_fisicos=[q3] | params=-
+0177: gate=sx | qubits_fisicos=[q16] | params=-
+0178: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+0179: gate=x | qubits_fisicos=[q16] | params=-
+0180: gate=rz | qubits_fisicos=[q23] | params=0.98998173
+0181: gate=rx | qubits_fisicos=[q23] | params=1.6127586
+0182: gate=rz | qubits_fisicos=[q23] | params=1.4768846
+0183: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.34568277 | conexion=q22<->q23
+0184: gate=rz | qubits_fisicos=[q23] | params=-2.578526
+0185: gate=rx | qubits_fisicos=[q23] | params=1.4075986
+0186: gate=rz | qubits_fisicos=[q23] | params=2.3559197
+0187: gate=rzz | qubits_fisicos=[q16, q23] | params=0.14913634 | conexion=q16<->q23
+0188: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+0189: gate=rz | qubits_fisicos=[q23] | params=-0.038297108
+0190: gate=rzz | qubits_fisicos=[q16, q23] | params=1.5324992 | conexion=q16<->q23
+0191: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+0192: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+0193: gate=sx | qubits_fisicos=[q16] | params=-
+0194: gate=sx | qubits_fisicos=[q23] | params=-
+0195: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+0196: gate=sx | qubits_fisicos=[q16] | params=-
+0197: gate=sx | qubits_fisicos=[q23] | params=-
+0198: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+0199: gate=rx | qubits_fisicos=[q24] | params=1.5707963
+0200: gate=sx | qubits_fisicos=[q25] | params=-
+0201: gate=rz | qubits_fisicos=[q26] | params=-0.66716322
+0202: gate=rx | qubits_fisicos=[q26] | params=1.5607507
+0203: gate=rz | qubits_fisicos=[q26] | params=0.0079120808
+0204: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+0205: gate=sx | qubits_fisicos=[q25] | params=-
+0206: gate=sx | qubits_fisicos=[q26] | params=-
+0207: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+0208: gate=sx | qubits_fisicos=[q25] | params=-
+0209: gate=sx | qubits_fisicos=[q26] | params=-
+0210: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+0211: gate=sx | qubits_fisicos=[q25] | params=-
+0212: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0213: gate=sx | qubits_fisicos=[q24] | params=-
+0214: gate=sx | qubits_fisicos=[q25] | params=-
+0215: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0216: gate=sx | qubits_fisicos=[q24] | params=-
+0217: gate=sx | qubits_fisicos=[q25] | params=-
+0218: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+0219: gate=rzz | qubits_fisicos=[q23, q24] | params=0.94016216 | conexion=q23<->q24
+0220: gate=sx | qubits_fisicos=[q23] | params=-
+0221: gate=rzz | qubits_fisicos=[q25, q24] | params=0.59612482 | conexion=q25<->q24
+0222: gate=rz | qubits_fisicos=[q24] | params=-2.8432589
+0223: gate=rx | qubits_fisicos=[q24] | params=1.5352689
+0224: gate=rz | qubits_fisicos=[q24] | params=3.1306703
+0225: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+0226: gate=sx | qubits_fisicos=[q23] | params=-
+0227: gate=sx | qubits_fisicos=[q24] | params=-
+0228: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+0229: gate=sx | qubits_fisicos=[q23] | params=-
+0230: gate=sx | qubits_fisicos=[q24] | params=-
+0231: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+0232: gate=sx | qubits_fisicos=[q25] | params=-
+0233: gate=rz | qubits_fisicos=[q37] | params=-0.76454692
+0234: gate=rx | qubits_fisicos=[q37] | params=1.4691985
+0235: gate=rz | qubits_fisicos=[q37] | params=0.09697418
+0236: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+0237: gate=sx | qubits_fisicos=[q25] | params=-
+0238: gate=sx | qubits_fisicos=[q37] | params=-
+0239: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+0240: gate=sx | qubits_fisicos=[q25] | params=-
+0241: gate=sx | qubits_fisicos=[q37] | params=-
+0242: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+0243: gate=rzz | qubits_fisicos=[q24, q25] | params=0.77249714 | conexion=q24<->q25
+0244: gate=rzz | qubits_fisicos=[q37, q25] | params=0.5832075 | conexion=q37<->q25
+0245: gate=rx | qubits_fisicos=[q25] | params=-3.0844634
+0246: gate=rz | qubits_fisicos=[q25] | params=-0.30420797
+
+Descripcion por capas (layer-by-layer)
+--------------------------------------
+Layer 000:
+  L000.00: gate=rz | qubits_fisicos=[q3] | params=1.5214291
+  L000.01: gate=rx | qubits_fisicos=[q16] | params=1.572268
+  L000.02: gate=rx | qubits_fisicos=[q21] | params=0.5616793
+  L000.03: gate=rx | qubits_fisicos=[q22] | params=1.3039868
+  L000.04: gate=rx | qubits_fisicos=[q23] | params=1.5940339
+  L000.05: gate=rx | qubits_fisicos=[q24] | params=0.46964867
+  L000.06: gate=rx | qubits_fisicos=[q25] | params=0.31105645
+  L000.07: gate=rz | qubits_fisicos=[q26] | params=-0.66716322
+  L000.08: gate=rz | qubits_fisicos=[q37] | params=-0.76454692
+Layer 001:
+  L001.00: gate=rx | qubits_fisicos=[q3] | params=0.86240852
+  L001.01: gate=rz | qubits_fisicos=[q16] | params=2.035789
+  L001.02: gate=rz | qubits_fisicos=[q21] | params=2.5222667
+  L001.03: gate=rz | qubits_fisicos=[q22] | params=-0.20690937
+  L001.04: gate=rz | qubits_fisicos=[q23] | params=-0.22658366
+  L001.05: gate=rz | qubits_fisicos=[q24] | params=-0.89489066
+  L001.06: gate=rz | qubits_fisicos=[q25] | params=-2.6578626
+  L001.07: gate=rx | qubits_fisicos=[q26] | params=1.5607507
+  L001.08: gate=rx | qubits_fisicos=[q37] | params=1.4691985
+Layer 002:
+  L002.00: gate=rz | qubits_fisicos=[q3] | params=0.71213139
+  L002.01: gate=rzz | qubits_fisicos=[q23, q24] | params=0.79734916 | conexion=q23<->q24
+  L002.02: gate=rz | qubits_fisicos=[q26] | params=0.0079120808
+  L002.03: gate=rz | qubits_fisicos=[q37] | params=0.09697418
+Layer 003:
+  L003.00: gate=rzz | qubits_fisicos=[q23, q22] | params=1.4723481 | conexion=q23<->q22
+  L003.01: gate=rz | qubits_fisicos=[q24] | params=3.1415927
+Layer 004:
+  L004.00: gate=rzz | qubits_fisicos=[q22, q21] | params=0.77629995 | conexion=q22<->q21
+  L004.01: gate=rz | qubits_fisicos=[q23] | params=3.1415927
+  L004.02: gate=x | qubits_fisicos=[q24] | params=-
+Layer 005:
+  L005.00: gate=rx | qubits_fisicos=[q21] | params=1.0992054
+  L005.01: gate=rx | qubits_fisicos=[q22] | params=1.5695621
+  L005.02: gate=x | qubits_fisicos=[q23] | params=-
+  L005.03: gate=rzz | qubits_fisicos=[q24, q25] | params=1.3605933 | conexion=q24<->q25
+Layer 006:
+  L006.00: gate=rzz | qubits_fisicos=[q23, q16] | params=1.4799641 | conexion=q23<->q16
+  L006.01: gate=rz | qubits_fisicos=[q21] | params=-2.4638365
+  L006.02: gate=rz | qubits_fisicos=[q22] | params=1.5877976
+  L006.03: gate=rx | qubits_fisicos=[q24] | params=-1.7966997
+  L006.04: gate=rx | qubits_fisicos=[q25] | params=0.23430475
+Layer 007:
+  L007.00: gate=rx | qubits_fisicos=[q16] | params=-0.85740885
+  L007.01: gate=rx | qubits_fisicos=[q23] | params=-1.9627204
+  L007.02: gate=rz | qubits_fisicos=[q24] | params=-1.4973072
+  L007.03: gate=rz | qubits_fisicos=[q25] | params=0.2632603
+Layer 008:
+  L008.00: gate=rz | qubits_fisicos=[q16] | params=-1.0016227
+  L008.01: gate=rz | qubits_fisicos=[q23] | params=-0.13061732
+Layer 009:
+  L009.00: gate=rzz | qubits_fisicos=[q23, q24] | params=1.3160036 | conexion=q23<->q24
+Layer 010:
+  L010.00: gate=rzz | qubits_fisicos=[q23, q22] | params=1.1956506 | conexion=q23<->q22
+  L010.01: gate=x | qubits_fisicos=[q24] | params=-
+Layer 011:
+  L011.00: gate=rzz | qubits_fisicos=[q23, q16] | params=0.68988483 | conexion=q23<->q16
+  L011.01: gate=x | qubits_fisicos=[q22] | params=-
+  L011.02: gate=rzz | qubits_fisicos=[q24, q25] | params=0.393261 | conexion=q24<->q25
+Layer 012:
+  L012.00: gate=rx | qubits_fisicos=[q16] | params=2.9921717
+  L012.01: gate=rzz | qubits_fisicos=[q22, q21] | params=0.061081877 | conexion=q22<->q21
+  L012.02: gate=rx | qubits_fisicos=[q23] | params=0.63148237
+  L012.03: gate=rx | qubits_fisicos=[q24] | params=-0.98992702
+  L012.04: gate=rx | qubits_fisicos=[q25] | params=1.5797585
+Layer 013:
+  L013.00: gate=rz | qubits_fisicos=[q16] | params=-0.8194642
+  L013.01: gate=rx | qubits_fisicos=[q21] | params=2.0454812
+  L013.02: gate=rx | qubits_fisicos=[q22] | params=-2.1348193
+  L013.03: gate=rz | qubits_fisicos=[q23] | params=0.24153214
+  L013.04: gate=rz | qubits_fisicos=[q24] | params=0.097977728
+  L013.05: gate=rz | qubits_fisicos=[q25] | params=-0.16197354
+Layer 014:
+  L014.00: gate=rz | qubits_fisicos=[q21] | params=0.82944649
+  L014.01: gate=rz | qubits_fisicos=[q22] | params=-0.3693787
+  L014.02: gate=rzz | qubits_fisicos=[q23, q24] | params=0.38295368 | conexion=q23<->q24
+Layer 015:
+  L015.00: gate=x | qubits_fisicos=[q23] | params=-
+  L015.01: gate=x | qubits_fisicos=[q24] | params=-
+Layer 016:
+  L016.00: gate=rzz | qubits_fisicos=[q23, q22] | params=0.29952435 | conexion=q23<->q22
+  L016.01: gate=rzz | qubits_fisicos=[q24, q25] | params=0.21317748 | conexion=q24<->q25
+Layer 017:
+  L017.00: gate=rzz | qubits_fisicos=[q23, q16] | params=0.029359518 | conexion=q23<->q16
+  L017.01: gate=x | qubits_fisicos=[q22] | params=-
+  L017.02: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 018:
+  L018.00: gate=sx | qubits_fisicos=[q16] | params=-
+  L018.01: gate=rzz | qubits_fisicos=[q22, q21] | params=0.23821018 | conexion=q22<->q21
+  L018.02: gate=rz | qubits_fisicos=[q23] | params=-0.67047129
+Layer 019:
+  L019.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L019.01: gate=sx | qubits_fisicos=[q21] | params=-
+  L019.02: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+  L019.03: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+Layer 020:
+  L020.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L020.01: gate=sx | qubits_fisicos=[q16] | params=-
+  L020.02: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+Layer 021:
+  L021.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+Layer 022:
+  L022.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L022.01: gate=sx | qubits_fisicos=[q16] | params=-
+Layer 023:
+  L023.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+Layer 024:
+  L024.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L024.01: gate=rz | qubits_fisicos=[q16] | params=-1.5816497
+Layer 025:
+  L025.00: gate=rx | qubits_fisicos=[q16] | params=2.3806697
+Layer 026:
+  L026.00: gate=rz | qubits_fisicos=[q16] | params=-1.5857825
+Layer 027:
+  L027.00: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+Layer 028:
+  L028.00: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  L028.01: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+Layer 029:
+  L029.00: gate=rz | qubits_fisicos=[q16] | params=-3.1415927
+  L029.01: gate=rz | qubits_fisicos=[q23] | params=-3.1415927
+Layer 030:
+  L030.00: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+Layer 031:
+  L031.00: gate=rz | qubits_fisicos=[q16] | params=-1.5707963
+  L031.01: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+Layer 032:
+  L032.00: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  L032.01: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+Layer 033:
+  L033.00: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.14344446 | conexion=q16<->q23
+Layer 034:
+  L034.00: gate=rz | qubits_fisicos=[q16] | params=0.90032503
+  L034.01: gate=rz | qubits_fisicos=[q23] | params=-2.8399465
+Layer 035:
+  L035.00: gate=rx | qubits_fisicos=[q16] | params=1.5707963
+  L035.01: gate=rx | qubits_fisicos=[q23] | params=0.71558026
+Layer 036:
+  L036.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L036.01: gate=rz | qubits_fisicos=[q23] | params=-2.2518071
+Layer 037:
+  L037.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L037.01: gate=sx | qubits_fisicos=[q16] | params=-
+  L037.02: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.24974991 | conexion=q22<->q23
+Layer 038:
+  L038.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L038.01: gate=rx | qubits_fisicos=[q22] | params=1.5707963
+  L038.02: gate=rz | qubits_fisicos=[q23] | params=1.6812953
+Layer 039:
+  L039.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L039.01: gate=sx | qubits_fisicos=[q16] | params=-
+  L039.02: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  L039.03: gate=rx | qubits_fisicos=[q23] | params=0.93175032
+Layer 040:
+  L040.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L040.01: gate=sx | qubits_fisicos=[q21] | params=-
+  L040.02: gate=sx | qubits_fisicos=[q22] | params=-
+  L040.03: gate=rz | qubits_fisicos=[q23] | params=2.5624681
+Layer 041:
+  L041.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L041.01: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.99106598 | conexion=q16<->q23
+  L041.02: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+Layer 042:
+  L042.00: gate=rx | qubits_fisicos=[q16] | params=3.1415927
+  L042.01: gate=sx | qubits_fisicos=[q21] | params=-
+  L042.02: gate=sx | qubits_fisicos=[q22] | params=-
+  L042.03: gate=rz | qubits_fisicos=[q23] | params=-0.7283842
+Layer 043:
+  L043.00: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  L043.01: gate=rx | qubits_fisicos=[q23] | params=1.3887751
+Layer 044:
+  L044.00: gate=sx | qubits_fisicos=[q21] | params=-
+  L044.01: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+  L044.02: gate=rz | qubits_fisicos=[q23] | params=-0.4294791
+Layer 045:
+  L045.00: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4172527 | conexion=q23<->q24
+Layer 046:
+  L046.00: gate=rz | qubits_fisicos=[q23] | params=2.4859143
+  L046.01: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+Layer 047:
+  L047.00: gate=rx | qubits_fisicos=[q23] | params=1.6214569
+  L047.01: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 048:
+  L048.00: gate=rz | qubits_fisicos=[q23] | params=-2.4530389
+  L048.01: gate=sx | qubits_fisicos=[q24] | params=-
+  L048.02: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 049:
+  L049.00: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 050:
+  L050.00: gate=sx | qubits_fisicos=[q24] | params=-
+  L050.01: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 051:
+  L051.00: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 052:
+  L052.00: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.64174504 | conexion=q23<->q24
+  L052.01: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 053:
+  L053.00: gate=rz | qubits_fisicos=[q23] | params=1.0422421
+  L053.01: gate=rx | qubits_fisicos=[q24] | params=3.1415927
+Layer 054:
+  L054.00: gate=rx | qubits_fisicos=[q23] | params=3.1270413
+Layer 055:
+  L055.00: gate=rz | qubits_fisicos=[q23] | params=0.68770969
+Layer 056:
+  L056.00: gate=rzz | qubits_fisicos=[q22, q23] | params=-1.3005221 | conexion=q22<->q23
+Layer 057:
+  L057.00: gate=rx | qubits_fisicos=[q22] | params=-1.5707963
+  L057.01: gate=rz | qubits_fisicos=[q23] | params=-2.7067015
+Layer 058:
+  L058.00: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  L058.01: gate=rx | qubits_fisicos=[q23] | params=3.1325684
+Layer 059:
+  L059.00: gate=sx | qubits_fisicos=[q21] | params=-
+  L059.01: gate=sx | qubits_fisicos=[q22] | params=-
+  L059.02: gate=rz | qubits_fisicos=[q23] | params=-0.75454666
+Layer 060:
+  L060.00: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  L060.01: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.63333444 | conexion=q23<->q24
+Layer 061:
+  L061.00: gate=sx | qubits_fisicos=[q21] | params=-
+  L061.01: gate=sx | qubits_fisicos=[q22] | params=-
+  L061.02: gate=rz | qubits_fisicos=[q23] | params=1.9937326
+  L061.03: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+Layer 062:
+  L062.00: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  L062.01: gate=rx | qubits_fisicos=[q23] | params=1.6298881
+  L062.02: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 063:
+  L063.00: gate=rz | qubits_fisicos=[q23] | params=-2.9564854
+  L063.01: gate=sx | qubits_fisicos=[q24] | params=-
+  L063.02: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 064:
+  L064.00: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 065:
+  L065.00: gate=sx | qubits_fisicos=[q24] | params=-
+  L065.01: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 066:
+  L066.00: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 067:
+  L067.00: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4188828 | conexion=q23<->q24
+  L067.01: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 068:
+  L068.00: gate=rz | qubits_fisicos=[q23] | params=0.56429427
+  L068.01: gate=rx | qubits_fisicos=[q24] | params=1.5707963
+  L068.02: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+Layer 069:
+  L069.00: gate=rx | qubits_fisicos=[q23] | params=0.98210573
+  L069.01: gate=sx | qubits_fisicos=[q25] | params=-
+  L069.02: gate=sx | qubits_fisicos=[q26] | params=-
+Layer 070:
+  L070.00: gate=rz | qubits_fisicos=[q23] | params=-0.15475976
+  L070.01: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+Layer 071:
+  L071.00: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.58658386 | conexion=q16<->q23
+  L071.01: gate=sx | qubits_fisicos=[q25] | params=-
+  L071.02: gate=sx | qubits_fisicos=[q26] | params=-
+Layer 072:
+  L072.00: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  L072.01: gate=rz | qubits_fisicos=[q23] | params=0.98998173
+  L072.02: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+Layer 073:
+  L073.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L073.01: gate=rx | qubits_fisicos=[q23] | params=1.6127586
+  L073.02: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 074:
+  L074.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L074.01: gate=sx | qubits_fisicos=[q16] | params=-
+  L074.02: gate=rz | qubits_fisicos=[q23] | params=1.4768846
+  L074.03: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 075:
+  L075.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L075.01: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.34568277 | conexion=q22<->q23
+  L075.02: gate=sx | qubits_fisicos=[q24] | params=-
+  L075.03: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 076:
+  L076.00: gate=sx | qubits_fisicos=[q3] | params=-
+  L076.01: gate=sx | qubits_fisicos=[q16] | params=-
+  L076.02: gate=rz | qubits_fisicos=[q23] | params=-2.578526
+  L076.03: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 077:
+  L077.00: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  L077.01: gate=rx | qubits_fisicos=[q23] | params=1.4075986
+  L077.02: gate=sx | qubits_fisicos=[q24] | params=-
+  L077.03: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 078:
+  L078.00: gate=x | qubits_fisicos=[q16] | params=-
+  L078.01: gate=rz | qubits_fisicos=[q23] | params=2.3559197
+  L078.02: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+Layer 079:
+  L079.00: gate=rzz | qubits_fisicos=[q16, q23] | params=0.14913634 | conexion=q16<->q23
+Layer 080:
+  L080.00: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+Layer 081:
+  L081.00: gate=rz | qubits_fisicos=[q23] | params=-0.038297108
+Layer 082:
+  L082.00: gate=rzz | qubits_fisicos=[q16, q23] | params=1.5324992 | conexion=q16<->q23
+Layer 083:
+  L083.00: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+Layer 084:
+  L084.00: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+Layer 085:
+  L085.00: gate=sx | qubits_fisicos=[q16] | params=-
+  L085.01: gate=sx | qubits_fisicos=[q23] | params=-
+Layer 086:
+  L086.00: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+Layer 087:
+  L087.00: gate=sx | qubits_fisicos=[q16] | params=-
+  L087.01: gate=sx | qubits_fisicos=[q23] | params=-
+Layer 088:
+  L088.00: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+Layer 089:
+  L089.00: gate=rzz | qubits_fisicos=[q23, q24] | params=0.94016216 | conexion=q23<->q24
+Layer 090:
+  L090.00: gate=sx | qubits_fisicos=[q23] | params=-
+  L090.01: gate=rzz | qubits_fisicos=[q25, q24] | params=0.59612482 | conexion=q25<->q24
+Layer 091:
+  L091.00: gate=rz | qubits_fisicos=[q24] | params=-2.8432589
+  L091.01: gate=sx | qubits_fisicos=[q25] | params=-
+Layer 092:
+  L092.00: gate=rx | qubits_fisicos=[q24] | params=1.5352689
+  L092.01: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+Layer 093:
+  L093.00: gate=rz | qubits_fisicos=[q24] | params=3.1306703
+  L093.01: gate=sx | qubits_fisicos=[q25] | params=-
+  L093.02: gate=sx | qubits_fisicos=[q37] | params=-
+Layer 094:
+  L094.00: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  L094.01: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+Layer 095:
+  L095.00: gate=sx | qubits_fisicos=[q23] | params=-
+  L095.01: gate=sx | qubits_fisicos=[q24] | params=-
+  L095.02: gate=sx | qubits_fisicos=[q25] | params=-
+  L095.03: gate=sx | qubits_fisicos=[q37] | params=-
+Layer 096:
+  L096.00: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  L096.01: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+Layer 097:
+  L097.00: gate=sx | qubits_fisicos=[q23] | params=-
+  L097.01: gate=sx | qubits_fisicos=[q24] | params=-
+Layer 098:
+  L098.00: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+Layer 099:
+  L099.00: gate=rzz | qubits_fisicos=[q24, q25] | params=0.77249714 | conexion=q24<->q25
+Layer 100:
+  L100.00: gate=rzz | qubits_fisicos=[q37, q25] | params=0.5832075 | conexion=q37<->q25
+Layer 101:
+  L101.00: gate=rx | qubits_fisicos=[q25] | params=-3.0844634
+Layer 102:
+  L102.00: gate=rz | qubits_fisicos=[q25] | params=-0.30420797
+
+Uso de cada qubit fisico en orden temporal
+------------------------------------------
+q3:
+  0000: gate=rz | qubits_fisicos=[q3] | params=1.5214291
+  0001: gate=rx | qubits_fisicos=[q3] | params=0.86240852
+  0002: gate=rz | qubits_fisicos=[q3] | params=0.71213139
+  0062: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0063: gate=sx | qubits_fisicos=[q3] | params=-
+  0065: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0066: gate=sx | qubits_fisicos=[q3] | params=-
+  0068: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0069: gate=sx | qubits_fisicos=[q3] | params=-
+  0089: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0090: gate=sx | qubits_fisicos=[q3] | params=-
+  0092: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0093: gate=sx | qubits_fisicos=[q3] | params=-
+  0095: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0096: gate=sx | qubits_fisicos=[q3] | params=-
+  0172: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0173: gate=sx | qubits_fisicos=[q3] | params=-
+  0175: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0176: gate=sx | qubits_fisicos=[q3] | params=-
+  0178: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+q16:
+  0003: gate=rx | qubits_fisicos=[q16] | params=1.572268
+  0004: gate=rz | qubits_fisicos=[q16] | params=2.035789
+  0022: gate=rzz | qubits_fisicos=[q23, q16] | params=1.4799641 | conexion=q23<->q16
+  0023: gate=rx | qubits_fisicos=[q16] | params=-0.85740885
+  0024: gate=rz | qubits_fisicos=[q16] | params=-1.0016227
+  0042: gate=rzz | qubits_fisicos=[q23, q16] | params=0.68988483 | conexion=q23<->q16
+  0043: gate=rx | qubits_fisicos=[q16] | params=2.9921717
+  0044: gate=rz | qubits_fisicos=[q16] | params=-0.8194642
+  0060: gate=rzz | qubits_fisicos=[q23, q16] | params=0.029359518 | conexion=q23<->q16
+  0061: gate=sx | qubits_fisicos=[q16] | params=-
+  0062: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0064: gate=sx | qubits_fisicos=[q16] | params=-
+  0065: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0067: gate=sx | qubits_fisicos=[q16] | params=-
+  0068: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0070: gate=rz | qubits_fisicos=[q16] | params=-1.5816497
+  0071: gate=rx | qubits_fisicos=[q16] | params=2.3806697
+  0072: gate=rz | qubits_fisicos=[q16] | params=-1.5857825
+  0076: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+  0077: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  0078: gate=rz | qubits_fisicos=[q16] | params=-3.1415927
+  0081: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+  0082: gate=rz | qubits_fisicos=[q16] | params=-1.5707963
+  0083: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  0086: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.14344446 | conexion=q16<->q23
+  0087: gate=rz | qubits_fisicos=[q16] | params=0.90032503
+  0088: gate=rx | qubits_fisicos=[q16] | params=1.5707963
+  0089: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0091: gate=sx | qubits_fisicos=[q16] | params=-
+  0092: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0094: gate=sx | qubits_fisicos=[q16] | params=-
+  0095: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0114: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.99106598 | conexion=q16<->q23
+  0115: gate=rx | qubits_fisicos=[q16] | params=3.1415927
+  0170: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.58658386 | conexion=q16<->q23
+  0171: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  0172: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0174: gate=sx | qubits_fisicos=[q16] | params=-
+  0175: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0177: gate=sx | qubits_fisicos=[q16] | params=-
+  0178: gate=cz | qubits_fisicos=[q16, q3] | params=- | conexion=q16<->q3
+  0179: gate=x | qubits_fisicos=[q16] | params=-
+  0187: gate=rzz | qubits_fisicos=[q16, q23] | params=0.14913634 | conexion=q16<->q23
+  0190: gate=rzz | qubits_fisicos=[q16, q23] | params=1.5324992 | conexion=q16<->q23
+  0191: gate=rx | qubits_fisicos=[q16] | params=-1.5707963
+  0192: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+  0193: gate=sx | qubits_fisicos=[q16] | params=-
+  0195: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+  0196: gate=sx | qubits_fisicos=[q16] | params=-
+  0198: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+q21:
+  0005: gate=rx | qubits_fisicos=[q21] | params=0.5616793
+  0006: gate=rz | qubits_fisicos=[q21] | params=2.5222667
+  0015: gate=rzz | qubits_fisicos=[q22, q21] | params=0.77629995 | conexion=q22<->q21
+  0016: gate=rx | qubits_fisicos=[q21] | params=1.0992054
+  0017: gate=rz | qubits_fisicos=[q21] | params=-2.4638365
+  0037: gate=rzz | qubits_fisicos=[q22, q21] | params=0.061081877 | conexion=q22<->q21
+  0038: gate=rx | qubits_fisicos=[q21] | params=2.0454812
+  0039: gate=rz | qubits_fisicos=[q21] | params=0.82944649
+  0057: gate=rzz | qubits_fisicos=[q22, q21] | params=0.23821018 | conexion=q22<->q21
+  0058: gate=sx | qubits_fisicos=[q21] | params=-
+  0102: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0103: gate=sx | qubits_fisicos=[q21] | params=-
+  0105: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0106: gate=sx | qubits_fisicos=[q21] | params=-
+  0108: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0109: gate=sx | qubits_fisicos=[q21] | params=-
+  0142: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0143: gate=sx | qubits_fisicos=[q21] | params=-
+  0145: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0146: gate=sx | qubits_fisicos=[q21] | params=-
+  0148: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+q22:
+  0007: gate=rx | qubits_fisicos=[q22] | params=1.3039868
+  0008: gate=rz | qubits_fisicos=[q22] | params=-0.20690937
+  0014: gate=rzz | qubits_fisicos=[q23, q22] | params=1.4723481 | conexion=q23<->q22
+  0015: gate=rzz | qubits_fisicos=[q22, q21] | params=0.77629995 | conexion=q22<->q21
+  0018: gate=rx | qubits_fisicos=[q22] | params=1.5695621
+  0019: gate=rz | qubits_fisicos=[q22] | params=1.5877976
+  0035: gate=rzz | qubits_fisicos=[q23, q22] | params=1.1956506 | conexion=q23<->q22
+  0036: gate=x | qubits_fisicos=[q22] | params=-
+  0037: gate=rzz | qubits_fisicos=[q22, q21] | params=0.061081877 | conexion=q22<->q21
+  0040: gate=rx | qubits_fisicos=[q22] | params=-2.1348193
+  0041: gate=rz | qubits_fisicos=[q22] | params=-0.3693787
+  0055: gate=rzz | qubits_fisicos=[q23, q22] | params=0.29952435 | conexion=q23<->q22
+  0056: gate=x | qubits_fisicos=[q22] | params=-
+  0057: gate=rzz | qubits_fisicos=[q22, q21] | params=0.23821018 | conexion=q22<->q21
+  0059: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+  0100: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.24974991 | conexion=q22<->q23
+  0101: gate=rx | qubits_fisicos=[q22] | params=1.5707963
+  0102: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0104: gate=sx | qubits_fisicos=[q22] | params=-
+  0105: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0107: gate=sx | qubits_fisicos=[q22] | params=-
+  0108: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0110: gate=rx | qubits_fisicos=[q22] | params=3.1415927
+  0140: gate=rzz | qubits_fisicos=[q22, q23] | params=-1.3005221 | conexion=q22<->q23
+  0141: gate=rx | qubits_fisicos=[q22] | params=-1.5707963
+  0142: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0144: gate=sx | qubits_fisicos=[q22] | params=-
+  0145: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0147: gate=sx | qubits_fisicos=[q22] | params=-
+  0148: gate=cz | qubits_fisicos=[q22, q21] | params=- | conexion=q22<->q21
+  0183: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.34568277 | conexion=q22<->q23
+q23:
+  0009: gate=rx | qubits_fisicos=[q23] | params=1.5940339
+  0010: gate=rz | qubits_fisicos=[q23] | params=-0.22658366
+  0013: gate=rzz | qubits_fisicos=[q23, q24] | params=0.79734916 | conexion=q23<->q24
+  0014: gate=rzz | qubits_fisicos=[q23, q22] | params=1.4723481 | conexion=q23<->q22
+  0020: gate=rz | qubits_fisicos=[q23] | params=3.1415927
+  0021: gate=x | qubits_fisicos=[q23] | params=-
+  0022: gate=rzz | qubits_fisicos=[q23, q16] | params=1.4799641 | conexion=q23<->q16
+  0025: gate=rx | qubits_fisicos=[q23] | params=-1.9627204
+  0026: gate=rz | qubits_fisicos=[q23] | params=-0.13061732
+  0034: gate=rzz | qubits_fisicos=[q23, q24] | params=1.3160036 | conexion=q23<->q24
+  0035: gate=rzz | qubits_fisicos=[q23, q22] | params=1.1956506 | conexion=q23<->q22
+  0042: gate=rzz | qubits_fisicos=[q23, q16] | params=0.68988483 | conexion=q23<->q16
+  0045: gate=rx | qubits_fisicos=[q23] | params=0.63148237
+  0046: gate=rz | qubits_fisicos=[q23] | params=0.24153214
+  0053: gate=rzz | qubits_fisicos=[q23, q24] | params=0.38295368 | conexion=q23<->q24
+  0054: gate=x | qubits_fisicos=[q23] | params=-
+  0055: gate=rzz | qubits_fisicos=[q23, q22] | params=0.29952435 | conexion=q23<->q22
+  0060: gate=rzz | qubits_fisicos=[q23, q16] | params=0.029359518 | conexion=q23<->q16
+  0073: gate=rz | qubits_fisicos=[q23] | params=-0.67047129
+  0074: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+  0075: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+  0076: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+  0079: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+  0080: gate=rz | qubits_fisicos=[q23] | params=-3.1415927
+  0081: gate=rzz | qubits_fisicos=[q16, q23] | params=-1.5707963 | conexion=q16<->q23
+  0084: gate=rz | qubits_fisicos=[q23] | params=1.5707963
+  0085: gate=rx | qubits_fisicos=[q23] | params=1.5707963
+  0086: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.14344446 | conexion=q16<->q23
+  0097: gate=rz | qubits_fisicos=[q23] | params=-2.8399465
+  0098: gate=rx | qubits_fisicos=[q23] | params=0.71558026
+  0099: gate=rz | qubits_fisicos=[q23] | params=-2.2518071
+  0100: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.24974991 | conexion=q22<->q23
+  0111: gate=rz | qubits_fisicos=[q23] | params=1.6812953
+  0112: gate=rx | qubits_fisicos=[q23] | params=0.93175032
+  0113: gate=rz | qubits_fisicos=[q23] | params=2.5624681
+  0114: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.99106598 | conexion=q16<->q23
+  0116: gate=rz | qubits_fisicos=[q23] | params=-0.7283842
+  0117: gate=rx | qubits_fisicos=[q23] | params=1.3887751
+  0118: gate=rz | qubits_fisicos=[q23] | params=-0.4294791
+  0123: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4172527 | conexion=q23<->q24
+  0124: gate=rz | qubits_fisicos=[q23] | params=2.4859143
+  0125: gate=rx | qubits_fisicos=[q23] | params=1.6214569
+  0126: gate=rz | qubits_fisicos=[q23] | params=-2.4530389
+  0136: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.64174504 | conexion=q23<->q24
+  0137: gate=rz | qubits_fisicos=[q23] | params=1.0422421
+  0138: gate=rx | qubits_fisicos=[q23] | params=3.1270413
+  0139: gate=rz | qubits_fisicos=[q23] | params=0.68770969
+  0140: gate=rzz | qubits_fisicos=[q22, q23] | params=-1.3005221 | conexion=q22<->q23
+  0149: gate=rz | qubits_fisicos=[q23] | params=-2.7067015
+  0150: gate=rx | qubits_fisicos=[q23] | params=3.1325684
+  0151: gate=rz | qubits_fisicos=[q23] | params=-0.75454666
+  0153: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.63333444 | conexion=q23<->q24
+  0154: gate=rz | qubits_fisicos=[q23] | params=1.9937326
+  0155: gate=rx | qubits_fisicos=[q23] | params=1.6298881
+  0156: gate=rz | qubits_fisicos=[q23] | params=-2.9564854
+  0166: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4188828 | conexion=q23<->q24
+  0167: gate=rz | qubits_fisicos=[q23] | params=0.56429427
+  0168: gate=rx | qubits_fisicos=[q23] | params=0.98210573
+  0169: gate=rz | qubits_fisicos=[q23] | params=-0.15475976
+  0170: gate=rzz | qubits_fisicos=[q16, q23] | params=-0.58658386 | conexion=q16<->q23
+  0180: gate=rz | qubits_fisicos=[q23] | params=0.98998173
+  0181: gate=rx | qubits_fisicos=[q23] | params=1.6127586
+  0182: gate=rz | qubits_fisicos=[q23] | params=1.4768846
+  0183: gate=rzz | qubits_fisicos=[q22, q23] | params=-0.34568277 | conexion=q22<->q23
+  0184: gate=rz | qubits_fisicos=[q23] | params=-2.578526
+  0185: gate=rx | qubits_fisicos=[q23] | params=1.4075986
+  0186: gate=rz | qubits_fisicos=[q23] | params=2.3559197
+  0187: gate=rzz | qubits_fisicos=[q16, q23] | params=0.14913634 | conexion=q16<->q23
+  0188: gate=rx | qubits_fisicos=[q23] | params=-1.5707963
+  0189: gate=rz | qubits_fisicos=[q23] | params=-0.038297108
+  0190: gate=rzz | qubits_fisicos=[q16, q23] | params=1.5324992 | conexion=q16<->q23
+  0192: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+  0194: gate=sx | qubits_fisicos=[q23] | params=-
+  0195: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+  0197: gate=sx | qubits_fisicos=[q23] | params=-
+  0198: gate=cz | qubits_fisicos=[q23, q16] | params=- | conexion=q23<->q16
+  0219: gate=rzz | qubits_fisicos=[q23, q24] | params=0.94016216 | conexion=q23<->q24
+  0220: gate=sx | qubits_fisicos=[q23] | params=-
+  0225: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  0226: gate=sx | qubits_fisicos=[q23] | params=-
+  0228: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  0229: gate=sx | qubits_fisicos=[q23] | params=-
+  0231: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+q24:
+  0011: gate=rx | qubits_fisicos=[q24] | params=0.46964867
+  0012: gate=rz | qubits_fisicos=[q24] | params=-0.89489066
+  0013: gate=rzz | qubits_fisicos=[q23, q24] | params=0.79734916 | conexion=q23<->q24
+  0027: gate=rz | qubits_fisicos=[q24] | params=3.1415927
+  0028: gate=x | qubits_fisicos=[q24] | params=-
+  0031: gate=rzz | qubits_fisicos=[q24, q25] | params=1.3605933 | conexion=q24<->q25
+  0032: gate=rx | qubits_fisicos=[q24] | params=-1.7966997
+  0033: gate=rz | qubits_fisicos=[q24] | params=-1.4973072
+  0034: gate=rzz | qubits_fisicos=[q23, q24] | params=1.3160036 | conexion=q23<->q24
+  0047: gate=x | qubits_fisicos=[q24] | params=-
+  0050: gate=rzz | qubits_fisicos=[q24, q25] | params=0.393261 | conexion=q24<->q25
+  0051: gate=rx | qubits_fisicos=[q24] | params=-0.98992702
+  0052: gate=rz | qubits_fisicos=[q24] | params=0.097977728
+  0053: gate=rzz | qubits_fisicos=[q23, q24] | params=0.38295368 | conexion=q23<->q24
+  0119: gate=x | qubits_fisicos=[q24] | params=-
+  0122: gate=rzz | qubits_fisicos=[q24, q25] | params=0.21317748 | conexion=q24<->q25
+  0123: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4172527 | conexion=q23<->q24
+  0127: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+  0129: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0130: gate=sx | qubits_fisicos=[q24] | params=-
+  0132: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0133: gate=sx | qubits_fisicos=[q24] | params=-
+  0135: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0136: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.64174504 | conexion=q23<->q24
+  0152: gate=rx | qubits_fisicos=[q24] | params=3.1415927
+  0153: gate=rzz | qubits_fisicos=[q23, q24] | params=-0.63333444 | conexion=q23<->q24
+  0157: gate=rx | qubits_fisicos=[q24] | params=-1.5707963
+  0159: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0160: gate=sx | qubits_fisicos=[q24] | params=-
+  0162: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0163: gate=sx | qubits_fisicos=[q24] | params=-
+  0165: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0166: gate=rzz | qubits_fisicos=[q23, q24] | params=-1.4188828 | conexion=q23<->q24
+  0199: gate=rx | qubits_fisicos=[q24] | params=1.5707963
+  0212: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0213: gate=sx | qubits_fisicos=[q24] | params=-
+  0215: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0216: gate=sx | qubits_fisicos=[q24] | params=-
+  0218: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0219: gate=rzz | qubits_fisicos=[q23, q24] | params=0.94016216 | conexion=q23<->q24
+  0221: gate=rzz | qubits_fisicos=[q25, q24] | params=0.59612482 | conexion=q25<->q24
+  0222: gate=rz | qubits_fisicos=[q24] | params=-2.8432589
+  0223: gate=rx | qubits_fisicos=[q24] | params=1.5352689
+  0224: gate=rz | qubits_fisicos=[q24] | params=3.1306703
+  0225: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  0227: gate=sx | qubits_fisicos=[q24] | params=-
+  0228: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  0230: gate=sx | qubits_fisicos=[q24] | params=-
+  0231: gate=cz | qubits_fisicos=[q24, q23] | params=- | conexion=q24<->q23
+  0243: gate=rzz | qubits_fisicos=[q24, q25] | params=0.77249714 | conexion=q24<->q25
+q25:
+  0029: gate=rx | qubits_fisicos=[q25] | params=0.31105645
+  0030: gate=rz | qubits_fisicos=[q25] | params=-2.6578626
+  0031: gate=rzz | qubits_fisicos=[q24, q25] | params=1.3605933 | conexion=q24<->q25
+  0048: gate=rx | qubits_fisicos=[q25] | params=0.23430475
+  0049: gate=rz | qubits_fisicos=[q25] | params=0.2632603
+  0050: gate=rzz | qubits_fisicos=[q24, q25] | params=0.393261 | conexion=q24<->q25
+  0120: gate=rx | qubits_fisicos=[q25] | params=1.5797585
+  0121: gate=rz | qubits_fisicos=[q25] | params=-0.16197354
+  0122: gate=rzz | qubits_fisicos=[q24, q25] | params=0.21317748 | conexion=q24<->q25
+  0128: gate=sx | qubits_fisicos=[q25] | params=-
+  0129: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0131: gate=sx | qubits_fisicos=[q25] | params=-
+  0132: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0134: gate=sx | qubits_fisicos=[q25] | params=-
+  0135: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0158: gate=sx | qubits_fisicos=[q25] | params=-
+  0159: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0161: gate=sx | qubits_fisicos=[q25] | params=-
+  0162: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0164: gate=sx | qubits_fisicos=[q25] | params=-
+  0165: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0200: gate=sx | qubits_fisicos=[q25] | params=-
+  0204: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+  0205: gate=sx | qubits_fisicos=[q25] | params=-
+  0207: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+  0208: gate=sx | qubits_fisicos=[q25] | params=-
+  0210: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+  0211: gate=sx | qubits_fisicos=[q25] | params=-
+  0212: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0214: gate=sx | qubits_fisicos=[q25] | params=-
+  0215: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0217: gate=sx | qubits_fisicos=[q25] | params=-
+  0218: gate=cz | qubits_fisicos=[q24, q25] | params=- | conexion=q24<->q25
+  0221: gate=rzz | qubits_fisicos=[q25, q24] | params=0.59612482 | conexion=q25<->q24
+  0232: gate=sx | qubits_fisicos=[q25] | params=-
+  0236: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0237: gate=sx | qubits_fisicos=[q25] | params=-
+  0239: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0240: gate=sx | qubits_fisicos=[q25] | params=-
+  0242: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0243: gate=rzz | qubits_fisicos=[q24, q25] | params=0.77249714 | conexion=q24<->q25
+  0244: gate=rzz | qubits_fisicos=[q37, q25] | params=0.5832075 | conexion=q37<->q25
+  0245: gate=rx | qubits_fisicos=[q25] | params=-3.0844634
+  0246: gate=rz | qubits_fisicos=[q25] | params=-0.30420797
+q26:
+  0201: gate=rz | qubits_fisicos=[q26] | params=-0.66716322
+  0202: gate=rx | qubits_fisicos=[q26] | params=1.5607507
+  0203: gate=rz | qubits_fisicos=[q26] | params=0.0079120808
+  0204: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+  0206: gate=sx | qubits_fisicos=[q26] | params=-
+  0207: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+  0209: gate=sx | qubits_fisicos=[q26] | params=-
+  0210: gate=cz | qubits_fisicos=[q25, q26] | params=- | conexion=q25<->q26
+q37:
+  0233: gate=rz | qubits_fisicos=[q37] | params=-0.76454692
+  0234: gate=rx | qubits_fisicos=[q37] | params=1.4691985
+  0235: gate=rz | qubits_fisicos=[q37] | params=0.09697418
+  0236: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0238: gate=sx | qubits_fisicos=[q37] | params=-
+  0239: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0241: gate=sx | qubits_fisicos=[q37] | params=-
+  0242: gate=cz | qubits_fisicos=[q25, q37] | params=- | conexion=q25<->q37
+  0244: gate=rzz | qubits_fisicos=[q37, q25] | params=0.5832075 | conexion=q37<->q25
+
+Drawer de Qiskit en texto ("imagen" del circuito)
+--------------------------------------------------
+global phase: π/2
+                    ┌────────────┐ ┌─────────────┐  ┌─────────────┐                                                                                                                                                                                                                                                                                   ┌────┐     ┌────┐        ┌────┐                                                                                                                                                                      ┌────┐                       ┌────┐                  ┌────┐                                                                                                                                                                                                                                                                                                                                                                                                                                       ┌────┐                        ┌────┐                                                                                                                                                                                                                                                                               
+ a_exposure_0 -> 3 ─┤ Rz(1.5214) ├─┤ Rx(0.86241) ├──┤ Rz(0.71213) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────┤ √X ├───■─┤ √X ├─■──────┤ √X ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────┤ √X ├──────────■────────────┤ √X ├──────────■───────┤ √X ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────────┤ √X ├───────────■────────────┤ √X ├──────────■────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                    ├────────────┤ └┬────────────┤  └─────────────┘                                                                       ┌──────────────┐┌─────────────┐                                                         ┌────────────┐ ┌──────────────┐                                                            ┌────┐          │        ├────┤   │ ├────┤ │ ┌────┴────┴───┐┌────────────┐┌─────────────┐           ┌──────────┐┌────────┐           ┌──────────┐┌──────────┐               ┌─────────────┐  ┌─────────┐         │            ├────┤          │            ├────┤          │       └────┘                  ┌───────┐                                                                                                                                                                                                                                                                                                                                                                             ┌──────────┐       │           ├────┤           │            ├────┤          │           ┌───┐                                                             ┌──────────┐   ┌────┐   ┌────┐                                                                                                                                                         
+         s_1 -> 16 ─┤ Rx(1.5723) ├──┤ Rz(2.0358) ├────────────────────────────────────────────────────────────────────────────■───────────┤ Rx(-0.85741) ├┤ Rz(-1.0016) ├──────────────────────────────────────────■──────────────┤ Rx(2.9922) ├─┤ Rz(-0.81946) ├──────────────────────────────────────────■─────────────────┤ √X ├──────────■────────┤ √X ├───■─┤ √X ├─■─┤ Rz(-1.5816) ├┤ Rx(2.3807) ├┤ Rz(-1.5858) ├─■─────────┤ Rx(-π/2) ├┤ Rz(-π) ├─■─────────┤ Rz(-π/2) ├┤ Rx(-π/2) ├─■─────────────┤ Rz(0.90033) ├──┤ Rx(π/2) ├─────────■────────────┤ √X ├──────────■────────────┤ √X ├──────────■──────────────■────────────────┤ Rx(π) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────────────┤ Rx(-π/2) ├───────■───────────┤ √X ├───────────■────────────┤ √X ├──────────■───────────┤ X ├──────■──────────────────────────────────────────■───────────┤ Rx(-π/2) ├─■─┤ √X ├─■─┤ √X ├─■───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                   ┌┴────────────┤  ├────────────┤                                            ┌────────────┐┌─────────────┐   │           └──────────────┘└─────────────┘                                          │              └────────────┘ └┬────────────┬┘┌─────────────┐                           │                 └────┘        ┌────┐     └────┘     └────┘   └─────────────┘└────────────┘└─────────────┘ │         └──────────┘└────────┘ │         └──────────┘└──────────┘ │             └─────────────┘  └─────────┘                      └────┘                       └────┘        ┌────┐           │                └─┬────┬┘                       ┌────┐                                                                                                                                                                                  ┌────┐                        ┌────┐                                                                                                          │               └──────────┘                   └────┘                        └────┘                      └───┘      │                                          │           └──────────┘ │ └────┘ │ └────┘ │                                                                                                                                                       
+         s_3 -> 21 ┤ Rx(0.56168) ├──┤ Rz(2.5223) ├────────────────────────────────■───────────┤ Rx(1.0992) ├┤ Rz(-2.4638) ├───┼────────────────────────────────────────────────────────────────────────────────────┼──────────────■───────────────┤ Rx(2.0455) ├─┤ Rz(0.82945) ├───────────────────────────┼──────────────■────────────────┤ √X ├──────────────────────────────────────────────────────────────────────┼────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────■───────────┤ √X ├──────■────┼──────────────────┤ √X ├───────────■────────────┤ √X ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────┤ √X ├────────────■───────────┤ √X ├──────────■───────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────┼────────────────────────┼────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                   └┬───────────┬┘ ┌┴────────────┴┐                               │ZZ(0.7763) ├────────────┤└┬────────────┤   │                                                                        ┌───┐       │              │ZZ(0.061082)  ┌┴────────────┤ ├─────────────┴┐                   ┌───┐  │              │ZZ(0.23821)   ┌─┴────┴┐                                                                     │                                │                                  │                                                                          ┌─────────┐         │           ├────┤      │    │                  ├────┤           │          ┌─┴────┴┐                                                                                                                                                 ┌──────────┐       │            ├────┤            │           ├────┤          │                                                                                               │                                                                                                                   │                                          │                        │        │        │                                                                                                                                                       
+         s_0 -> 22 ─┤ Rx(1.304) ├──┤ Rz(-0.20691) ├──────────────────■────────────■───────────┤ Rx(1.5696) ├─┤ Rz(1.5878) ├───┼────────────────────────────────────────────────────────■───────────────┤ X ├───────┼──────────────■──────────────┤ Rx(-2.1348) ├─┤ Rz(-0.36938) ├──────■────────────┤ X ├──┼──────────────■──────────────┤ Rx(π) ├─────────────────────────────────────────────────────────────────────┼────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────────────────────────────■──────────────┤ Rx(π/2) ├─────────■───────────┤ √X ├──────■────┼──────────────────┤ √X ├───────────■──────────┤ Rx(π) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────┤ Rx(-π/2) ├───────■────────────┤ √X ├────────────■───────────┤ √X ├──────────■───────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────■─────────────────────────────────────────────────────────┼──────────────────────────────────────────┼────────────────────────┼────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                    ├───────────┤  ├──────────────┤                  │ZZ(1.4723)   ┌───────┐  └───┬───┬────┘ └────────────┘   │ZZ(1.48)   ┌─────────────┐ ┌──────────────┐             │ZZ(1.1957)     └───┘       │ZZ(0.68988)  ┌─────────────┐ ├─────────────┤ └──────────────┘┌───┐ │ZZ(0.29952) └───┘  │ZZ(0.02936) ┌──────────────┐┌┴───────┴┐┌─────────┐                                                         │ZZ(-π/2) ┌──────────┐┌────────┐ │ZZ(-π/2) ┌─────────┐ ┌─────────┐  │ZZ(-0.14344) ┌─────────────┐┌─────────────┐┌─────────────┐ │ZZ(-0.24975) ┌┴─────────┴─┐┌─────────────┐┌───┴────┴───┐       │ZZ(-0.99107) ┌────┴────┴────┐┌────────────┐┌──┴───────┴───┐              ┌────────────┐┌────────────┐┌────────────┐                           ┌────────────┐┌───────────┐┌─────────────┐ │ZZ(-1.3005) ┌─┴──────────┴┐┌────────────┐┌────┴────┴────┐               ┌───┴────┴───┐┌────────────┐┌─────────────┐                          ┌─────────────┐┌─────────────┐┌──────────────┐ │ZZ(-0.58658) ┌─────────────┐┌────────────┐┌────────────┐ │ZZ(-0.34568) ┌─────────────┐┌────────────┐┌────────────┐ │ZZ(0.14914) ┌──────────┐┌───────────────┐ │ZZ(1.5325)              │ ┌────┐ │ ┌────┐ │                   ┌────┐                                                  ┌────┐   ┌────┐                                                             
+         t_0 -> 23 ─┤ Rx(1.594) ├──┤ Rz(-0.22658) ├───■──────────────■─────────────┤ Rz(π) ├──────┤ X ├───────────────────────■───────────┤ Rx(-1.9627) ├─┤ Rz(-0.13062) ├─■───────────■───────────────────────────■─────────────┤ Rx(0.63148) ├─┤ Rz(0.24153) ├───■─────────────┤ X ├─■───────────────────■────────────┤ Rz(-0.67047) ├┤ Rx(π/2) ├┤ Rz(π/2) ├─────────────────────────────────────────────────────────■─────────┤ Rx(-π/2) ├┤ Rz(-π) ├─■─────────┤ Rz(π/2) ├─┤ Rx(π/2) ├──■─────────────┤ Rz(-2.8399) ├┤ Rx(0.71558) ├┤ Rz(-2.2518) ├─■─────────────┤ Rz(1.6813) ├┤ Rx(0.93175) ├┤ Rz(2.5625) ├───────■─────────────┤ Rz(-0.72838) ├┤ Rx(1.3888) ├┤ Rz(-0.42948) ├─■────────────┤ Rz(2.4859) ├┤ Rx(1.6215) ├┤ Rz(-2.453) ├─────────────■─────────────┤ Rz(1.0422) ├┤ Rx(3.127) ├┤ Rz(0.68771) ├─■────────────┤ Rz(-2.7067) ├┤ Rx(3.1326) ├┤ Rz(-0.75455) ├─■─────────────┤ Rz(1.9937) ├┤ Rx(1.6299) ├┤ Rz(-2.9565) ├─────────────■────────────┤ Rz(0.56429) ├┤ Rx(0.98211) ├┤ Rz(-0.15476) ├─■─────────────┤ Rz(0.98998) ├┤ Rx(1.6128) ├┤ Rz(1.4769) ├─■─────────────┤ Rz(-2.5785) ├┤ Rx(1.4076) ├┤ Rz(2.3559) ├─■────────────┤ Rx(-π/2) ├┤ Rz(-0.038297) ├─■────────────────────────■─┤ √X ├─■─┤ √X ├─■──■────────────────┤ √X ├────────────────────────────────────────────────■─┤ √X ├─■─┤ √X ├─■───────────────────────────────────────────────────────────
+                   ┌┴───────────┴┐ ├──────────────┤   │ZZ(0.79735)    ┌───────┐    └─┬───┬─┘      └───┘     ┌─────────────┐┌─────────────┐└─────────────┘ └──────────────┘ │ZZ(1.316)     ┌───┐                  ┌──────────────┐├─────────────┴┐└─────────────┘   │ZZ(0.38295)  ├───┤                                  └──────────────┘└─────────┘└─────────┘                                                                   └──────────┘└────────┘           └─────────┘ └─────────┘                └─────────────┘└─────────────┘└─────────────┘               └────────────┘└─────────────┘└────────────┘                     └──────────────┘└────────────┘└──────────────┘ │ZZ(-1.4173) └┬──────────┬┘└────────────┘└───┬────┬───┘   ┌────┐    │ZZ(-0.64175) └─┬───────┬──┘└───────────┘└─────────────┘              └─────────────┘└────────────┘└──────────────┘ │ZZ(-0.63333) └┬──────────┬┘└────────────┘└────┬────┬───┘   ┌────┐    │ZZ(-1.4189) └─┬─────────┬─┘└─────────────┘└──────────────┘               └─────────────┘└────────────┘└────────────┘     ┌────┐    └─────────────┘└───┬────┬───┘└────────────┘              └──────────┘└───────────────┘                            └────┘   └────┘    │ZZ(0.94016)     └────┘    ┌─────────────┐┌────────────┐┌────────────┐ │ ├────┤ │ ├────┤ │                                                           
+         t_1 -> 24 ┤ Rx(0.46965) ├─┤ Rz(-0.89489) ├───■───────────────┤ Rz(π) ├──────┤ X ├─────■────────────┤ Rx(-1.7967) ├┤ Rz(-1.4973) ├─────────────────────────────────■──────────────┤ X ├─────■────────────┤ Rx(-0.98993) ├┤ Rz(0.097978) ├──────────────────■─────────────┤ X ├─■────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■─────────────┤ Rx(-π/2) ├───────■───────────┤ √X ├─────■─┤ √X ├─■──■───────────────┤ Rx(π) ├───────────────────────────────────────────────────────────────────────────────────────────■──────────────┤ Rx(-π/2) ├───────■────────────┤ √X ├─────■─┤ √X ├─■──■──────────────┤ Rx(π/2) ├───────────────────────────────────────────────────────────────────────────────────■────────────┤ √X ├───────────■───────────┤ √X ├──────────■─────────────────────────────────────────────────────────────────────────────────────────────────■─────────────■────────────┤ Rz(-2.8433) ├┤ Rx(1.5353) ├┤ Rz(3.1307) ├─■─┤ √X ├─■─┤ √X ├─■──■────────────────────────────────────────────────────────
+                   ├─────────────┤ ├─────────────┬┘                   └───────┘      └───┘     │ZZ(1.3606)  └┬────────────┤├─────────────┤                                                └───┘     │ZZ(0.39326) └┬────────────┬┘├──────────────┤                                └───┘ │ZZ(0.21318) ┌────┐                                                                                                                                                                                                                                                                                                                                                                                        └──────────┘       │           ├────┤     │ ├────┤ │      ┌────┐      └───────┘                                                                                                          └──────────┘       │            ├────┤     │ ├────┤ │     ┌────┐      └─────────┘       ┌────┐                         ┌────┐                       ┌────┐          │            ├────┤           │           ├────┤          │                                                                                                               │ZZ(0.59612) └────┬────┬───┘└────────────┘└───┬────┬───┘   ├────┤   └────┘    │ZZ(0.7725)               ┌─────────────┐┌──────────────┐
+         s_2 -> 25 ┤ Rx(0.31106) ├─┤ Rz(-2.6579) ├─────────────────────────────────────────────■─────────────┤ Rx(0.2343) ├┤ Rz(0.26326) ├──────────────────────────────────────────────────────────■─────────────┤ Rx(1.5798) ├─┤ Rz(-0.16197) ├──────────────────────────────────────■────────────┤ √X ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────────┤ √X ├─────■─┤ √X ├─■──────┤ √X ├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────┤ √X ├─────■─┤ √X ├─■─────┤ √X ├───────────■────────────┤ √X ├───────────■─────────────┤ √X ├───────────■───────────┤ √X ├──────────■────────────┤ √X ├───────────■───────────┤ √X ├──────────■───────────────────────────────────────────────────────────────────────────────────────────────────────────────■─────────────────┤ √X ├──────────■───────────┤ √X ├─────■─┤ √X ├─■───────────■────────────■────────────┤ Rx(-3.0845) ├┤ Rz(-0.30421) ├
+                   ├─────────────┴┐└┬────────────┤ ┌───────────────┐                                         └────────────┘└─────────────┘                                                                        └────────────┘ └──────────────┘                                                   └────┘                                                                                                                                                                                                                                                                                                                                                                                                                       └────┘       └────┘        └────┘                                                                                                                                                         └────┘       └────┘       └────┘           │            ├────┤           │             ├────┤           │           └────┘                       └────┘                       └────┘                                                                                                                                            └────┘          │           └────┘     │ └────┘ │                        │            └─────────────┘└──────────────┘
+ a_default_0 -> 26 ┤ Rz(-0.66716) ├─┤ Rx(1.5608) ├─┤ Rz(0.0079121) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────┤ √X ├───────────■─────────────┤ √X ├───────────■───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────┼────────┼────────────────────────┼───────────────────────────────────────────
+                   ├──────────────┤ ├────────────┤ └┬──────────────┤                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               └────┘                         └────┘                                                                                                                                                                                                                                                   │           ┌────┐     │ ┌────┐ │                        │ZZ(0.58321)                                
+a_discount_0 -> 37 ┤ Rz(-0.76455) ├─┤ Rx(1.4692) ├──┤ Rz(0.096974) ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────────┤ √X ├─────■─┤ √X ├─■────────────────────────■───────────────────────────────────────────
+                   └──────────────┘ └────────────┘  └──────────────┘                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   └────┘       └────┘                                                                      
