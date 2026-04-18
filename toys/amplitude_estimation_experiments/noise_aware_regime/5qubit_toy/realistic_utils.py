@@ -63,10 +63,12 @@ class _FakeSamplerJob:
 		return self._pub_results
 
 
-def build_large_state_preparation() -> QuantumCircuit:
+def build_large_state_preparation(objective_ry_offset: float = 0.0) -> QuantumCircuit:
 	"""
 	Five-qubit entangled state preparation.
 	Qubits 0..3 are work qubits, qubit 4 is the objective qubit.
+	A final optional objective-qubit RY offset lets us sweep different true amplitudes
+	while preserving the same circuit family.
 	"""
 	qc = QuantumCircuit(5, name="A_large")
 
@@ -93,16 +95,18 @@ def build_large_state_preparation() -> QuantumCircuit:
 	qc.cx(0, 2)
 	qc.cx(2, 4)
 	qc.cx(3, 4)
+	if objective_ry_offset != 0.0:
+		qc.ry(float(objective_ry_offset), 4)
 
 	return qc
 
 
-def build_large_problem() -> tuple[EstimationProblem, float]:
+def build_large_problem(objective_ry_offset: float = 0.0) -> tuple[EstimationProblem, float]:
 	"""
 	Build an amplitude-estimation problem on 5 qubits.
 	The good state is defined by the objective qubit (qubit 4) being |1>.
 	"""
-	state_preparation = build_large_state_preparation()
+	state_preparation = build_large_state_preparation(objective_ry_offset=objective_ry_offset)
 	oracle = QuantumCircuit(5, name="oracle_good")
 	oracle.z(4)
 
@@ -147,44 +151,87 @@ def ideal_good_probability(problem: EstimationProblem, k: int) -> float:
 	return float(probs.get(good_key, 0.0))
 
 
-def  build_noise_model(scale: float) -> NoiseModel:
-	"""
-	More realistic noise:
-	  - depolarizing errors,
-	  - thermal relaxation,
-	  - symmetric readout error.
-	"""
-	noise_model = NoiseModel()
+from qiskit_aer.noise import NoiseModel, ReadoutError
+from qiskit_aer.noise.errors import depolarizing_error, thermal_relaxation_error
 
-	p1 = min(2.5e-4 * scale, 5e-3)
-	p2 = min(8.0e-3 * scale, 5e-2)
-	p_ro = min(1.0e-2 * scale, 7e-2)
 
-	t1 = 180_000.0 / scale
-	t2 = 140_000.0 / scale
+def build_noise_model(scale: float) -> NoiseModel:
+    """
+    Effective noise model inspired by ibm_basquecountry calibration data,
+    but keeping CX as the entangling gate for simulation purposes.
 
-	t_sx = 35.0
-	t_x = 70.0
-	t_cx = 420.0
+    Interpretation:
+      - 1q noise calibrated close to hardware medians.
+      - CX is treated as an effective 2q gate whose error level is chosen
+        to be coherent with the CZ errors seen in the CSV.
+      - Asymmetric readout error.
+    """
+    noise_model = NoiseModel()
 
-	therm_sx = thermal_relaxation_error(t1, t2, t_sx)
-	therm_x = thermal_relaxation_error(t1, t2, t_x)
-	err_sx = depolarizing_error(p1, 1).compose(therm_sx)
-	err_x = depolarizing_error(p1, 1).compose(therm_x)
+    # ------------------------------------------------------------------
+    # Effective hardware-inspired parameters
+    # ------------------------------------------------------------------
 
-	therm_cx_1 = thermal_relaxation_error(t1, t2, t_cx)
-	therm_cx_2 = thermal_relaxation_error(t1, t2, t_cx)
-	therm_cx = therm_cx_1.tensor(therm_cx_2)
-	err_cx = depolarizing_error(p2, 2).compose(therm_cx)
+    # 1q depolarizing error ~ median single-qubit error in CSV
+    p1 = min(2.3e-4 * scale, 5e-3)
 
-	ro = ReadoutError([[1 - p_ro, p_ro], [p_ro, 1 - p_ro]])
+    # Effective CX error:
+    # CZ median is around ~1.8e-3, but keeping CX as a proxy justifies
+    # taking something slightly more conservative.
+    p2 = min(2.4e-3 * scale, 5e-2)
 
-	noise_model.add_all_qubit_quantum_error(err_sx, ["sx"])
-	noise_model.add_all_qubit_quantum_error(err_x, ["x"])
-	noise_model.add_all_qubit_quantum_error(err_cx, ["cx"])
-	noise_model.add_all_qubit_readout_error(ro)
+    # Asymmetric readout, roughly consistent with CSV medians
+    p_10 = min(6.6e-3 * scale, 0.2)   # P(1|0)
+    p_01 = min(7.6e-3 * scale, 0.2)   # P(0|1)
 
-	return noise_model
+    # Coherence times (ns), consistent with CSV medians
+    t1 = 250_000.0 / scale
+    t2 = 160_000.0 / scale
+
+    # Gate durations (ns)
+    t_id = 32.0
+    t_sx = 32.0
+    t_x = 32.0
+    t_cx = 80.0   # invented, but coherent with CZ ~68 ns; slightly conservative
+
+    # ------------------------------------------------------------------
+    # 1-qubit errors
+    # ------------------------------------------------------------------
+    err_id = depolarizing_error(p1, 1).compose(
+        thermal_relaxation_error(t1, t2, t_id)
+    )
+    err_sx = depolarizing_error(p1, 1).compose(
+        thermal_relaxation_error(t1, t2, t_sx)
+    )
+    err_x = depolarizing_error(p1, 1).compose(
+        thermal_relaxation_error(t1, t2, t_x)
+    )
+
+    # ------------------------------------------------------------------
+    # 2-qubit CX error (effective proxy for hardware CZ)
+    # ------------------------------------------------------------------
+    therm_cx = thermal_relaxation_error(t1, t2, t_cx).tensor(
+        thermal_relaxation_error(t1, t2, t_cx)
+    )
+    err_cx = depolarizing_error(p2, 2).compose(therm_cx)
+
+    # ------------------------------------------------------------------
+    # Readout error
+    # [[P(0|0), P(1|0)],
+    #  [P(0|1), P(1|1)]]
+    # ------------------------------------------------------------------
+    ro = ReadoutError([
+        [1.0 - p_10, p_10],
+        [p_01, 1.0 - p_01],
+    ])
+
+    noise_model.add_all_qubit_quantum_error(err_id, ["id"])
+    noise_model.add_all_qubit_quantum_error(err_sx, ["sx"])
+    noise_model.add_all_qubit_quantum_error(err_x, ["x"])
+    noise_model.add_all_qubit_quantum_error(err_cx, ["cx"])
+    noise_model.add_all_qubit_readout_error(ro)
+
+    return noise_model
 
 
 class AerCountSampler:
