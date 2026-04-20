@@ -195,6 +195,8 @@ class SMCsampler():
         return ESS
         
     def logl_catch(self, ls, print_which = True):
+        ls = np.asarray(ls, dtype=float)
+
         def cleanup(ls):
             zeros_pc = 100*np.sum(ls == 0)/len(ls)
             print(f"> {zeros_pc:.1f}% of likelihoods were zero.")
@@ -209,13 +211,15 @@ class SMCsampler():
                 # input()
 
             if np.isclose(zeros_pc, 100):
-                # Pause execution and give opportunity to keyboard interrupt.
-                input()
+                # Degenerate case under extreme evidence: preserve execution
+                # by assigning a tiny nonzero likelihood to all particles.
+                eps = np.finfo(float).tiny
+                return np.log(np.full_like(ls, eps, dtype=float))
 
             self.locs = self.locs[ls != 0]
             self.ws = self.ws[ls != 0]
             ls = ls[ls != 0]
-            lls = np.log(ls)
+            lls = np.log(np.clip(ls, np.finfo(float).tiny, None))
             return lls
         
         assert all(ls >= 0)
@@ -347,9 +351,9 @@ class SMCsampler():
         # mean = np.average(self.locs, weights=self.ws)
         mean = np.sum(self.param_of_interest*np.exp(self.ws - self.lnorm))
         if mean == 0:
-            print("> Mean is zero.")
-            self.print_lists()
-            input()
+            print("> Mean is zero; using particle-average fallback.")
+            fallback = float(np.mean(self.param_of_interest))
+            mean = max(fallback, np.finfo(float).tiny)
         return mean
     
     def normalize(self, quantity):
@@ -637,7 +641,8 @@ class MetropolisSampler(SMCsampler):
                               self.locs[i], f"(weight {self.ws[i]})")
                         print("> Proposal with log-likelihood a:    ", 
                               proposals[i])
-                        input()
+                        print("> Continuing with capped acceptance rates.")
+                        break
                     
 
         exp_calc = lambda A, B: np.exp(A-B)

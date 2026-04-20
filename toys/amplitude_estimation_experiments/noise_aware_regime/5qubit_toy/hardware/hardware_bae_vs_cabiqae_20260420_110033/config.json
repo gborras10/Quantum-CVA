@@ -1,0 +1,22 @@
+{
+  "run_id": "20260420_110033",
+  "run_uuid": "616f312c-fac9-409a-b00a-d164b16e5181",
+  "backend_name": "ibm_basquecountry",
+  "objective_ry_offset": -0.1,
+  "algorithms": [
+    "bae",
+    "cabiqae"
+  ],
+  "session_max_time": "5m",
+  "soft_wallclock_limit_seconds": 270.0,
+  "max_sampler_calls_per_algorithm": 18,
+  "alpha": 0.1,
+  "num_shots": 16,
+  "epsilon_target": 0.08,
+  "t_eff_known": 4.96,
+  "cap_kappa": 1000.0,
+  "optimization_level": 0,
+  "seed_transpile": 1234,
+  "channel": "ibm_quantum_platform",
+  "a_true": 0.36022559526332343
+}

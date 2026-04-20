@@ -1,0 +1,2 @@
+a_true,algorithm,coverage,final_abs_error,final_estimate,final_nrmse,final_queries,k_max,n_trace_points,objective_ry_offset,run_id,run_uuid,runtime_seconds
+0.36022559526332343,cabiqae,1.0,0.007348401239099134,0.36757399650242256,0.02039944228207183,160,1,10,-0.1,20260420_110033,616f312c-fac9-409a-b00a-d164b16e5181,55.3973938000272

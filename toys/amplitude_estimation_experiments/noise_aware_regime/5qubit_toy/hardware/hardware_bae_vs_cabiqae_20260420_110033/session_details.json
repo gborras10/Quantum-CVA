@@ -1,0 +1,16 @@
+{
+  "id": "b8880c6b-e864-4d0f-b16d-3f4623709ba5",
+  "backend_name": "ibm_basquecountry",
+  "interactive_timeout": 60,
+  "max_time": 300,
+  "active_timeout": 300,
+  "state": "active",
+  "accepting_jobs": true,
+  "last_job_started": "2026-04-20T09:03:14.21Z",
+  "last_job_completed": "2026-04-20T09:03:19.253Z",
+  "started_at": "2026-04-20T09:02:18.253Z",
+  "closed_at": null,
+  "activated_at": "2026-04-20T09:02:18.253Z",
+  "mode": "dedicated",
+  "usage_time": null
+}

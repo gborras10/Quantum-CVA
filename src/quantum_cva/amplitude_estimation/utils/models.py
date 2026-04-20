@@ -384,8 +384,10 @@ class QAEmodel(LikelihoodModel):
             print(f"> {zeros_pc:.1f}% of {info} likelihoods were zero. "
                   "[QAEmodel.logl_catch]")
             if np.isclose(zeros_pc, 100):
-                print("> Quitting.")
-                exit()
+                # Degenerate case: keep inference alive with a tiny floor
+                # instead of terminating the whole process.
+                eps = np.finfo(float).tiny
+                return np.log(np.full_like(ls, eps, dtype=float))
 
             if print_which:
                 print("> For: ")

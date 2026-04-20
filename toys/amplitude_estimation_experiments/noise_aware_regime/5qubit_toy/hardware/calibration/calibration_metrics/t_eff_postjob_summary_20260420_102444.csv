@@ -1,0 +1,2 @@
+a_true,backend,bootstrap_samples,bootstrap_valid_samples,calib_id,calib_uuid,fit_kind,intercept,job_id,n_fit_points,n_probe_ks,n_repeats_per_k,objective_ry_offset,probe_ks,runtime_seconds,shots_per_rep,slope,status,t_eff,t_eff_ci_high,t_eff_ci_low
+0.36022559526332343,ibm_basquecountry,1000,1000,20260420_102444,155b9e08-7162-4ee5-a785-54358c9a40f4,weighted_log_contrast,-1.0001527909487407,d7ism9tpv4fs739rm7qg,7,7,6,-0.1,"0,1,2,3,4,6,8",9.876871399988886,256,-0.20141991284876845,ok,4.964752421230701,12.005759531851199,2.8204979496110774

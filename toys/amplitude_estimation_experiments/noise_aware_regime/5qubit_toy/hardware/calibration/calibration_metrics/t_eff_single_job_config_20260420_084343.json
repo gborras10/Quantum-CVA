@@ -1,0 +1,22 @@
+{
+  "calib_id": "20260420_084343",
+  "calib_uuid": "886bb6af-714c-4908-97d7-0343d832745f",
+  "backend_name": "ibm_basquecountry",
+  "objective_ry_offset": -0.1,
+  "probe_ks": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    6,
+    8
+  ],
+  "probe_shots": 256,
+  "n_repeats_per_k": 6,
+  "optimization_level": 0,
+  "seed_transpile": 1234,
+  "execution_mode": "job",
+  "submission_style": "single_sampler_run_single_job",
+  "job_map_csv": "c:\\Users\\guilb\\Desktop\\Quantum-CVA\\toys\\amplitude_estimation_experiments\\noise_aware_regime\\5qubit_toy\\hardware\\calibration\\t_eff_single_job_map_20260420_084343.csv"
+}

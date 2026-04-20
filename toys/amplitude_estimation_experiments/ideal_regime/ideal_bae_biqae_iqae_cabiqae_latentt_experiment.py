@@ -2,7 +2,6 @@ import os
 import sys
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 # Add source directory to path.
@@ -14,7 +13,7 @@ if src_dir not in sys.path:
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from quantum_cva.algorithms.proposed_algorithms.cabiae_known_t_latent_theta import CABIQAELatentTheta
+from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta
 from quantum_cva.algorithms.third_party.biae import BayesianIQAE as BIQAE
 from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
     StandaloneBAEHardware as StandaloneBAE,
@@ -22,6 +21,9 @@ from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
 from toys.amplitude_estimation_experiments.common_utils.experiment_utils import (
     ContrastDecaySampler,
     build_problem,
+)
+from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (
+    plot_query_benchmark_with_confidence_bands,
 )
 
 
@@ -39,66 +41,66 @@ ALGORITHM_STYLES = {
     "cabiqae_latentt": {"color": "#2A9D8F", "marker": "^"},
 }
 
-# Keep the same experiment shape as the noisy script, but force ideal dynamics.
-# Tuned to push all methods deeper into the 1e6-query regime.
 ALGORITHM_CONFIG = {
     "bae": {
         "epsilon_target": 5e-5,
-        "n_shots": 5,
-        "max_queries": 1_000_000,
+        "n_shots": None,
+        "max_queries": 3e5,
         "estimate_T": False,
     },
     "biqae": {
         "epsilon_target": 5e-5,
-        "n_shots": 5,
+        "n_shots": None,
         "max_queries": None,
     },
     "iqae": {
         "epsilon_target": 5e-5,
-        "n_shots": 5,
+        "n_shots": None,
         "max_queries": None,
     },
     "cabiqae_latentt": {
         "epsilon_target": 5e-5,
-        "n_shots": 100,
+        "n_shots": None,
         "max_queries": None,
     },
 }
 
 
-def _safe_nanmean(values: np.ndarray, axis: int) -> np.ndarray:
-    valid_counts = np.sum(~np.isnan(values), axis=axis)
-    summed = np.nansum(values, axis=axis)
-    means = np.full(summed.shape, np.nan, dtype=float)
-    np.divide(summed, valid_counts, out=means, where=valid_counts > 0)
-    return means
+def _effective_n_shots(algorithm: str, configured_n_shots: int | None) -> int:
+    if configured_n_shots is not None:
+        return int(configured_n_shots)
+    if algorithm == "bae":
+        return 20
+    return 10
 
 
 def _build_solver(
     algorithm: str,
     epsilon_target: float,
     alpha: float,
-    n_shots: int,
+    n_shots: int | None,
     seed: int,
     estimate_T: bool = False,
 ) -> tuple[Any, bool]:
     ideal_sampler = ContrastDecaySampler(T=None, seed=seed)
 
     if algorithm == "bae":
+        bae_kwargs: dict[str, Any] = {
+            "epsilon_target": epsilon_target,
+            "alpha": alpha,
+            "sampler": ideal_sampler,
+            "noise_model": "ideal",
+            "T_known": None,
+            "cap_kappa": 2.0,
+            "estimate_T": estimate_T,
+            "T_range": None,
+            "TNs": 0,
+            "wNs": 100,
+        }
+        if n_shots is not None:
+            bae_kwargs["Ns"] = int(n_shots)
         return (
-            StandaloneBAE(
-                epsilon_target=epsilon_target,
-                alpha=alpha,
-                sampler=ideal_sampler,
-                noise_model="ideal",
-                T_known=None,
-                cap_kappa=2.0,
-                estimate_T=estimate_T,
-                T_range=None,
-                TNs=0,
-                wNs=100,
-                Ns=n_shots,
-            ),
+            StandaloneBAE(**bae_kwargs),
             True,
         )
 
@@ -148,7 +150,7 @@ def _build_solver(
 def _extract_trace(
     algorithm: str,
     result: Any,
-    n_shots: int,
+    n_shots: int | None,
 ) -> tuple[np.ndarray, np.ndarray]:
     if algorithm == "bae":
         history = getattr(result, "history", {}) or {}
@@ -169,7 +171,8 @@ def _extract_trace(
         return np.asarray([], dtype=float), np.asarray([], dtype=float)
 
     estimations = np.mean(interval_array, axis=1)
-    queries = np.cumsum(n_shots * (2.0 * powers[:usable] + 1.0))
+    effective_n_shots = _effective_n_shots(algorithm, n_shots)
+    queries = np.cumsum(effective_n_shots * (2.0 * powers[:usable] + 1.0))
     return queries.astype(float), estimations.astype(float)
 
 
@@ -190,13 +193,13 @@ def _interpolate_nsqe(
 def run_experiment() -> None:
     """
     Compare BAE, BIQAE, IQAE and CABIQAE_latentt in an ideal regime with
-    random amplitudes, matching the same experiment flow used in the noisy script.
+    random amplitudes.
     """
-    n_rep = 20
-    a_range = (0.05, 0.95)
+    n_rep = 100
+    a_range = (0.1, 0.4)
 
     alpha = 0.05
-    max_queries = 10**6
+    max_queries = 1e6
     query_grid = np.logspace(2, np.log10(max_queries), num=120)
 
     interpolated_nsqe = {
@@ -228,32 +231,36 @@ def run_experiment() -> None:
 
         for alg_idx, algorithm in enumerate(ALGORITHMS):
             alg_cfg = ALGORITHM_CONFIG[algorithm]
+            configured_n_shots = (
+                None if alg_cfg["n_shots"] is None else int(alg_cfg["n_shots"])
+            )
             seed = int(1_000_000 + rep * 100 + alg_idx)
             solver, bayes = _build_solver(
                 algorithm=algorithm,
                 epsilon_target=float(alg_cfg["epsilon_target"]),
                 alpha=alpha,
-                n_shots=int(alg_cfg["n_shots"]),
+                n_shots=configured_n_shots,
                 seed=seed,
                 estimate_T=bool(alg_cfg.get("estimate_T", False)),
             )
 
             try:
                 if algorithm == "bae":
-                    # Legacy BAE internals rely on NumPy's global RNG.
                     np.random.seed(seed)
-                    result = solver.estimate(
-                        problem,
-                        n_shots=int(alg_cfg["n_shots"]),
-                        max_queries=int(alg_cfg["max_queries"] or max_queries),
-                    )
+                    estimate_kwargs: dict[str, Any] = {
+                        "max_queries": int(alg_cfg["max_queries"] or max_queries),
+                    }
+                    if configured_n_shots is not None:
+                        estimate_kwargs["n_shots"] = configured_n_shots
+                    result = solver.estimate(problem, **estimate_kwargs)
                 else:
-                    result = solver.estimate(
-                        problem,
-                        bayes=bayes,
-                        show_details=False,
-                        n_shots=int(alg_cfg["n_shots"]),
-                    )
+                    estimate_kwargs = {
+                        "bayes": bayes,
+                        "show_details": False,
+                    }
+                    if configured_n_shots is not None:
+                        estimate_kwargs["n_shots"] = configured_n_shots
+                    result = solver.estimate(problem, **estimate_kwargs)
             except Exception as exc:
                 print(
                     f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
@@ -261,7 +268,7 @@ def run_experiment() -> None:
                 )
                 continue
 
-            queries, estimations = _extract_trace(algorithm, result, int(alg_cfg["n_shots"]))
+            queries, estimations = _extract_trace(algorithm, result, configured_n_shots)
             if len(queries) == 0:
                 print(
                     f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
@@ -280,39 +287,26 @@ def run_experiment() -> None:
                 f"queries={int(queries[-1])}"
             )
 
-    sqrt_limit = 1.0 / np.sqrt(query_grid)
-    heisenberg_like = 3.0 / query_grid
-
-    plt.figure(figsize=(10, 6))
-    for algorithm in ALGORITHMS:
-        mean_nsqe = _safe_nanmean(interpolated_nsqe[algorithm], axis=0)
-        mean_rmse = np.sqrt(mean_nsqe)
-        style = ALGORITHM_STYLES[algorithm]
-        plt.loglog(
-            query_grid,
-            mean_rmse,
-            color=style["color"],
-            marker=style["marker"],
-            markersize=3,
-            markevery=8,
-            linewidth=2.0,
-            label=f"{ALGORITHM_LABELS[algorithm]} (mean)",
-        )
-
-    plt.loglog(query_grid, sqrt_limit, "--", color="#6D6875", label=r"$\mathcal{O}(1/\sqrt{N_q})$")
-    plt.loglog(query_grid, heisenberg_like, "-.", color="#6D6875", label=r"$\mathcal{O}(1/N_q)$")
-
-    plt.grid(True, which="both", ls="--", alpha=0.35)
-    plt.xlabel("Cumulative query count")
-    plt.ylabel("Normalized RMSE")
-    plt.title("Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE_latentt")
-    plt.legend()
-    plt.tight_layout()
-
     out_path = os.path.join(current_dir, "bae_biqae_iqae_cabiqae_latentt_ideal_rmse.png")
-    plt.savefig(out_path, dpi=300)
+    rmse_curves = {
+        algorithm: np.sqrt(interpolated_nsqe[algorithm])
+        for algorithm in ALGORITHMS
+    }
+    plot_query_benchmark_with_confidence_bands(
+        query_grid=query_grid,
+        curves_by_algorithm=rmse_curves,
+        algorithms=ALGORITHMS,
+        algorithm_labels=ALGORITHM_LABELS,
+        algorithm_styles=ALGORITHM_STYLES,
+        output_path=out_path,
+        ylabel="Median normalized RMSE",
+        title="Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE_latentt",
+        confidence_level=0.95,
+        statistic="median",
+        bootstrap_samples=1000,
+        show=True,
+    )
     print(f"Saved plot to {out_path}")
-    plt.show()
 
 
 if __name__ == "__main__":

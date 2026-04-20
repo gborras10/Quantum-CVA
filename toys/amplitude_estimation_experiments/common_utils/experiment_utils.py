@@ -9,7 +9,7 @@ from qiskit.quantum_info import Statevector
 from qiskit_algorithms import EstimationProblem
 
 from quantum_cva.algorithms.proposed_algorithms.cabiae_known_t import CABIQAE
-from quantum_cva.algorithms.proposed_algorithms.cabiae_known_t_latent_theta import CABIQAELatentTheta
+from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta
 from quantum_cva.algorithms.third_party.biae import BayesianIQAE as BIQAE       
 from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
     StandaloneBAEHardware as StandaloneBAE,

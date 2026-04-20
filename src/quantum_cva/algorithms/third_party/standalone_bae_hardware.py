@@ -110,6 +110,31 @@ def _extract_counts_from_data_bin(data_bin: Any) -> Mapping[Any, Any] | None:
     return None
 
 
+def _looks_like_result_container(obj: Any) -> bool:
+    """
+    Detect runtime/container objects that are not registered as Python Sequence
+    but still support result[0] access, e.g. PrimitiveResult from Runtime.
+    """
+
+    if obj is None:
+        return False
+
+    if isinstance(obj, (str, bytes, bytearray, Mapping)):
+        return False
+
+    if hasattr(obj, "pub_results"):
+        return True
+
+    if hasattr(obj, "__getitem__"):
+        try:
+            _ = obj[0]
+            return True
+        except Exception:
+            return False
+
+    return False
+
+
 def _extract_single_counts(payload: Any, circuit: QuantumCircuit | None = None) -> dict[str, int]:
     """Extract one-circuit counts from sampler/backends with different return shapes."""
 
@@ -120,6 +145,15 @@ def _extract_single_counts(payload: Any, circuit: QuantumCircuit | None = None) 
         if len(payload) == 0:
             raise ValueError("Sampler returned an empty sequence of results.")
         return _extract_single_counts(payload[0], circuit=circuit)
+
+    # Runtime PrimitiveResult / similar containers.
+    if _looks_like_result_container(payload):
+        try:
+            return _extract_single_counts(payload[0], circuit=circuit)
+        except Exception:
+            pub_results = getattr(payload, "pub_results", None)
+            if pub_results is not None:
+                return _extract_single_counts(pub_results[0], circuit=circuit)
 
     data_bin = getattr(payload, "data", None)
     counts_from_data = _extract_counts_from_data_bin(data_bin)
