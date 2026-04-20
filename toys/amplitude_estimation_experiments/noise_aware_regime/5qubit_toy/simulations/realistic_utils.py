@@ -64,68 +64,63 @@ class _FakeSamplerJob:
 
 
 def build_large_state_preparation(objective_ry_offset: float = 0.0) -> QuantumCircuit:
-    """
-    Five-qubit hardware-friendly state preparation.
+	"""
+	Five-qubit entangled state preparation.
+	Qubits 0..3 are work qubits, qubit 4 is the objective qubit.
+	A final optional objective-qubit RY offset lets us sweep different true amplitudes
+	while preserving the same circuit family.
+	"""
+	qc = QuantumCircuit(5, name="A_large")
 
-    Diseño:
-      - solo usa puertas nativas o muy cercanas al backend: rx, rz, cz
-      - solo usa conectividad de cadena 0-1-2-3-4
-      - mantiene un estado no trivial, correlacionado y sensible al ruido
-      - evita controlled rotations y acoplos largos que disparan el routing
-    """
-    qc = QuantumCircuit(5, name="A_large")
+	ry_1 = [1.07, 0.63, 1.21, 0.54, 0.22]
+	rz_1 = [0.31, -0.27, 0.18, 0.41, -0.33]
+	for q, (ay, az) in enumerate(zip(ry_1, rz_1)):
+		qc.ry(ay, q)
+		qc.rz(az, q)
 
-    # ------------------------------------------------------------------
-    # Layer 1: local single-qubit dressing
-    # ------------------------------------------------------------------
-    rx_1 = [0.88, 0.54, 1.02, 0.71, 0.36]
-    rz_1 = [0.31, -0.27, 0.18, 0.41, -0.22]
+	qc.cx(0, 1)
+	qc.cx(1, 2)
+	qc.cx(2, 3)
+	qc.cx(1, 4)
+	qc.cry(0.44, 0, 4)
+	qc.cry(0.67, 2, 4)
+	qc.crz(0.35, 3, 4)
 
-    for q, (ax, az) in enumerate(zip(rx_1, rz_1)):
-        qc.rz(az, q)
-        qc.rx(ax, q)
+	ry_2 = [-0.28, 0.17, -0.36, 0.29, 0.41]
+	rz_2 = [0.22, 0.11, -0.19, 0.07, 0.13]
+	for q, (ay, az) in enumerate(zip(ry_2, rz_2)):
+		qc.ry(ay, q)
+		qc.rz(az, q)
 
-    # ------------------------------------------------------------------
-    # Layer 2: nearest-neighbour entanglement on a chain
-    # 0--1--2--3--4
-    # ------------------------------------------------------------------
-    for q0, q1 in ((0, 1), (1, 2), (2, 3), (3, 4)):
-        qc.cz(q0, q1)
+	qc.cx(0, 2)
+	qc.cx(2, 4)
+	qc.cx(3, 4)
+	if objective_ry_offset != 0.0:
+		qc.ry(float(objective_ry_offset), 4)
 
-    # ------------------------------------------------------------------
-    # Layer 3: second local dressing
-    # ------------------------------------------------------------------
-    rx_2 = [-0.24, 0.17, -0.28, 0.23, 0.39]
-    rz_2 = [0.16, 0.09, -0.14, 0.07, 0.12]
+	return qc
 
-    for q, (ax, az) in enumerate(zip(rx_2, rz_2)):
-        qc.rz(az, q)
-        qc.rx(ax, q)
 
-    # ------------------------------------------------------------------
-    # Layer 4: focused entanglement near the objective qubit
-    # mantiene no trivialidad pero sin meter acoplos largos
-    # ------------------------------------------------------------------
-    for q0, q1 in ((1, 2), (2, 3), (3, 4)):
-        qc.cz(q0, q1)
+def build_large_problem(objective_ry_offset: float = 0.0) -> tuple[EstimationProblem, float]:
+	"""
+	Build an amplitude-estimation problem on 5 qubits.
+	The good state is defined by the objective qubit (qubit 4) being |1>.
+	"""
+	state_preparation = build_large_state_preparation(objective_ry_offset=objective_ry_offset)
+	oracle = QuantumCircuit(5, name="oracle_good")
+	oracle.z(4)
 
-    # ------------------------------------------------------------------
-    # Final local dressing on the "business end"
-    # ------------------------------------------------------------------
-    qc.rz(0.11, 2)
-    qc.rx(-0.18, 2)
+	grover_operator = GroverOperator(oracle, state_preparation=state_preparation)
+	problem = EstimationProblem(
+		state_preparation=state_preparation,
+		grover_operator=grover_operator,
+		objective_qubits=[4],
+	)
 
-    qc.rz(-0.09, 3)
-    qc.rx(0.14, 3)
-
-    qc.rz(0.08, 4)
-    qc.rx(0.26, 4)
-
-    # Sweep of the final amplitude on the objective qubit
-    if objective_ry_offset != 0.0:
-        qc.rx(float(objective_ry_offset), 4)
-
-    return qc
+	state = Statevector.from_instruction(state_preparation)
+	probs = state.probabilities_dict(qargs=[4])
+	a_true = float(probs.get("1", 0.0))
+	return problem, a_true
 
 def build_noise_model(scale: float) -> NoiseModel:
     """
@@ -159,11 +154,11 @@ def build_noise_model(scale: float) -> NoiseModel:
 
     # Duraciones de puertas (ns)
     t_id = 5.0
-    t_sx = 5.0   # En base al "Single-qubit gate length" general del CSV
+    t_sx = 32.0   # En base al "Single-qubit gate length" general del CSV
     t_x = 32.0
 
     # Duración CX: CZ original dura 68ns, asumiendo 2x sx gates de penalización
-    t_cx = 70.0
+    t_cx = 132.0
 
     # ------------------------------------------------------------------
     # 1-qubit errors
@@ -291,27 +286,6 @@ def build_noise_model(scale: float) -> NoiseModel:
 
     return noise_model
 '''
-def build_large_problem(objective_ry_offset: float = 0.0) -> tuple[EstimationProblem, float]:
-	"""
-	Build an amplitude-estimation problem on 5 qubits.
-	The good state is defined by the objective qubit (qubit 4) being |1>.
-	"""
-	state_preparation = build_large_state_preparation(objective_ry_offset=objective_ry_offset)
-	oracle = QuantumCircuit(5, name="oracle_good")
-	oracle.z(4)
-
-	grover_operator = GroverOperator(oracle, state_preparation=state_preparation)
-	problem = EstimationProblem(
-		state_preparation=state_preparation,
-		grover_operator=grover_operator,
-		objective_qubits=[4],
-	)
-
-	state = Statevector.from_instruction(state_preparation)
-	probs = state.probabilities_dict(qargs=[4])
-	a_true = float(probs.get("1", 0.0))
-	return problem, a_true
-
 
 def construct_measured_circuit(problem: EstimationProblem, k: int) -> QuantumCircuit:
 	num_qubits = max(
