@@ -1012,17 +1012,23 @@ def plot_budget_panels(
 					alpha=0.9,
 				)
 
+		reference_budgets = budgets_reference[
+			np.isfinite(budgets_reference) & (budgets_reference > 0.0)
+		]
+		if reference_budgets.size == 0:
+			raise ValueError("budgets_reference must contain at least one positive finite value.")
+		reference_anchor = float(reference_budgets[0])
 		ax.loglog(
-			budgets_reference,
-			1.0 / np.sqrt(budgets_reference),
+			reference_budgets,
+			1.0 / np.sqrt(reference_budgets),
 			"--",
 			color="gray",
 			alpha=0.6,
 			label=r"$\mathcal{O}(1/\sqrt{N_q})$",
 		)
 		ax.loglog(
-			budgets_reference,
-			3.0 / budgets_reference,
+			reference_budgets,
+			np.sqrt(reference_anchor) / reference_budgets,
 			"-.",
 			color="black",
 			alpha=0.5,
