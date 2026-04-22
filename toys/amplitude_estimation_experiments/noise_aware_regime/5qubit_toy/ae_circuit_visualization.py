@@ -214,6 +214,15 @@ def main() -> None:
     print(f"Logical image saved to    : {logical_png}")
     print(f"Transpiled image saved to : {transpiled_png}")
 
+    qc = hardware_utils.construct_measured_circuit(problem, 1)
+    qc_dec = qc
+    for _ in range(6):
+        qc_dec = qc_dec.decompose()
+
+    print(qc.count_ops())
+    print(qc_dec.count_ops())
+    print(qc_dec.depth(), qc_dec.size())
+
 
 if __name__ == "__main__":
     main()

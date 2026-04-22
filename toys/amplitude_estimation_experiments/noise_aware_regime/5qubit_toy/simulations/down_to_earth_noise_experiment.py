@@ -60,7 +60,7 @@ ALPHA = 0.05
 NUM_SHOTS = 64
 
 BUDGETS = np.unique(
-    np.round(np.logspace(np.log10(300), np.log10(15000), 8)).astype(int)
+    np.round(np.logspace(np.log10(300), np.log10(15000), 8)).astype(int)  
 )
 
 MAX_ANALYSIS_BUDGET = int(BUDGETS[-1])

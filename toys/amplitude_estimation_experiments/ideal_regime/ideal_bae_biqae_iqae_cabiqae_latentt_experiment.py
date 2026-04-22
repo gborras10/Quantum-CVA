@@ -195,7 +195,7 @@ def run_experiment() -> None:
     Compare BAE, BIQAE, IQAE and CABIQAE_latentt in an ideal regime with
     random amplitudes.
     """
-    n_rep = 100
+    n_rep = 500    
     a_range = (0.1, 0.4)
 
     alpha = 0.05

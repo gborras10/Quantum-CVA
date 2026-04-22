@@ -326,17 +326,25 @@ def plot_query_benchmark_with_confidence_bands(
                 label=algorithm_labels.get(algorithm, algorithm),
             )
 
+    reference_queries = query_grid[np.isfinite(query_grid) & (query_grid > 0.0)]
+    if reference_queries.size == 0:
+        raise ValueError("query_grid must contain at least one positive finite value.")
+    reference_anchor = float(reference_queries[0])
+    sqrt_reference = 1.0 / np.sqrt(reference_queries)
+    # Anchor the 1/N guide to the same leftmost point as the 1/sqrt(N) guide.
+    linear_reference = np.sqrt(reference_anchor) / reference_queries
+
     ax.loglog(
-        query_grid,
-        1.0 / np.sqrt(query_grid),
+        reference_queries,
+        sqrt_reference,
         "--",
         color="gray",
         alpha=0.6,
         label=r"$\mathcal{O}(1/\sqrt{N_q})$",
     )
     ax.loglog(
-        query_grid,
-        3.0 / query_grid,
+        reference_queries,
+        linear_reference,
         "-.",
         color="black",
         alpha=0.5,
