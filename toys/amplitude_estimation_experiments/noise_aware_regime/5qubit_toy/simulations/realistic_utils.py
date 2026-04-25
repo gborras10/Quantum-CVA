@@ -347,7 +347,7 @@ class AerCountSampler:
 				circuit,
 				self._sim,
 				basis_gates=self._basis_gates,
-				optimization_level=0,
+				optimization_level=3,
 				seed_transpiler=1234,
 			)
 		return self._cache[key]
@@ -482,6 +482,7 @@ def build_solver(
 				cap_kappa=1000.0,
 				max_shots_same_k=None,
 				estimate_T=False,
+				wNs=0,
 			)
 		else:
 			solver = StandaloneBAEModel(
@@ -494,7 +495,7 @@ def build_solver(
 				estimate_T=False,
 				T_range=None if t_eff is None or np.isinf(t_eff) else (0.5 * float(t_eff), 1.5 * float(t_eff)),
 				TNs=0,
-				wNs=60,
+				wNs=0,
 				Ns=n_shots,
 			)
 		return solver, True

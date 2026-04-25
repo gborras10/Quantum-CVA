@@ -67,8 +67,8 @@ MAX_ANALYSIS_BUDGET = int(BUDGETS[-1])
 
 NOISE_PROFILE_NAME = "realistic"
 
-N_REP = 25
-OBJECTIVE_RY_OFFSETS = np.sort(np.random.default_rng(12345).uniform(-0.8, 0.8, 20))
+N_REP = 10
+OBJECTIVE_RY_OFFSETS = np.sort(np.random.default_rng(12345).uniform(-0.8, 0.8, 8))
 MIN_VALID_A_TRUE = 0.04
 MAX_VALID_A_TRUE = 0.96
 
