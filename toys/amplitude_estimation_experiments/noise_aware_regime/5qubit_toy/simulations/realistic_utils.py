@@ -121,7 +121,8 @@ def build_large_problem(objective_ry_offset: float = 0.0) -> tuple[EstimationPro
 	probs = state.probabilities_dict(qargs=[4])
 	a_true = float(probs.get("1", 0.0))
 	return problem, a_true
-
+# true noise conditions
+'''
 def build_noise_model(scale: float) -> NoiseModel:
     """
     Effective noise model tailored for a projected 2028-2029 superconducting QPU.
@@ -206,9 +207,10 @@ def build_noise_model(scale: float) -> NoiseModel:
     noise_model.add_all_qubit_readout_error(ro)
 
     return noise_model
+'''
 
 # mild noise conditions
-'''
+
 def build_noise_model(scale: float) -> NoiseModel:
     """
     Effective noise model tailored for a projected 2028-2029 superconducting QPU.
@@ -285,7 +287,7 @@ def build_noise_model(scale: float) -> NoiseModel:
     noise_model.add_all_qubit_readout_error(ro)
 
     return noise_model
-'''
+
 
 def construct_measured_circuit(problem: EstimationProblem, k: int) -> QuantumCircuit:
 	num_qubits = max(
