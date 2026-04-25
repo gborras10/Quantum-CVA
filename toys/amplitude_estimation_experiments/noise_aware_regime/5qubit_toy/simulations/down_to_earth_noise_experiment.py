@@ -7,6 +7,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from qiskit_ibm_runtime import QiskitRuntimeService
 
 import warnings
 
@@ -15,10 +16,11 @@ warnings.filterwarnings("ignore")
 # Path management
 # --------------------------------------------------------------------------------------
 current_dir = os.path.dirname(os.path.abspath(__file__))
+toy_dir = os.path.abspath(os.path.join(current_dir, ".."))
 root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 src_dir = os.path.join(root_dir, "src")
 
-for path in [src_dir, root_dir]:
+for path in [src_dir, toy_dir, root_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
@@ -26,11 +28,16 @@ for path in [src_dir, root_dir]:
 # Imports
 # --------------------------------------------------------------------------------------
 try:
+    from ae_circuit_utils import (
+        PHYSICAL_BACKEND_NAME,
+        TRANSPILER_OPTIMIZATION_LEVEL,
+        build_problem_with_true_amplitude,
+        choose_transpilation_plan,
+    )
     from realistic_utils import (
         BAE_KIND,
         AerCountSampler,
         aggregate_budget_rows,
-        build_large_problem,
         build_noise_model,
         build_solver,
         calibrate_effective_T,
@@ -90,10 +97,28 @@ ALGORITHM_STYLES = {
 }
 
 
+def load_physical_transpile_backend():
+    service = QiskitRuntimeService()
+    return service.backend(PHYSICAL_BACKEND_NAME)
+
+
+def select_benchmark_transpilation_plan(physical_backend, scenarios):
+    if not scenarios:
+        raise RuntimeError("Cannot select a transpilation plan without scenarios.")
+    return choose_transpilation_plan(
+        physical_backend,
+        scenarios[0]["problem"],
+        optimization_level=TRANSPILER_OPTIMIZATION_LEVEL,
+        reference_ks=PROBE_KS,
+    )
+
+
 def build_amplitude_scenarios() -> list[dict[str, Any]]:
     scenarios: list[dict[str, Any]] = []
     for scenario_id, offset in enumerate(OBJECTIVE_RY_OFFSETS, start=1):
-        problem, a_true = build_large_problem(objective_ry_offset=float(offset))
+        problem, a_true = build_problem_with_true_amplitude(
+            objective_ry_offset=float(offset)
+        )
         if not (MIN_VALID_A_TRUE <= a_true <= MAX_VALID_A_TRUE):
             continue
         scenarios.append(
@@ -114,13 +139,35 @@ def build_amplitude_scenarios() -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------------------
 def run_experiment() -> None:
     scenarios = build_amplitude_scenarios()
+    physical_backend = load_physical_transpile_backend()
+    transpilation_plan = select_benchmark_transpilation_plan(
+        physical_backend,
+        scenarios,
+    )
 
     print("Large-circuit benchmark")
     print(f"BAE backend mode: {BAE_KIND}")
+    print(f"Physical transpilation backend = {PHYSICAL_BACKEND_NAME}")
+    print(f"Initial layout = {list(transpilation_plan.initial_layout)}")
+    print(f"Layout source = {transpilation_plan.candidate_source}")
+    print(
+        "Layout search metrics = "
+        f"swaps:{transpilation_plan.aggregate_swap_count}, "
+        f"2q:{transpilation_plan.aggregate_two_qubit_gates}, "
+        f"depth:{transpilation_plan.aggregate_depth}, "
+        f"size:{transpilation_plan.aggregate_size}, "
+        f"plans:{transpilation_plan.evaluated_plans}"
+    )
     print(f"Amplitude scenarios = {len(scenarios)}")
     print(f"Budgets = {list(BUDGETS)}")
     print(f"Repetitions per scenario = {N_REP}")
     print(f"Probe ks = {PROBE_KS}, probe shots = {PROBE_SHOTS}")
+    print(
+        "Execution circuits are transpiled with "
+        f"optimization_level={TRANSPILER_OPTIMIZATION_LEVEL}, "
+        f"seed_transpiler={transpilation_plan.seed_transpiler}, "
+        f"routing_method={transpilation_plan.routing_method}"
+    )
 
     calibration_rows: list[dict[str, Any]] = []
     budget_rows: list[dict[str, Any]] = []
@@ -140,6 +187,8 @@ def run_experiment() -> None:
         calib_sampler = AerCountSampler(
             noise_model=build_noise_model(1.0),
             seed=10_000 + scenario_id,
+            transpile_backend=physical_backend,
+            transpilation_plan=transpilation_plan,
         )
         cal = calibrate_effective_T(
             profile_name=NOISE_PROFILE_NAME,
@@ -190,6 +239,8 @@ def run_experiment() -> None:
             noisy_sampler = AerCountSampler(
                 noise_model=build_noise_model(1.0),
                 seed=100_000 + scenario_id * 1000 + rep,
+                transpile_backend=physical_backend,
+                transpilation_plan=transpilation_plan,
             )
 
             for alg_idx, alg_key in enumerate(ALGORITHMS):
@@ -528,7 +579,6 @@ def _plot_error_vs_runtime(summary_rows: list[dict[str, Any]]) -> None:
             handlelength=2.2,
         )
     fig.tight_layout(rect=(0, 0, 1, 0.90))
-
 
 if __name__ == "__main__":
     run_experiment()

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 from typing import Any, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
-from qiskit import ClassicalRegister, QuantumCircuit, transpile
-from qiskit.circuit.library import GroverOperator
+from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
 from qiskit_algorithms import EstimationProblem
 from qiskit_aer import AerSimulator
@@ -22,6 +23,18 @@ from quantum_cva.algorithms.proposed_algorithms.cabiae import (
 	CABIQAELatentTheta,
 )
 from quantum_cva.algorithms.third_party.biae import BayesianIQAE as BIQAE
+
+TOY_DIR = Path(__file__).resolve().parent.parent
+if str(TOY_DIR) not in sys.path:
+	sys.path.insert(0, str(TOY_DIR))
+
+from ae_circuit_utils import (
+	INITIAL_LAYOUT,
+	build_problem_with_true_amplitude,
+	build_state_preparation as build_large_state_preparation,
+	construct_measured_circuit as construct_shared_measured_circuit,
+	transpile_for_execution,
+)
 
 try:
 	from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
@@ -63,64 +76,11 @@ class _FakeSamplerJob:
 		return self._pub_results
 
 
-def build_large_state_preparation(objective_ry_offset: float = 0.0) -> QuantumCircuit:
-	"""
-	Five-qubit entangled state preparation.
-	Qubits 0..3 are work qubits, qubit 4 is the objective qubit.
-	A final optional objective-qubit RY offset lets us sweep different true amplitudes
-	while preserving the same circuit family.
-	"""
-	qc = QuantumCircuit(5, name="A_large")
-
-	ry_1 = [1.07, 0.63, 1.21, 0.54, 0.22]
-	rz_1 = [0.31, -0.27, 0.18, 0.41, -0.33]
-	for q, (ay, az) in enumerate(zip(ry_1, rz_1)):
-		qc.ry(ay, q)
-		qc.rz(az, q)
-
-	qc.cx(0, 1)
-	qc.cx(1, 2)
-	qc.cx(2, 3)
-	qc.cx(1, 4)
-	qc.cry(0.44, 0, 4)
-	qc.cry(0.67, 2, 4)
-	qc.crz(0.35, 3, 4)
-
-	ry_2 = [-0.28, 0.17, -0.36, 0.29, 0.41]
-	rz_2 = [0.22, 0.11, -0.19, 0.07, 0.13]
-	for q, (ay, az) in enumerate(zip(ry_2, rz_2)):
-		qc.ry(ay, q)
-		qc.rz(az, q)
-
-	qc.cx(0, 2)
-	qc.cx(2, 4)
-	qc.cx(3, 4)
-	if objective_ry_offset != 0.0:
-		qc.ry(float(objective_ry_offset), 4)
-
-	return qc
-
-
 def build_large_problem(objective_ry_offset: float = 0.0) -> tuple[EstimationProblem, float]:
 	"""
-	Build an amplitude-estimation problem on 5 qubits.
-	The good state is defined by the objective qubit (qubit 4) being |1>.
+	Build the shared 3-qubit amplitude-estimation problem.
 	"""
-	state_preparation = build_large_state_preparation(objective_ry_offset=objective_ry_offset)
-	oracle = QuantumCircuit(5, name="oracle_good")
-	oracle.z(4)
-
-	grover_operator = GroverOperator(oracle, state_preparation=state_preparation)
-	problem = EstimationProblem(
-		state_preparation=state_preparation,
-		grover_operator=grover_operator,
-		objective_qubits=[4],
-	)
-
-	state = Statevector.from_instruction(state_preparation)
-	probs = state.probabilities_dict(qargs=[4])
-	a_true = float(probs.get("1", 0.0))
-	return problem, a_true
+	return build_problem_with_true_amplitude(objective_ry_offset)
 # true noise conditions
 '''
 def build_noise_model(scale: float) -> NoiseModel:
@@ -203,7 +163,7 @@ def build_noise_model(scale: float) -> NoiseModel:
     noise_model.add_all_qubit_quantum_error(err_id, ["id"])
     noise_model.add_all_qubit_quantum_error(err_sx, ["sx"])
     noise_model.add_all_qubit_quantum_error(err_x, ["x"])
-    noise_model.add_all_qubit_quantum_error(err_cx, ["cx"])
+    noise_model.add_all_qubit_quantum_error(err_cx, ["cx", "cz", "ecr"])
     noise_model.add_all_qubit_readout_error(ro)
 
     return noise_model
@@ -283,27 +243,14 @@ def build_noise_model(scale: float) -> NoiseModel:
     noise_model.add_all_qubit_quantum_error(err_id, ["id"])
     noise_model.add_all_qubit_quantum_error(err_sx, ["sx"])
     noise_model.add_all_qubit_quantum_error(err_x, ["x"])
-    noise_model.add_all_qubit_quantum_error(err_cx, ["cx"])
+    noise_model.add_all_qubit_quantum_error(err_cx, ["cx", "cz", "ecr"])
     noise_model.add_all_qubit_readout_error(ro)
 
     return noise_model
 
 
 def construct_measured_circuit(problem: EstimationProblem, k: int) -> QuantumCircuit:
-	num_qubits = max(
-		problem.state_preparation.num_qubits,
-		problem.grover_operator.num_qubits,
-	)
-	circuit = QuantumCircuit(num_qubits, name=f"AE_k_{k}")
-	circuit.compose(problem.state_preparation, inplace=True)
-	if k > 0:
-		circuit.compose(problem.grover_operator.power(k).decompose(), inplace=True)
-
-	creg = ClassicalRegister(len(problem.objective_qubits), "c0")
-	circuit.add_register(creg)
-	circuit.barrier()
-	circuit.measure(problem.objective_qubits, creg[:])
-	return circuit
+	return construct_shared_measured_circuit(problem, k)
 
 
 def ideal_good_probability(problem: EstimationProblem, k: int) -> float:
@@ -330,26 +277,52 @@ class AerCountSampler:
 		noise_model: NoiseModel | None = None,
 		seed: int | None = None,
 		method: str = "density_matrix",
+		transpile_backend: object | None = None,
+		initial_layout: list[int] | None = None,
+		transpilation_plan: Any | None = None,
 	):
 		self._rng = np.random.default_rng(seed)
 		self._sim = AerSimulator(noise_model=noise_model, method=method)
-		self._basis_gates = noise_model.basis_gates if noise_model is not None else None
+		self._transpile_backend = transpile_backend
+		self._initial_layout = list(initial_layout) if initial_layout is not None else None
+		self._transpilation_plan = transpilation_plan
+		self._pass_manager = (
+			transpilation_plan.build_pass_manager(transpile_backend)
+			if transpilation_plan is not None and transpile_backend is not None
+			else None
+		)
 		self._cache: dict[tuple[Any, ...], QuantumCircuit] = {}
 
 	def _cache_key(self, circuit: QuantumCircuit) -> tuple[Any, ...]:
-		ops = tuple(sorted((str(k), int(v)) for k, v in circuit.count_ops().items()))
-		return (circuit.num_qubits, circuit.size(), circuit.depth(), ops)
+		instructions = []
+		for instruction in circuit.data:
+			operation = instruction.operation
+			qubits = tuple(circuit.find_bit(qubit).index for qubit in instruction.qubits)
+			clbits = tuple(circuit.find_bit(clbit).index for clbit in instruction.clbits)
+			params = tuple(str(param) for param in operation.params)
+			instructions.append((operation.name, params, qubits, clbits))
+		return (
+			circuit.num_qubits,
+			circuit.num_clbits,
+			str(circuit.global_phase),
+			tuple(instructions),
+		)
 
 	def _transpiled(self, circuit: QuantumCircuit) -> QuantumCircuit:
 		key = self._cache_key(circuit)
 		if key not in self._cache:
-			self._cache[key] = transpile(
-				circuit,
-				self._sim,
-				basis_gates=self._basis_gates,
-				optimization_level=3,
-				seed_transpiler=1234,
-			)
+			if self._pass_manager is not None:
+				self._cache[key] = self._pass_manager.run(circuit)
+			else:
+				transpile_backend = self._transpile_backend or self._sim
+				initial_layout = self._initial_layout
+				if initial_layout is None and self._transpile_backend is not None:
+					initial_layout = INITIAL_LAYOUT
+				self._cache[key] = transpile_for_execution(
+					circuit,
+					backend=transpile_backend,
+					initial_layout=initial_layout,
+				)
 		return self._cache[key]
 
 	def run(self, circuits: list[QuantumCircuit], shots: int = 1024) -> _FakeSamplerJob:
