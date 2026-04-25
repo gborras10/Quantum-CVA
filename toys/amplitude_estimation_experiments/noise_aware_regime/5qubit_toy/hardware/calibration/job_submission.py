@@ -19,8 +19,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 src_dir = os.path.join(root_dir, "src")
 hardware_dir = os.path.abspath(os.path.join(current_dir, ".."))
+toy_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 
-for path in [src_dir, root_dir, hardware_dir]:
+for path in [toy_dir, src_dir, root_dir, hardware_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
@@ -28,7 +29,7 @@ for path in [src_dir, root_dir, hardware_dir]:
 # Imports from project
 # --------------------------------------------------------------------------------------
 try:
-    from realistic_utils import (
+    from ae_pipeline_utils import (
         DEFAULT_AE_REFERENCE_KS,
         build_ae_pass_manager,
         build_large_problem,
@@ -135,7 +136,7 @@ class RuntimeSingleJobBuilder:
         return circuit_cache_key(circuit)
 
     def isa_circuit(self, circuit: QuantumCircuit) -> QuantumCircuit:
-        qc = ensure_meas_register(circuit)
+        qc = ensure_meas_register(circuit).decompose(reps=10)
         key = self._cache_key(qc)
         if key not in self._cache:
             self._cache[key] = self.pm.run(qc)

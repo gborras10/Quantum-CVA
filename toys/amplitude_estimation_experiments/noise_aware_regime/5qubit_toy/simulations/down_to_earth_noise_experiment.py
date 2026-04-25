@@ -28,19 +28,17 @@ for path in [src_dir, toy_dir, root_dir]:
 # Imports
 # --------------------------------------------------------------------------------------
 try:
-    from ae_circuit_utils import (
+    from ae_pipeline_utils import (
+        BAE_KIND,
         PHYSICAL_BACKEND_NAME,
         TRANSPILER_OPTIMIZATION_LEVEL,
-        build_problem_with_true_amplitude,
-        choose_transpilation_plan,
-    )
-    from realistic_utils import (
-        BAE_KIND,
         AerCountSampler,
         aggregate_budget_rows,
+        build_problem_with_true_amplitude,
         build_noise_model,
         build_solver,
         calibrate_effective_T,
+        choose_transpilation_plan,
         estimate_at_budget,
         extract_trace,
         kmax_at_budget,

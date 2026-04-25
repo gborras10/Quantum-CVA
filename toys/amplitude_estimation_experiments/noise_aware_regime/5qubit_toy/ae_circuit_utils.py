@@ -108,7 +108,10 @@ def construct_measured_circuit(
     circuit = QuantumCircuit(num_qubits, name=f"AE_k_{k}")
     circuit.compose(problem.state_preparation, inplace=True)
     if k > 0:
-        circuit.compose(problem.grover_operator.power(k), inplace=True)
+        grover_power = problem.grover_operator.power(k)
+        if hasattr(grover_power, "decompose"):
+            grover_power = grover_power.decompose(reps=10)
+        circuit.compose(grover_power, inplace=True)
 
     creg = ClassicalRegister(len(problem.objective_qubits), "c0")
     circuit.add_register(creg)

@@ -30,24 +30,16 @@ for path in [hardware_dir, src_dir, root_dir]:
 # Imports from project
 # --------------------------------------------------------------------------------------
 try:
-    from realistic_utils import (
+    from ae_pipeline_utils import (
         DEFAULT_AE_REFERENCE_KS,
         build_ae_pass_manager,
+        build_solver as build_common_solver,
         build_large_problem,
         circuit_cache_key,
         extract_trace,
     )
 except ImportError as e:
     print(f"Error importing realistic_utils: {e}")
-    sys.exit(1)
-
-try:
-    from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta
-    from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
-        StandaloneBAEHardware as StandaloneBAEModel,
-    )
-except ImportError as e:
-    print(f"Error importing algorithms: {e}")
     sys.exit(1)
 
 # --------------------------------------------------------------------------------------
@@ -217,6 +209,7 @@ class RuntimeCountSampler:
         return circuit_cache_key(circuit)
 
     def _isa_circuit(self, circuit: QuantumCircuit) -> QuantumCircuit:
+        circuit = circuit.decompose(reps=10)
         key = self._cache_key(circuit)
         if key not in self._cache:
             self._cache[key] = self.pm.run(circuit)
@@ -273,35 +266,17 @@ def build_solver(
     sampler: RuntimeCountSampler,
     t_eff: float | None,
 ) -> tuple[Any, bool]:
-    if algorithm == "bae":
-        solver = StandaloneBAEModel(
-            epsilon_target=epsilon_target,
-            alpha=alpha,
-            sampler=sampler,
-            noise_model="ideal" if t_eff is None or np.isinf(t_eff) else "exponential_contrast",
-            T_known=None if t_eff is None or np.isinf(t_eff) else float(t_eff),
-            cap_kappa=1000.0,
-            max_shots_same_k=None,
-            estimate_T=False,
-        )
-        return solver, True
-
-    if algorithm == "cabiqae":
-        solver = CABIQAELatentTheta(
-            epsilon_target=epsilon_target,
-            alpha=alpha,
-            sampler=sampler,
-            min_ratio=2,
-            confint_method="beta",
-            noise_model="ideal" if t_eff is None or np.isinf(t_eff) else "exponential_contrast",
-            T_known=None if t_eff is None or np.isinf(t_eff) else float(t_eff),
-            cap_kappa=float(CAP_KAPPA),
-            use_noise_cap=True,
-            max_shots_same_k=None,
-        )
-        return solver, True
-
-    raise ValueError(f"Unknown algorithm: {algorithm}")
+    canonical_algorithm = "cabiqae_latentt" if algorithm == "cabiqae" else algorithm
+    return build_common_solver(
+        canonical_algorithm,
+        epsilon_target,
+        alpha,
+        n_shots,
+        seed=0,
+        noisy_sampler=sampler,
+        t_eff=t_eff,
+        cap_kappa=CAP_KAPPA,
+    )
 
 
 # --------------------------------------------------------------------------------------

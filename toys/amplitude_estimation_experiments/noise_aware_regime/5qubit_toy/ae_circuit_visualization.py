@@ -3,7 +3,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 from qiskit_ibm_runtime import QiskitRuntimeService
 
-from ae_circuit_utils import (
+from ae_pipeline_utils import (
     PHYSICAL_BACKEND_NAME,
     build_estimation_problem,
     choose_transpilation_plan,

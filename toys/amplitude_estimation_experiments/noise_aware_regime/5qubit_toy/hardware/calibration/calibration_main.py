@@ -22,8 +22,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 hardware_dir = os.path.abspath(os.path.join(current_dir, ".."))
 root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "..", "..", "..", ".."))
 src_dir = os.path.join(root_dir, "src")
+toy_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 
-for path in [hardware_dir, src_dir, root_dir]:
+for path in [toy_dir, hardware_dir, src_dir, root_dir]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
@@ -31,7 +32,7 @@ for path in [hardware_dir, src_dir, root_dir]:
 # Imports from project
 # --------------------------------------------------------------------------------------
 try:
-    from realistic_utils import build_large_problem, ideal_good_probability
+    from ae_pipeline_utils import build_large_problem, ideal_good_probability
 except ImportError as e:
     print(f"Error importing project modules: {e}")
     sys.exit(1)
