@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import time
+import sys
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -16,6 +18,20 @@ from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
 )
 
 
+AMPLITUDE_EXPERIMENTS_DIR = Path(__file__).resolve().parents[1]
+CANONICAL_TOY_DIR = AMPLITUDE_EXPERIMENTS_DIR / "noise_aware_regime" / "3qubit_toy"
+for path in (CANONICAL_TOY_DIR, AMPLITUDE_EXPERIMENTS_DIR):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
+
+from ae_circuit_utils import (  # noqa: E402
+    CANONICAL_OBJECTIVE_RY_OFFSET,
+    OBJECTIVE_QUBITS,
+    build_problem_with_true_amplitude,
+)
+
+
 ALGORITHM_LABELS = {
     "biqae": "BIQAE",
     "iqae": "IQAE",
@@ -26,39 +42,23 @@ ALGORITHM_LABELS = {
     "bae": "BAE",
 }
 
-class BernoulliA(QuantumCircuit):
-    """Single-qubit Bernoulli state preparation."""
-
-    def __init__(self, probability: float):
-        super().__init__(1)
-        self.ry(2.0 * np.arcsin(np.sqrt(probability)), 0)
-
-
-class BernoulliQ(QuantumCircuit):
-    """Single-qubit Grover iterate for Bernoulli amplitude estimation."""
-
-    def __init__(self, probability: float):
-        super().__init__(1)
-        theta_p = 2.0 * np.arcsin(np.sqrt(probability))
-        self.ry(2.0 * theta_p, 0)
-        self._theta_p = float(theta_p)
-
-    def power(self, k: int) -> QuantumCircuit:
-        q_k = QuantumCircuit(1, name=f"Q^{k}")
-        q_k.metadata = {"grover_power": int(k)}
-
-        for _ in range(max(0, int(k))):
-            q_k.ry(2.0 * self._theta_p, 0)
-
-        return q_k
+def build_problem(
+    objective_ry_offset: float = CANONICAL_OBJECTIVE_RY_OFFSET,
+) -> EstimationProblem:
+    problem, _ = build_problem_with_true_amplitude(float(objective_ry_offset))
+    return problem
 
 
-def build_problem(a_true: float) -> EstimationProblem:
-    return EstimationProblem(
-        state_preparation=BernoulliA(a_true),
-        grover_operator=BernoulliQ(a_true),
-        objective_qubits=[0],
-    )
+def true_amplitude_for_offset(
+    objective_ry_offset: float = CANONICAL_OBJECTIVE_RY_OFFSET,
+) -> float:
+    _, a_true = build_problem_with_true_amplitude(float(objective_ry_offset))
+    return float(a_true)
+
+
+def canonical_true_amplitude() -> float:
+    a_true = true_amplitude_for_offset(CANONICAL_OBJECTIVE_RY_OFFSET)
+    return float(a_true)
 
 
 def infer_grover_power(circuit: QuantumCircuit) -> int:
@@ -67,6 +67,10 @@ def infer_grover_power(circuit: QuantumCircuit) -> int:
         return int(metadata["grover_power"])
 
     count_ops = circuit.count_ops()
+    q_count = int(count_ops.get("Q", 0))
+    if q_count > 0:
+        return q_count
+
     ry_count = int(count_ops.get("ry", 0))
     return max(0, ry_count - 1)
 
@@ -94,7 +98,10 @@ def _remove_measurements(circuit: QuantumCircuit) -> QuantumCircuit:
 def ideal_good_probability(circuit: QuantumCircuit) -> float:
     clean = _remove_measurements(circuit)
     state = Statevector.from_instruction(clean)
-    probs = state.probabilities_dict(qargs=[0])
+    qargs = list(OBJECTIVE_QUBITS)
+    if max(qargs) >= clean.num_qubits:
+        qargs = [clean.num_qubits - 1]
+    probs = state.probabilities_dict(qargs=qargs)
     return float(probs.get("1", 0.0))
 
 

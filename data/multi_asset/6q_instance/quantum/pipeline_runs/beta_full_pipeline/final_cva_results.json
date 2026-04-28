@@ -1,0 +1,20 @@
+{
+  "cva_classical_reference": 0.5215900006813697,
+  "cva_statevector": 0.5864946085782612,
+  "default_l2_statevector": 0.0004554739067278678,
+  "default_n_params": 6,
+  "discount_l2_statevector": 0.009859537587022932,
+  "discount_n_params": 6,
+  "exposure_l2_statevector": 0.4885376867312731,
+  "exposure_n_params": 40,
+  "iqae_cva": 0.5862086099000984,
+  "iqae_oracle_queries": 55296,
+  "p111_statevector": 0.1328730942948926,
+  "qae_cva": 0.6464073242246955,
+  "qae_oracle_queries": 64512,
+  "qcbm_kl_statevector": 0.1130642781112419,
+  "qcbm_n_params": 51,
+  "relative_error_iqae_pct": 12.388774542133723,
+  "relative_error_qae_pct": 23.93016035205293,
+  "relative_error_statevector_pct": 12.44360662821459
+}

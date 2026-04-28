@@ -1,0 +1,15 @@
+{
+  "readout": {
+    "p_obs_1_given_0": 0.0006103515625,
+    "p_obs_1_given_1": 0.9986572265625,
+    "readout_denom": 0.998046875,
+    "readout_usable": 1.0
+  },
+  "calibration_status": "ok",
+  "fit_points": 21,
+  "t_eff_zero_intercept": 45.54433064354338,
+  "t_eff_free_intercept": 46.112684729564506,
+  "contrast_prefactor": 0.9905938717092961,
+  "free_intercept_slope": -0.021686006916853053,
+  "k_visible": 25
+}

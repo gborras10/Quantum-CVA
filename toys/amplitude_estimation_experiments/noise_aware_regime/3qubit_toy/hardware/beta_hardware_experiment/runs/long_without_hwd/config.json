@@ -1,0 +1,83 @@
+{
+  "run_id": "hardware_amplification_bae_biqae_cabiqae_20260428_125437",
+  "run_uuid": "3c13ee81-cb8c-41e8-a669-74a5cd0ac53a",
+  "mode": "preflight",
+  "backend": "ibm_basquecountry",
+  "channel": "ibm_quantum_platform",
+  "objective_ry_offset": -0.1,
+  "max_grover_power_requested": 25,
+  "external_k_cap_enabled": false,
+  "scan_repeats": 2,
+  "scan_shots": 1024,
+  "readout_shots": 2048,
+  "direct_shots": 128,
+  "max_direct_sampler_calls_per_algorithm": 4,
+  "replay_repetitions": 200,
+  "replay_probability_mode": "normal",
+  "replay_probability_se_scale": 1.0,
+  "budgets": [
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192
+  ],
+  "session_max_time": "5m",
+  "soft_wallclock_limit_seconds": 240.0,
+  "max_isa_depth": 2500,
+  "max_isa_2q": 600,
+  "optimization_level": 3,
+  "seed_transpiler": 1234,
+  "seed": 12345,
+  "verbose": false,
+  "algorithms": [
+    "cabiqae_latentt",
+    "biqae",
+    "bae"
+  ],
+  "bae_adapter_kind": "hardware",
+  "a_true": 0.07232750360492672,
+  "transpilation": {
+    "strategy": "fixed_layout_search",
+    "fallback_used": false,
+    "fallback_reason": null,
+    "reference_ks": [
+      0,
+      1,
+      2
+    ],
+    "discovery_seeds": [
+      11,
+      23,
+      37,
+      101,
+      211
+    ],
+    "evaluation_seeds": [
+      11,
+      23,
+      37,
+      101,
+      211
+    ],
+    "initial_layout": [
+      67,
+      69,
+      68
+    ],
+    "seed_transpiler": 11,
+    "optimization_level": 3,
+    "routing_method": "sabre",
+    "candidate_source": "sabre_discovery(seed=211, ref=0)",
+    "aggregate_swap_count": 0,
+    "aggregate_two_qubit_gates": 176,
+    "aggregate_depth": 635,
+    "aggregate_size": 932,
+    "evaluated_layouts": 13,
+    "evaluated_plans": 51,
+    "reference_circuit_count": 3
+  },
+  "max_grover_power_after_preflight": 13
+}

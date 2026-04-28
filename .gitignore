@@ -16,10 +16,7 @@ dist/
 pip-wheel-metadata/
 
 # Virtual environments
-.venv/
-venv/
-env/
-ENV/
+.venv311/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -56,3 +53,4 @@ results/
 
 # Github
 .github/
+

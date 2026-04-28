@@ -4,7 +4,6 @@ from typing import Any
 
 import numpy as np
 
-# Add source directory to path.
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 src_dir = os.path.join(root_dir, "src")
@@ -21,6 +20,7 @@ from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
 from toys.amplitude_estimation_experiments.common_utils.experiment_utils import (
     ContrastDecaySampler,
     build_problem,
+    true_amplitude_for_offset,
 )
 from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (
     plot_query_benchmark_with_confidence_bands,
@@ -40,6 +40,8 @@ ALGORITHM_STYLES = {
     "iqae": {"color": "#457B9D", "marker": "D"},
     "cabiqae_latentt": {"color": "#2A9D8F", "marker": "^"},
 }
+
+OBJECTIVE_RY_OFFSETS = np.array([0.30, 0.44, 0.48, 0.52, 0.56, 0.60, 0.63, 0.67], dtype=float)
 
 ALGORITHM_CONFIG = {
     "bae": {
@@ -193,10 +195,9 @@ def _interpolate_nsqe(
 def run_experiment() -> None:
     """
     Compare BAE, BIQAE, IQAE and CABIQAE_latentt in an ideal regime with
-    random amplitudes.
+    the canonical 3-qubit AE topology used by the hardware experiment.
     """
     n_rep = 500    
-    a_range = (0.1, 0.4)
 
     alpha = 0.05
     max_queries = 1e6
@@ -207,11 +208,10 @@ def run_experiment() -> None:
         for algorithm in ALGORITHMS
     }
     rng = np.random.default_rng(1234)
-
     print(
         "Running ideal amplitude-estimation benchmark "
         f"({', '.join(ALGORITHM_LABELS[a] for a in ALGORITHMS)}) "
-        f"with {n_rep} repetitions..."
+        f"with {n_rep} repetitions on the canonical 3-qubit topology..."
     )
     print(
         "Algorithm budgets: "
@@ -226,8 +226,9 @@ def run_experiment() -> None:
     )
 
     for rep in range(n_rep):
-        target_a = float(rng.uniform(*a_range))
-        problem = build_problem(target_a)
+        objective_ry_offset = float(rng.choice(OBJECTIVE_RY_OFFSETS))
+        problem = build_problem(objective_ry_offset)
+        target_a = true_amplitude_for_offset(objective_ry_offset)
 
         for alg_idx, algorithm in enumerate(ALGORITHMS):
             alg_cfg = ALGORITHM_CONFIG[algorithm]
@@ -282,7 +283,7 @@ def run_experiment() -> None:
 
             print(
                 f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
-                f"a={target_a:.3f}, "
+                f"offset={objective_ry_offset:+.3f}, a={target_a:.3f}, "
                 f"final nRMSE={np.sqrt(normalized_sq_errors[-1]):.3e}, "
                 f"queries={int(queries[-1])}"
             )

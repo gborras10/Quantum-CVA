@@ -1,0 +1,95 @@
+algorithm,error,error_type,phase,repetition,timestamp_epoch
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,0,1777374186.4777858
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,1,1777374189.2139382
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,2,1777374192.1892145
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,3,1777374194.901456
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,4,1777374198.3655307
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,6,1777374204.6115766
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,7,1777374208.1315236
+bae,"'Replay requested k=17, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,7,1777374210.3747098
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,8,1777374211.2671354
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,9,1777374214.533775
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,10,1777374218.3848784
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,11,1777374225.1800208
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,12,1777374228.8285072
+bae,"'Replay requested k=17, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,12,1777374231.412277
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,13,1777374232.4650612
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,14,1777374236.050556
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,16,1777374245.278406
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,17,1777374250.260256
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,18,1777374255.240154
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,19,1777374260.1324532
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,20,1777374265.0924425
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,21,1777374273.5590377
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,22,1777374278.7628858
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,24,1777374286.9146721
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,25,1777374292.146477
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,27,1777374304.1182075
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,28,1777374311.1857896
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,29,1777374317.4671533
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,30,1777374323.864634
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,31,1777374333.514591
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,32,1777374339.9496133
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,33,1777374346.85622
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,34,1777374352.945521
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,36,1777374365.5578003
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,37,1777374372.0713983
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,38,1777374378.9448447
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,39,1777374385.65316
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,40,1777374392.8491316
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,41,1777374402.7974572
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,42,1777374409.9670513
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,44,1777374423.4660704
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,45,1777374429.5460863
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,46,1777374436.830617
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,47,1777374444.5163503
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,48,1777374452.0319474
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,49,1777374458.6093428
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,50,1777374466.057188
+bae,"'Replay requested k=17, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,50,1777374470.7618134
+bae,"'Replay requested k=14, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,51,1777374476.9820771
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,52,1777374477.8914797
+bae,"'Replay requested k=14, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,52,1777374479.5432708
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,53,1777374480.5899131
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,54,1777374488.5768657
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,55,1777374495.4909976
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,56,1777374503.5428987
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,57,1777374511.5662951
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,58,1777374519.00275
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,60,1777374535.896866
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,61,1777374548.1712632
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,62,1777374557.5201657
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,63,1777374566.3548627
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,64,1777374575.03657
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,65,1777374585.6401446
+bae,"'Replay requested k=16, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,65,1777374589.2766047
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,67,1777374598.6986153
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,68,1777374608.9864402
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,69,1777374617.8220117
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,70,1777374627.831629
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,71,1777374640.1321561
+bae,"'Replay requested k=17, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,71,1777374643.7210226
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,72,1777374645.1697567
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,73,1777374655.8458357
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,74,1777374665.1858652
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,76,1777374685.647838
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,77,1777374696.6482017
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,78,1777374707.4194036
+bae,"'Replay requested k=14, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18, 21, 25, 28, 35].'",KeyError,hardware_replay,79,1777374721.9757113
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,80,1777374723.3033414
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,82,1777374748.8729987
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,83,1777374759.4880052
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,84,1777374770.590678
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,85,1777374785.8427029
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,86,1777374798.821482
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,87,1777374812.2786999
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,90,1777374849.779632
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,91,1777374868.8012557
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,92,1777374881.5217004
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,93,1777374894.514223
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,94,1777374907.8582196
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,95,1777374921.5460634
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,96,1777374935.3215795
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,97,1777374948.0254297
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,98,1777374963.4710116
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,99,1777374977.8224397

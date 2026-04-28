@@ -46,6 +46,22 @@ def simulate_multi_asset_gbm(
 
     N_paths, M, num_assets = Z.shape
 
+    if rho.shape != (num_assets, num_assets):
+        raise ValueError(
+            f"rho must have shape (d, d) = ({num_assets}, {num_assets}), "
+            f"got {rho.shape}."
+        )
+
+    # Spectral regularisation
+    delta = 1e-6
+    eigvals = np.linalg.eigvalsh(rho)
+    eps = max(0.0, -eigvals.min() + delta)
+    if eps > 0.0:
+        rho = rho + eps * np.eye(rho.shape[0])
+        # Rescale diagonal back to 1
+        d_inv = 1.0 / np.sqrt(np.diag(rho))
+        rho = rho * np.outer(d_inv, d_inv)
+
     if t.shape != (M,):
         raise ValueError(
             "t and Z must have matching time dimension: "
@@ -114,8 +130,9 @@ def simulate_multi_asset_gbm(
             raise ValueError("Moment matching failed: zero-variance slice.")
         Z = (Z - mean) / std
 
-    # correlate normals using Cholesky
     L = np.linalg.cholesky(rho)
+
+    # correlate normals using Cholesky
     Lt = np.ascontiguousarray(L.T)
 
     # increase memory contiguity for better performance in the matrix multiplication below

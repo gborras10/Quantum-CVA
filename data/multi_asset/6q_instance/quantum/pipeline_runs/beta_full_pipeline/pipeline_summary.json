@@ -1,0 +1,48 @@
+{
+  "classical": {
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\benchmark\\three_asset_instance.npz",
+    "skipped": true,
+    "stage_elapsed_s": 0.00016519997734576464
+  },
+  "final_statevector_cva": {
+    "cva_classical_reference": 0.5215900006813697,
+    "cva_statevector": 0.5864946085782612,
+    "default_l2_statevector": 0.0004554739067278678,
+    "default_n_params": 6,
+    "discount_l2_statevector": 0.009859537587022932,
+    "discount_n_params": 6,
+    "exposure_l2_statevector": 0.4885376867312731,
+    "exposure_n_params": 40,
+    "iqae_cva": 0.5862086099000984,
+    "iqae_oracle_queries": 55296,
+    "p111_statevector": 0.1328730942948926,
+    "qae_cva": 0.6464073242246955,
+    "qae_oracle_queries": 64512,
+    "qcbm_kl_statevector": 0.1130642781112419,
+    "qcbm_n_params": 51,
+    "relative_error_iqae_pct": 12.388774542133723,
+    "relative_error_qae_pct": 23.93016035205293,
+    "relative_error_statevector_pct": 12.44360662821459,
+    "stage_elapsed_s": 39.174085499951616
+  },
+  "train_crca_default": {
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+    "skipped": true,
+    "stage_elapsed_s": 0.00018129998352378607
+  },
+  "train_crca_discount": {
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+    "skipped": true,
+    "stage_elapsed_s": 0.0001517001073807478
+  },
+  "train_crca_exposure": {
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz",
+    "skipped": true,
+    "stage_elapsed_s": 0.00017779995687305927
+  },
+  "train_qcbm": {
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+    "skipped": true,
+    "stage_elapsed_s": 0.00019349996000528336
+  }
+}

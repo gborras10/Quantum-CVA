@@ -1,0 +1,47 @@
+{
+  "cases": [
+    {
+      "case_id": "base",
+      "call_strike": 4500.0,
+      "put_strike": 12500.0
+    },
+    {
+      "case_id": "call_down_10pct",
+      "call_strike": 4050.0,
+      "put_strike": 12500.0
+    },
+    {
+      "case_id": "call_up_10pct",
+      "call_strike": 4950.0,
+      "put_strike": 12500.0
+    },
+    {
+      "case_id": "put_down_10pct",
+      "call_strike": 4500.0,
+      "put_strike": 11250.0
+    },
+    {
+      "case_id": "put_up_10pct",
+      "call_strike": 4500.0,
+      "put_strike": 13750.000000000002
+    },
+    {
+      "case_id": "both_down_10pct",
+      "call_strike": 4050.0,
+      "put_strike": 11250.0
+    },
+    {
+      "case_id": "both_up_10pct",
+      "call_strike": 4950.0,
+      "put_strike": 13750.000000000002
+    }
+  ],
+  "repeats": 1,
+  "resume": false,
+  "force": false,
+  "run_qae": false,
+  "run_iqae": false,
+  "exposure_shots": null,
+  "exposure_maxiter": null,
+  "no_warmstart": false
+}

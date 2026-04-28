@@ -1,0 +1,3 @@
+amplification_factor,cx,cz,decomposed_2q,decomposed_depth,ecr,grover_power,isa_2q,isa_depth,isa_size,logical_2q,logical_depth,p_ideal,rzz,swap,within_2q_limit,within_depth_limit
+1,0,18,12,26,0,0,18,65,98,6,10,0.07232750360492672,0,0,True,True
+3,0,64,42,89,0,1,64,214,319,36,73,0.5314509384038665,0,0,True,True

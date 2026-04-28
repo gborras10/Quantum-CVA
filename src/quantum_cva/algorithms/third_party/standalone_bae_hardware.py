@@ -375,7 +375,7 @@ class StandaloneBAEHardware:
         self.strategy.update(kwargs.get("strategy", {}))
 
         self.sampler_kwargs = {
-            "Npart": int(kwargs.get("Npart", 2000)),
+            "Npart": int(kwargs.get("Npart", 800)),
             "thr": float(kwargs.get("thr", 0.5)),
             "var": kwargs.get("var", "theta"),
             "ut": kwargs.get("ut", "var"),

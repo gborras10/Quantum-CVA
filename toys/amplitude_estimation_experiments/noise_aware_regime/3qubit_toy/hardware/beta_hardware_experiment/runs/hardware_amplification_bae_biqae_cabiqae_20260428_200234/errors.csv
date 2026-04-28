@@ -1,0 +1,405 @@
+algorithm,error,error_type,phase,repetition,timestamp_epoch
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,0,1777399467.5163362
+bae,"'Replay requested k=26, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,0,1777399468.6015615
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,1,1777399472.0319
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,1,1777399473.7261674
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,2,1777399477.056889
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,2,1777399479.2628276
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,3,1777399482.4941509
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,3,1777399484.11478
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,4,1777399486.2904377
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,5,1777399493.2351637
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,5,1777399496.77738
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,6,1777399499.6917095
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,6,1777399503.0042038
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,7,1777399505.3317678
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,7,1777399508.0873554
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,8,1777399511.1412308
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,9,1777399519.9272509
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,9,1777399522.4014425
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,10,1777399525.750141
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,10,1777399527.1807854
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,11,1777399532.9650946
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,11,1777399534.9339972
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,12,1777399537.9067938
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,12,1777399540.7971697
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,13,1777399543.9319994
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,13,1777399548.1784246
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,14,1777399550.164899
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,15,1777399558.0206025
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,15,1777399560.3660712
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,16,1777399563.8030617
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,16,1777399568.6628196
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,17,1777399571.8956969
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,17,1777399575.0831027
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,18,1777399578.2712588
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,18,1777399582.7098093
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,19,1777399587.2005627
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,19,1777399591.3352025
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,20,1777399594.6875677
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,20,1777399597.4449034
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,21,1777399603.242058
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,21,1777399605.1585631
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,22,1777399608.7182205
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,22,1777399611.3368382
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,23,1777399614.9722402
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,23,1777399619.4768312
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,24,1777399622.7626774
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,24,1777399624.7480834
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,25,1777399627.019348
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,25,1777399629.6989536
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,26,1777399631.4623418
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,26,1777399633.5422559
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,27,1777399636.6452115
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,27,1777399638.7800376
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,28,1777399642.7871752
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,29,1777399651.7953157
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,29,1777399655.611823
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,30,1777399658.6963024
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,31,1777399670.161217
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,31,1777399676.7072146
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,32,1777399681.4878995
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,32,1777399684.8170512
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,33,1777399687.9247823
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,33,1777399691.950919
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,34,1777399694.6433306
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,34,1777399698.6561291
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,35,1777399701.8328152
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,36,1777399711.5887127
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,36,1777399716.1127086
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,37,1777399719.0483177
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,37,1777399722.5314999
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,38,1777399726.283586
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,38,1777399732.346901
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,39,1777399734.49189
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,39,1777399737.067835
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,40,1777399738.7142823
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,40,1777399741.3397496
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,41,1777399746.7730236
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,42,1777399756.6217659
+bae,"'Replay requested k=29, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,42,1777399759.1113236
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,43,1777399762.0118716
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,43,1777399767.8641057
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,44,1777399771.315397
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,44,1777399778.3533328
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,45,1777399781.0723786
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,46,1777399792.6585088
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,46,1777399798.129335
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,47,1777399801.6101737
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,47,1777399806.9715126
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,48,1777399810.4983976
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,48,1777399813.396727
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,49,1777399815.1667962
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,50,1777399828.9675174
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,50,1777399839.0924964
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,51,1777399844.7743707
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,51,1777399847.759039
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,52,1777399850.7944508
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,52,1777399853.7203827
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,53,1777399856.1451669
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,53,1777399863.3388596
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,54,1777399867.0673542
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,54,1777399870.398408
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,55,1777399874.1071978
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,55,1777399879.100669
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,56,1777399882.279078
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,56,1777399886.7918758
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,57,1777399890.5293636
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,58,1777399903.380251
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,58,1777399910.3841639
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,59,1777399913.8031104
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,59,1777399918.4553568
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,60,1777399921.5898108
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,60,1777399925.2078676
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,61,1777399932.2628074
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,61,1777399941.317351
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,62,1777399944.433796
+bae,"'Replay requested k=26, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,62,1777399948.259541
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,63,1777399951.493234
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,63,1777399954.8895352
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,64,1777399959.9237628
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,64,1777399964.6135273
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,65,1777399966.9077148
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,65,1777399970.5210264
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,66,1777399973.0972195
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,67,1777399987.9875789
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,67,1777399994.4800484
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,68,1777399997.7641034
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,68,1777400001.3059337
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,69,1777400004.2083566
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,70,1777400016.470311
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,70,1777400023.1542861
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,71,1777400028.7735112
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,71,1777400034.0941043
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,72,1777400037.1286922
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,72,1777400040.7845302
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,73,1777400043.3261597
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,73,1777400049.8977435
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,74,1777400053.219693
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,74,1777400064.7777452
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,75,1777400067.9516196
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,75,1777400073.1315596
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,76,1777400076.1148093
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,76,1777400086.1636648
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,77,1777400089.0716486
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,77,1777400095.916965
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,78,1777400099.0011768
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,79,1777400111.9743094
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,79,1777400115.950666
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,80,1777400119.1226082
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,80,1777400126.243937
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,81,1777400132.9301784
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,81,1777400136.9713712
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,82,1777400139.5064406
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,82,1777400142.0607321
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,83,1777400145.2246416
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,83,1777400149.289825
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,84,1777400152.77979
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,84,1777400163.5819924
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,85,1777400166.7707546
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,85,1777400170.7784674
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,86,1777400172.8026655
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,86,1777400180.286542
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,87,1777400183.6834955
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,87,1777400194.121695
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,88,1777400196.9062288
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,88,1777400201.2461898
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,89,1777400203.4173596
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,89,1777400214.7388778
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,90,1777400217.825756
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,90,1777400225.296679
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,91,1777400229.913367
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,91,1777400234.2475173
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,92,1777400237.3690283
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,92,1777400248.2169976
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,93,1777400251.032452
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,93,1777400255.558859
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,94,1777400258.4855936
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,94,1777400263.9904764
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,95,1777400267.1036718
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,95,1777400273.8734863
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,96,1777400276.8933685
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,96,1777400287.274863
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,97,1777400290.7006683
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,98,1777400306.1563585
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,98,1777400320.177103
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,99,1777400323.3151815
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,99,1777400329.863661
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,100,1777400332.8169088
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,100,1777400337.5760193
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,101,1777400342.1337512
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,101,1777400354.1869433
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,102,1777400358.3761394
+bae,"'Replay requested k=31, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,102,1777400363.2497895
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,103,1777400366.2139745
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,103,1777400371.1913257
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,104,1777400373.1687605
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,104,1777400385.724886
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,105,1777400388.6907096
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,105,1777400393.60161
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,106,1777400396.4489038
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,106,1777400401.184609
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,107,1777400404.5205717
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,108,1777400419.8086085
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,108,1777400426.4789805
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,109,1777400429.4794302
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,109,1777400434.5063798
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,110,1777400437.417234
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,110,1777400444.4804525
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,111,1777400450.1234558
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,111,1777400460.967836
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,112,1777400464.4102669
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,113,1777400480.6098602
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,113,1777400487.713094
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,114,1777400490.6306658
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,114,1777400497.7016492
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,115,1777400500.923008
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,115,1777400506.0928552
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,116,1777400509.2036934
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,116,1777400516.577217
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,117,1777400519.5591393
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,118,1777400539.2601802
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,118,1777400544.6945622
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,119,1777400546.658237
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,119,1777400558.227463
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,120,1777400560.4258807
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,120,1777400572.4428084
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,121,1777400578.930193
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,121,1777400595.8484113
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,122,1777400598.7963924
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,122,1777400604.6372724
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,123,1777400606.8107483
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,123,1777400619.2741556
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,124,1777400621.2568467
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,124,1777400633.9406903
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,125,1777400637.253274
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,125,1777400647.2342196
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,126,1777400650.1500728
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,127,1777400669.6770654
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,127,1777400675.5617077
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,128,1777400678.589645
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,128,1777400688.9335997
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,129,1777400692.3853002
+bae,"'Replay requested k=32, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,129,1777400703.566553
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,130,1777400707.5365036
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,131,1777400732.5771103
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,131,1777400743.0042558
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,132,1777400745.7888932
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,133,1777400767.7827597
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,134,1777400787.5627353
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,134,1777400800.4287105
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,135,1777400802.5431101
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,135,1777400820.746194
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,136,1777400823.4847872
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,136,1777400834.308956
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,137,1777400837.2807405
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,137,1777400843.575757
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,138,1777400846.7531283
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,138,1777400857.1476414
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,139,1777400860.537296
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,140,1777400881.9094813
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,140,1777400888.450031
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,141,1777400894.5348492
+bae,"'Replay requested k=33, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,141,1777400903.2227805
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,142,1777400906.227333
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,142,1777400914.6029487
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,143,1777400917.6939995
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,143,1777400931.173437
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,144,1777400934.2075071
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,145,1777400955.0976384
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,146,1777400972.724863
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,147,1777400992.4783509
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,147,1777400999.0474052
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,148,1777401002.0885706
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,148,1777401010.8744938
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,149,1777401014.036563
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,149,1777401025.195306
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,150,1777401029.2546225
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,150,1777401033.4720514
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,151,1777401038.1822934
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,152,1777401057.8101656
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,152,1777401064.625003
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,153,1777401067.770695
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,153,1777401077.2850287
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,154,1777401080.4992967
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,155,1777401100.369508
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,155,1777401109.5862644
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,156,1777401112.454974
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,156,1777401127.143442
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,157,1777401130.1889586
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,157,1777401145.1045983
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,158,1777401148.402399
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,159,1777401169.4010298
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,159,1777401182.4315865
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,160,1777401185.4895532
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,160,1777401200.2766564
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,161,1777401206.602301
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,161,1777401215.4575086
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,162,1777401217.275197
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,162,1777401226.2732384
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,163,1777401229.7880406
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,163,1777401245.3000956
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,164,1777401248.630352
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,164,1777401258.7326756
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,165,1777401261.6830783
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,165,1777401266.4883573
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,166,1777401269.7728553
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,166,1777401280.0599532
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,167,1777401283.2624261
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,167,1777401302.253051
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,168,1777401305.2877517
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,168,1777401312.8644977
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,169,1777401316.0231674
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,169,1777401323.5924153
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,170,1777401326.4616244
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,170,1777401337.3987887
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,171,1777401343.1331594
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,171,1777401358.577734
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,172,1777401361.1053367
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,172,1777401371.0760524
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,173,1777401374.0447237
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,173,1777401384.036701
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,174,1777401385.0951004
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,174,1777401392.8555171
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,175,1777401396.0148335
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,175,1777401406.4418552
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,176,1777401408.7165122
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,176,1777401422.671446
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,177,1777401424.5691512
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,177,1777401437.9604416
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,178,1777401440.1272044
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,178,1777401450.497946
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,179,1777401453.838321
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,179,1777401470.1184013
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,180,1777401473.2400687
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,181,1777401496.484337
+bae,"'Replay requested k=32, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,181,1777401504.1405687
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,182,1777401506.0214663
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,182,1777401513.9339123
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,183,1777401517.127521
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,184,1777401542.879487
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,185,1777401568.865707
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,185,1777401577.2699895
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,186,1777401579.3903003
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,187,1777401604.3040233
+bae,"'Replay requested k=26, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,187,1777401609.4777117
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,188,1777401612.6332273
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,188,1777401632.695221
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,189,1777401635.7387874
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,189,1777401652.3884525
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,190,1777401655.459826
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,190,1777401669.337805
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,191,1777401674.929296
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,192,1777403665.496882
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,192,1777403679.8112943
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,193,1777403684.6424348
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,194,1777403723.3215585
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,194,1777403740.281143
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,195,1777403744.7268615
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,195,1777403762.450852
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,196,1777403765.2533462
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,196,1777403791.1027563
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,197,1777403795.5539467
+bae,"'Replay requested k=26, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,197,1777403812.4631305
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,198,1777403815.8370042
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,198,1777403848.4298263
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,199,1777403852.5066795
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,199,1777403879.0334718
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,200,1777403883.601847
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,200,1777403915.1933053
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,201,1777403925.5030973
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,201,1777403940.1269073
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,202,1777403944.0774343
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,202,1777403957.0160122
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,203,1777403962.323472
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,203,1777403973.423762
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,204,1777403977.5233436
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,205,1777404013.1369436
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,205,1777404044.551068
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,206,1777404049.4505746
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,206,1777404061.6502087
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,207,1777404066.661831
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,207,1777404091.7175558
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,208,1777404095.3127267
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,208,1777404137.3703535
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,209,1777404142.7509775
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,210,1777404181.80047
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,210,1777404218.181809
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,211,1777404227.0698414
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,211,1777404256.4638364
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,212,1777404260.800343
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,212,1777404287.8398588
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,213,1777404292.3303485
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,214,1777404319.0431895
+bae,"'Replay requested k=28, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,214,1777404328.5415885
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,215,1777404331.775537
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,215,1777404341.4673393
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,216,1777404344.7022674
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,216,1777404362.6858518
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,217,1777404366.8971002
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,218,1777404408.374274
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,218,1777404425.6833503
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,219,1777404428.3308067
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,219,1777404460.9840362
+biqae,'The job was not completed successfully.',AlgorithmError,hardware_replay,220,1777404466.4699721
+bae,"'Replay requested k=27, but no premeasured hardware probability exists for that Grover power. Available k values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25].'",KeyError,hardware_replay,220,1777404494.1954744
