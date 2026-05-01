@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+TOY_DIR = Path(__file__).resolve().parents[2]
+if str(TOY_DIR) not in sys.path:
+    sys.path.insert(0, str(TOY_DIR))
+
+from ae_final_error_plots import plot_final_error_figures
 
 
 STYLE = {
@@ -70,6 +77,66 @@ def amplification_factors(group: pd.DataFrame) -> np.ndarray:
     if "grover_power_max_median" in group:
         return 2.0 * group["grover_power_max_median"].to_numpy(dtype=float) + 1.0
     return np.full(len(group), np.nan, dtype=float)
+
+
+def actual_trace_label(algorithm: str, group: pd.DataFrame) -> str:
+    if "repetition" not in group:
+        return str(algorithm)
+    n_repetitions = int(group["repetition"].nunique())
+    return f"{algorithm} ({n_repetitions} reps)"
+
+
+def log_binned_trace_summary(
+    query_budget: np.ndarray,
+    error: np.ndarray,
+    *,
+    max_bins: int = 14,
+    min_points_per_bin: int = 5,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    valid = (
+        np.isfinite(query_budget)
+        & np.isfinite(error)
+        & (query_budget > 0.0)
+        & (error > 0.0)
+    )
+    query_budget = query_budget[valid]
+    error = error[valid]
+    if query_budget.size == 0:
+        return np.asarray([]), np.asarray([]), np.asarray([])
+
+    if query_budget.size <= max_bins:
+        order = np.argsort(query_budget)
+        return query_budget[order], error[order], np.zeros(query_budget.size, dtype=float)
+
+    q_min = float(np.nanmin(query_budget))
+    q_max = float(np.nanmax(query_budget))
+    if not np.isfinite(q_min) or not np.isfinite(q_max) or q_min <= 0.0 or q_max <= q_min:
+        return np.asarray([]), np.asarray([]), np.asarray([])
+
+    edges = np.geomspace(q_min, q_max, num=max_bins + 1)
+    bin_index = np.digitize(query_budget, edges, right=False) - 1
+    bin_index = np.clip(bin_index, 0, max_bins - 1)
+
+    x_values: list[float] = []
+    y_values: list[float] = []
+    yerr_values: list[float] = []
+    for idx in range(max_bins):
+        mask = bin_index == idx
+        n_points = int(np.sum(mask))
+        if n_points < min_points_per_bin:
+            continue
+        q_bin = query_budget[mask]
+        e_bin = error[mask]
+        x_values.append(float(np.nanmedian(q_bin)))
+        y_values.append(float(np.nanmedian(e_bin)))
+        err_std = float(np.nanstd(e_bin, ddof=1)) if n_points > 1 else 0.0
+        yerr_values.append(err_std / np.sqrt(n_points))
+
+    return (
+        np.asarray(x_values, dtype=float),
+        np.asarray(y_values, dtype=float),
+        np.asarray(yerr_values, dtype=float),
+    )
 
 
 def bootstrap_median_ci(values: np.ndarray, n_boot: int = 2000, alpha: float = 0.05) -> tuple[float, float, float]:
@@ -218,83 +285,115 @@ def plot_direct_trace(run_dir: Path, out_dir: Path) -> None:
 
 
 def plot_replay_budget(run_dir: Path, out_dir: Path) -> None:
-    summary = maybe_read(run_dir / "budget_summary.csv")
-    if summary.empty:
+    plot_replay_actual_queries(run_dir, out_dir, output_stem="hardware_replay_budget")
+
+
+def plot_replay_actual_queries(
+    run_dir: Path,
+    out_dir: Path,
+    *,
+    output_stem: str = "hardware_replay_actual_queries",
+) -> None:
+    trace = maybe_read(run_dir / "replay_trace_rows.csv")
+    if trace.empty or "algorithm" not in trace or "query_budget" not in trace:
         return
-    fig, ax = plt.subplots(figsize=(8.0, 4.8))
+    if "normalized_abs_error" not in trace and "nrmse" not in trace:
+        return
+
+    error_col = "normalized_abs_error" if "normalized_abs_error" in trace else "nrmse"
+    fig, ax = plt.subplots(figsize=(6.8, 4.2))
     guide_points: list[tuple[float, float]] = []
-    success_counts, total_repetitions = replay_success_counts(run_dir)
-    for algorithm, group in summary.groupby("algorithm"):
-        group = group.sort_values("budget")
+
+    for algorithm, group in trace.groupby("algorithm"):
+        group = group.copy()
+        group["query_budget"] = pd.to_numeric(group["query_budget"], errors="coerce")
+        group[error_col] = pd.to_numeric(group[error_col], errors="coerce")
+        group = group[
+            np.isfinite(group["query_budget"])
+            & np.isfinite(group[error_col])
+            & (group["query_budget"] > 0.0)
+            & (group[error_col] > 0.0)
+        ]
+        if group.empty:
+            continue
+
         style = STYLE.get(str(algorithm), {"color": None, "marker": "o"})
-        y_median = column(group, "normalized_abs_error_median", "nrmse_median")
-        if "normalized_abs_error_se" in group:
-            yerr = group["normalized_abs_error_se"].to_numpy(dtype=float)
-        else:
-            yerr = np.zeros(len(group), dtype=float)
-        y_values = y_median.to_numpy(dtype=float)
-        yerr = np.asarray(yerr, dtype=float)
+        query_budget = group["query_budget"].to_numpy(dtype=float)
+        error = group[error_col].to_numpy(dtype=float)
+
+        x_values, y_values, yerr = log_binned_trace_summary(
+            query_budget,
+            error,
+            max_bins=12,
+            min_points_per_bin=100,
+        )
+        if x_values.size == 0:
+            continue
+        order = np.argsort(x_values)
+        x_values = x_values[order]
+        y_values = y_values[order]
+        yerr = yerr[order]
         yerr = np.where(np.isfinite(yerr), yerr, 0.0)
         yerr = np.minimum(yerr, np.maximum(0.0, 0.95 * y_values))
+
         guide_points.extend(
             (float(x), float(y))
-            for x, y in zip(group["budget"], y_median)
-            if np.isfinite(float(x)) and np.isfinite(float(y)) and float(x) > 0 and float(y) > 0
+            for x, y in zip(x_values, y_values)
+            if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
         )
         ax.errorbar(
-            group["budget"],
+            x_values,
             y_values,
             yerr=yerr,
             marker=style["marker"],
             color=style["color"],
-            linewidth=1.6,
+            linewidth=2.0,
+            markersize=5.6,
             elinewidth=1.0,
-            capsize=3,
-            label=budget_label(str(algorithm), group, success_counts, total_repetitions),
+            capsize=2.8,
+            label=actual_trace_label(str(algorithm), group),
         )
-        for x_val, y_val, k_val in zip(group["budget"].to_numpy(dtype=float), y_values, amplification_factors(group)):
-            if np.isfinite(x_val) and np.isfinite(y_val) and np.isfinite(k_val):
-                ax.annotate(
-                    f"K={int(np.rint(k_val))}",
-                    xy=(x_val, y_val),
-                    xytext=(4, 4),
-                    textcoords="offset points",
-                    fontsize=7,
-                    color=style["color"],
-                    alpha=0.9,
-                )
+
     if guide_points:
-        budgets = np.asarray(sorted(summary["budget"].dropna().unique()), dtype=float)
-        budgets = budgets[budgets > 0]
-        if budgets.size:
-            x0 = float(budgets[0])
-            y0_values = [y for x, y in guide_points if np.isclose(x, x0)]
-            y0 = float(np.nanmedian(y0_values)) if y0_values else float(np.nanmedian([y for _, y in guide_points]))
+        x_values = np.asarray([x for x, _ in guide_points], dtype=float)
+        y_values = np.asarray([y for _, y in guide_points], dtype=float)
+        valid = np.isfinite(x_values) & np.isfinite(y_values) & (x_values > 0.0) & (y_values > 0.0)
+        x_values = x_values[valid]
+        y_values = y_values[valid]
+        if x_values.size:
+            x0 = float(np.nanmin(x_values))
+            y0_values = y_values[np.isclose(x_values, x0)]
+            y0 = float(np.nanmedian(y0_values)) if y0_values.size else float(np.nanmedian(y_values))
+            guide_x = np.geomspace(x0, float(np.nanmax(x_values)), num=200)
             ax.loglog(
-                budgets,
-                y0 * (x0 / budgets),
+                guide_x,
+                y0 * (x0 / guide_x),
                 color="black",
                 linestyle="--",
-                linewidth=1.2,
-                label="O(1/N)",
+                linewidth=1.15,
+                alpha=0.82,
+                label=r"$O(1/N)$",
             )
             ax.loglog(
-                budgets,
-                y0 * np.sqrt(x0 / budgets),
+                guide_x,
+                y0 * np.sqrt(x0 / guide_x),
                 color="black",
                 linestyle=":",
-                linewidth=1.4,
-                label=r"O(1/\sqrt{N})",
+                linewidth=1.35,
+                alpha=0.82,
+                label=r"$O(1/\sqrt{N})$",
             )
+
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Query budget")
-    ax.set_ylabel("Median normalized absolute error (SE bars)")
-    ax.set_title("Hardware replay budget comparison")
-    ax.grid(True, which="both", alpha=0.25)
-    ax.legend(frameon=False)
+    ax.set_xlabel(r"Actual query cost $N_q$")
+    ax.set_ylabel("Median normalized absolute error")
+    ax.grid(True, which="major", alpha=0.24)
+    ax.grid(True, which="minor", alpha=0.12)
+    ax.legend(frameon=False, loc="lower left")
     fig.tight_layout()
-    fig.savefig(out_dir / "hardware_replay_budget.png", dpi=220)
+    fig.savefig(out_dir / f"{output_stem}.png", dpi=300)
+    fig.savefig(out_dir / f"{output_stem}.pdf")
     plt.close(fig)
 
 
@@ -332,6 +431,17 @@ def plot_final_comparison(run_dir: Path, out_dir: Path) -> None:
     plt.close(fig)
 
 
+def plot_replay_final_error_figures(run_dir: Path, out_dir: Path) -> None:
+    final_path = run_dir / "replay_final_rows.csv"
+    if not final_path.exists() or final_path.stat().st_size == 0:
+        return
+    plot_final_error_figures(
+        final_path,
+        out_dir,
+        title_suffix="under hardware replay",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plot beta hardware experiment artifacts.")
     parser.add_argument("--run-dir", required=True)
@@ -342,7 +452,9 @@ def main() -> None:
     plot_amplification(run_dir, out_dir)
     plot_direct_trace(run_dir, out_dir)
     plot_replay_budget(run_dir, out_dir)
+    plot_replay_actual_queries(run_dir, out_dir)
     plot_final_comparison(run_dir, out_dir)
+    plot_replay_final_error_figures(run_dir, out_dir)
     print(f"Plots saved in: {out_dir}")
 
 

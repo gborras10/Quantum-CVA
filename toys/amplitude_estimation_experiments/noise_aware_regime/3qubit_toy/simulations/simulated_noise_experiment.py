@@ -3,10 +3,12 @@
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from qiskit import QuantumCircuit
 from qiskit_ibm_runtime import QiskitRuntimeService
 
@@ -29,26 +31,21 @@ for path in [src_dir, toy_dir, root_dir]:
 # Imports
 # --------------------------------------------------------------------------------------
 try:
+    from ae_actual_query_plots import plot_actual_query_error
     from ae_pipeline_utils import (
         BAE_KIND,
         PHYSICAL_BACKEND_NAME,
         TRANSPILER_OPTIMIZATION_LEVEL,
         AerCountSampler,
-        aggregate_budget_rows,
         build_problem_with_true_amplitude,
         build_noise_model,
         build_solver,
         calibrate_effective_T,
         choose_transpilation_plan,
         construct_measured_circuit,
-        estimate_at_budget,
         extract_trace,
-        kmax_at_budget,
-        plot_budget_panels,
-        print_budget_summary,
         print_final_summary,
         save_csv,
-        time_to_budget,
     )
 except ImportError as e:
     print(f"Error importing project modules: {e}")
@@ -66,12 +63,6 @@ RUN_EPSILON_BY_ALGORITHM = {
 ALPHA = 0.05
 NUM_SHOTS = 128
 
-MIN_COMMON_BUDGET = NUM_SHOTS
-BUDGETS = np.unique(
-    np.round(np.logspace(np.log10(MIN_COMMON_BUDGET), np.log10(15000), 8)).astype(int)
-)
-
-MAX_ANALYSIS_BUDGET = int(BUDGETS[-1])
 BAE_MAX_ANALYSIS_BUDGET = 15000
 
 NOISE_PROFILE_NAME = "realistic"
@@ -94,13 +85,6 @@ ALGORITHM_LABELS = {
     "biqae": "BIQAE",
     "cabiqae_latentt": "CABIQAE_latentt",
 }
-
-ALGORITHM_STYLES = {
-    "bae": {"color": "#1D3557", "marker": "o"},
-    "biqae": {"color": "#E63946", "marker": "s"},
-    "cabiqae_latentt": {"color": "#2A9D8F", "marker": "^"},
-}
-
 
 def load_physical_transpile_backend():
     service = QiskitRuntimeService()
@@ -208,7 +192,7 @@ def run_experiment() -> None:
         f"plans:{transpilation_plan.evaluated_plans}"
     )
     print(f"Amplitude scenarios = {len(scenarios)}")
-    print(f"Budgets = {list(BUDGETS)}")
+    print("Budget policy = actual per-algorithm query costs from adaptive traces")
     print(f"BAE max analysis budget = {BAE_MAX_ANALYSIS_BUDGET}")
     print(f"Repetitions per scenario = {N_REP}")
     print(f"Probe ks = {PROBE_KS}, probe shots = {PROBE_SHOTS}")
@@ -220,8 +204,8 @@ def run_experiment() -> None:
     )
 
     calibration_rows: list[dict[str, Any]] = []
-    budget_rows: list[dict[str, Any]] = []
     final_rows: list[dict[str, Any]] = []
+    trace_rows: list[dict[str, Any]] = []
 
     # --------------------------------------------------------------------------
     # T_eff calibration (una vez por scenario)
@@ -285,7 +269,6 @@ def run_experiment() -> None:
         )
 
         for rep in range(N_REP):
-            run_results: dict[str, dict[str, Any]] = {}
             noisy_sampler = AerCountSampler(
                 noise_model=build_noise_model(1.0),
                 seed=100_000 + scenario_id * 1000 + rep,
@@ -345,6 +328,41 @@ def run_experiment() -> None:
                     final_queries = int(getattr(result, "num_state_prep_calls", queries[-1]))
                     k_max = int(np.max(k_sequence)) if len(k_sequence) > 0 else 0
 
+                    final_queries_float = float(final_queries)
+                    for step_index, (query, estimate, amplification_factor) in enumerate(
+                        zip(queries, estimations, k_sequence)
+                    ):
+                        query_budget = float(query)
+                        step_abs_error = abs(float(estimate) - a_true)
+                        runtime_to_budget = (
+                            float(runtime_seconds * query_budget / final_queries_float)
+                            if final_queries_float > 0.0
+                            else np.nan
+                        )
+                        k_max_budget = int(np.max(k_sequence[: step_index + 1]))
+                        trace_rows.append(
+                            {
+                                "profile": NOISE_PROFILE_NAME,
+                                "scenario_id": scenario_id,
+                                "objective_ry_offset": offset,
+                                "a_true": a_true,
+                                "rep": rep + 1,
+                                "step_index": int(step_index),
+                                "algorithm": ALGORITHM_LABELS[alg_key],
+                                "budget": query_budget,
+                                "query_budget": query_budget,
+                                "query_budget_actual": query_budget,
+                                "estimate": float(estimate),
+                                "abs_error": float(step_abs_error),
+                                "normalized_abs_error": float(step_abs_error / a_true),
+                                "nrmse": float(step_abs_error / a_true),
+                                "amplification_factor": int(amplification_factor),
+                                "k_max_budget": k_max_budget,
+                                "time_to_budget_seconds": runtime_to_budget,
+                                "runtime_seconds": runtime_to_budget,
+                            }
+                        )
+
                     ci = getattr(result, "confidence_interval", None)
                     coverage = (
                         np.nan
@@ -370,13 +388,6 @@ def run_experiment() -> None:
                         }
                     )
 
-                    run_results[alg_key] = {
-                        "queries": queries,
-                        "estimations": estimations,
-                        "k_sequence": k_sequence,
-                        "runtime_seconds": runtime_seconds,
-                    }
-
                     print(
                         f"  s{scenario_id:02d} | rep={rep + 1:02d} | "
                         f"{alg_key:15s} | "
@@ -391,93 +402,6 @@ def run_experiment() -> None:
                         f"  Error in s{scenario_id:02d}, rep={rep + 1}, alg={alg_key}: {e}"
                     )
 
-            # ------------------------------------------------------------------
-            # Budget-aligned comparison — LÓGICA CORREGIDA
-            #
-            # Problema original: se usaba
-            #
-            #   common_budget_ceiling = min(trayectoria_alg_1[-1],
-            #                              trayectoria_alg_2[-1],
-            #                              trayectoria_alg_3[-1])
-            #
-            # y se descartaban los budgets > ceiling para el run entero.
-            # Esto hacía que a budgets altos solo sobrevivieran los runs donde
-            # todos los algoritmos tardaron mucho (casos difíciles), sesgando
-            # la muestra de forma distinta en cada punto del eje x.
-            #
-            # Solución: filtrar POR BUDGET, no por run.
-            # Para cada budget B, solo se incluye este run si los tres algoritmos
-            # tienen una estimación real disponible a B queries. Así la muestra
-            # de runs que compone cada punto del eje x es la misma para los tres
-            # algoritmos, comparación limpia.
-            # ------------------------------------------------------------------
-            if not all(alg in run_results for alg in ALGORITHMS):
-                # Algún algoritmo petó completamente: run no comparable.
-                continue
-
-            for budget in BUDGETS:
-                budget_int = int(budget)
-                if budget_int > MAX_ANALYSIS_BUDGET:
-                    continue
-
-                # El budget se añade de forma atómica: si algún algoritmo no
-                # tiene estimación real en B, no añadimos filas para ninguno.
-                per_algorithm_rows: list[dict[str, Any]] = []
-                for alg_key in ALGORITHMS:
-                    alg_results = run_results[alg_key]
-                    if (
-                        len(alg_results["queries"]) == 0
-                        or int(alg_results["queries"][-1]) < budget_int
-                    ):
-                        per_algorithm_rows = []
-                        break
-
-                    est = estimate_at_budget(
-                        alg_results["queries"],
-                        alg_results["estimations"],
-                        budget_int,
-                    )
-                    if est is None:
-                        per_algorithm_rows = []
-                        break
-
-                    kmax_budget = kmax_at_budget(
-                        alg_results["queries"],
-                        alg_results["k_sequence"],
-                        budget_int,
-                    )
-                    time_budget = time_to_budget(
-                        alg_results["queries"],
-                        float(alg_results["runtime_seconds"]),
-                        budget_int,
-                    )
-                    if kmax_budget is None or time_budget is None:
-                        per_algorithm_rows = []
-                        break
-
-                    abs_error = abs(est - a_true)
-                    normalized_abs_error = abs_error / a_true
-
-                    per_algorithm_rows.append(
-                        {
-                            "profile": NOISE_PROFILE_NAME,
-                            "scenario_id": scenario_id,
-                            "objective_ry_offset": offset,
-                            "a_true": a_true,
-                            "rep": rep + 1,
-                            "budget": budget_int,
-                            "algorithm": ALGORITHM_LABELS[alg_key],
-                            "estimate": float(est),
-                            "abs_error": float(abs_error),
-                            "normalized_abs_error": float(normalized_abs_error),
-                            "k_max_budget": int(kmax_budget),
-                            "time_to_budget_seconds": float(time_budget),
-                        }
-                    )
-
-                if len(per_algorithm_rows) == len(ALGORITHMS):
-                    budget_rows.extend(per_algorithm_rows)
-
     # --------------------------------------------------------------------------
     # Save
     # --------------------------------------------------------------------------
@@ -485,155 +409,54 @@ def run_experiment() -> None:
     save_csv(calibration_rows, calibration_csv)
 
     budget_csv = os.path.join(current_dir, "large_realistic_budget_rows.csv")
-    save_csv(budget_rows, budget_csv)
+    save_csv(trace_rows, budget_csv)
+
+    trace_csv = os.path.join(current_dir, "large_realistic_trace_rows.csv")
+    save_csv(trace_rows, trace_csv)
 
     final_csv = os.path.join(current_dir, "large_realistic_final_rows.csv")
     save_csv(final_rows, final_csv)
 
     print(f"\nSaved calibration rows  → {calibration_csv}")
-    print(f"Saved budget-aligned rows → {budget_csv}")
+    print(f"Saved actual-budget rows → {budget_csv}")
+    print(f"Saved trace rows        → {trace_csv}")
     print(f"Saved final rows         → {final_csv}")
 
     # --------------------------------------------------------------------------
     # Summary + plot
     # --------------------------------------------------------------------------
-    summary_rows = aggregate_budget_rows(budget_rows, ALGORITHMS, ALGORITHM_LABELS)
-
-    # Muestra cuántos runs contribuyen a cada budget (útil para detectar
-    # si algún algoritmo desaparece a budgets altos por no llegar).
-    _print_coverage_table(budget_rows)
-
-    print_budget_summary(summary_rows, [NOISE_PROFILE_NAME])
     print_final_summary(final_rows, [NOISE_PROFILE_NAME], ALGORITHMS, ALGORITHM_LABELS)
 
-    plot_path = os.path.join(current_dir, "large_realistic_budget_aligned_panels.png")
-    plot_budget_panels(
-        summary_rows,
-        plot_path,
-        [NOISE_PROFILE_NAME],
-        ALGORITHMS,
-        ALGORITHM_LABELS,
-        ALGORITHM_STYLES,
-        BUDGETS,
+    actual_query_plot_path = os.path.join(current_dir, "large_realistic_actual_queries.png")
+    actual_summary = plot_actual_query_error(
+        pd.DataFrame(trace_rows),
+        Path(actual_query_plot_path),
+        summary_path=Path(current_dir) / "large_realistic_budget_summary.csv",
+        pdf_path=Path(current_dir) / "large_realistic_actual_queries.pdf",
     )
-    print(f"Saved plot → {plot_path}")
-    _plot_error_vs_runtime(summary_rows)
+    _print_actual_budget_summary(actual_summary)
+    print(f"Saved actual-query plot → {actual_query_plot_path}")
     plt.show()
 
 
-def _print_coverage_table(budget_rows: list[dict[str, Any]]) -> None:
-    """
-    Imprime cuántos runs (scenario, rep) contribuyen a cada (budget, algoritmo).
-    Si un algoritmo desaparece a budgets altos es señal de que sus trayectorias
-    son más cortas que el budget: el filtro por-budget lo está excluyendo.
-    """
-    print("\n=== Runs que contribuyen a cada budget (per algoritmo) ===")
-    budgets = sorted({int(r["budget"]) for r in budget_rows})
-    alg_names = [ALGORITHM_LABELS[alg] for alg in ALGORITHMS]
-
-    header = f"{'budget':>8}  " + "  ".join(f"{a:>18}" for a in alg_names)
-    print(header)
-    for budget in budgets:
-        counts = {
-            alg: sum(
-                1 for r in budget_rows
-                if int(r["budget"]) == budget and r["algorithm"] == alg
-            )
-            for alg in alg_names
-        }
-        row = f"{budget:>8}  " + "  ".join(f"{counts[a]:>18}" for a in alg_names)
-        print(row)
-
-
-def _plot_error_vs_runtime(summary_rows: list[dict[str, Any]]) -> None:
-    """
-    Muestra una figura adicional con error frente a runtime.
-    Cada punto representa un budget agregado y se anota con su valor.
-    """
-    if not summary_rows:
+def _print_actual_budget_summary(summary: pd.DataFrame) -> None:
+    if summary.empty:
+        print("\n=== Actual-query budget summary: no rows ===")
         return
 
-    profiles = sorted({str(row["profile"]) for row in summary_rows})
-    fig_width = max(9.5, 7.2 * len(profiles))
-    fig, axes = plt.subplots(
-        1,
-        len(profiles),
-        figsize=(fig_width, 4.8),
-        squeeze=False,
-    )
-
-    for j, profile in enumerate(profiles):
-        ax = axes[0, j]
-        prof_rows = [row for row in summary_rows if str(row["profile"]) == profile]
-
-        for alg_key in ALGORITHMS:
-            alg_name = ALGORITHM_LABELS[alg_key]
-            subset = [row for row in prof_rows if row["algorithm"] == alg_name]
-            if not subset:
-                continue
-
-            runtime = np.asarray(
-                [float(row.get("time_to_budget_seconds_median", np.nan)) for row in subset],
-                dtype=float,
-            )
-            error = np.asarray(
-                [float(row.get("normalized_abs_error_median", np.nan)) for row in subset],
-                dtype=float,
-            )
-            budgets = np.asarray([int(row["budget"]) for row in subset], dtype=int)
-
-            valid = np.isfinite(runtime) & np.isfinite(error) & (runtime > 0.0) & (error > 0.0)
-            if not np.any(valid):
-                continue
-
-            runtime = runtime[valid]
-            error = error[valid]
-            budgets = budgets[valid]
-
-            order = np.argsort(runtime)
-            runtime = runtime[order]
-            error = error[order]
-            budgets = budgets[order]
-
-            style = ALGORITHM_STYLES[alg_key]
-            ax.loglog(
-                runtime,
-                error,
-                color=style["color"],
-                marker=style["marker"],
-                linewidth=1.8,
-                markersize=5,
-                label=alg_name,
-            )
-
-            for x_val, y_val, budget in zip(runtime, error, budgets):
-                ax.annotate(
-                    f"B={budget}",
-                    xy=(x_val, y_val),
-                    xytext=(4, 4),
-                    textcoords="offset points",
-                    fontsize=7,
-                    color=style["color"],
-                    alpha=0.9,
-                )
-
-        ax.set_xlabel("Median runtime to budget [s]")
-        ax.set_ylabel("Median normalized absolute error")
-        ax.grid(True, which="both", alpha=0.2)
-
-    handles, labels = axes[0, 0].get_legend_handles_labels()
-    if handles:
-        fig.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.99),
-            ncol=min(len(labels), 4),
-            frameon=False,
-            columnspacing=1.6,
-            handlelength=2.2,
+    print("\n=== Actual-query budget summary by algorithm ===")
+    for algorithm, group in summary.groupby("algorithm", sort=False):
+        q_min = float(group["query_cost_median"].min())
+        q_max = float(group["query_cost_median"].max())
+        n_min = int(group["n_points"].min())
+        n_max = int(group["n_points"].max())
+        err_last = float(group.sort_values("query_cost_median")["normalized_abs_error_median"].iloc[-1])
+        n_text = f"{n_min}" if n_min == n_max else f"{n_min}-{n_max}"
+        print(
+            f"  {algorithm:8s} bins={len(group):2d} "
+            f"q_med_range=[{q_min:.0f}, {q_max:.0f}] "
+            f"n/bin={n_text} last_med_err={err_last:.3e}"
         )
-    fig.tight_layout(rect=(0, 0, 1, 0.90))
 
 if __name__ == "__main__":
     run_experiment()

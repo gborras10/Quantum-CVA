@@ -51,6 +51,21 @@ Notas:
   Aunque sea dry-run, sigue generando reportes, CSVs, QASM3 y plots salvo que se salten.
 
 
+python .\hardware_bae_biqae_cabiqae_experiment.py `
+>>   --mode hardware-topup `
+>>   --run-dir "C:\Users\guilb\Desktop\Quantum-CVA\toys\amplitude_estimation_experiments\noise_aware_regime\3qubit_toy\hardware\beta_hardware_experiment\runs\hardware_amplification_bae_biqae_cabiqae_20260428_213407" `
+>>   --backend ibm_basquecountry `
+>>   --channel ibm_quantum_platform `
+>>   --scan-grover-powers 26,27,28,29,30,31,32,33,34,35,36,37,38,39,40 `
+>>   --scan-repeats 3 `
+>>   --scan-shots 4096 `
+>>   --readout-shots 8192 `
+>>   --replay-repetitions 300 `
+>>   --replay-probability-mode normal `
+>>   --replay-probability-se-scale 1.0 `
+>>   -- soft-wallclock-limit 7000.0 `
+>>   --skip-direct
+
 2) --mode preflight
 -------------------
 Solo construye y transpila circuitos AE para k = 0..max_grover_power contra el

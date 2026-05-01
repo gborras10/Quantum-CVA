@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from typing import Any
 
 import numpy as np
@@ -22,8 +23,12 @@ from toys.amplitude_estimation_experiments.common_utils.experiment_utils import 
     build_problem,
     true_amplitude_for_offset,
 )
-from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (
-    plot_query_benchmark_with_confidence_bands,
+from toys.amplitude_estimation_experiments.ideal_regime.ideal_benchmark_outputs import (
+    aggregate_budget_summary,
+    extract_trace,
+    plot_budget_summary,
+    save_csv,
+    trace_rows_from_result,
 )
 
 
@@ -32,13 +37,13 @@ ALGORITHM_LABELS = {
     "bae": "BAE",
     "biqae": "BIQAE",
     "iqae": "IQAE",
-    "cabiqae_latentt": "CABIQAE_latentt",
+    "cabiqae_latentt": "CABIQAE",
 }
 ALGORITHM_STYLES = {
-    "bae": {"color": "#1D3557", "marker": "o"},
-    "biqae": {"color": "#E76F51", "marker": "s"},
-    "iqae": {"color": "#457B9D", "marker": "D"},
-    "cabiqae_latentt": {"color": "#2A9D8F", "marker": "^"},
+    "bae": {"color": "#E07A5F", "marker": "^"},
+    "biqae": {"color": "#A23B72", "marker": "s"},
+    "iqae": {"color": "#4C78A8", "marker": "D"},
+    "cabiqae_latentt": {"color": "#1F6F8B", "marker": "o"},
 }
 
 OBJECTIVE_RY_OFFSETS = np.array([0.30, 0.44, 0.48, 0.52, 0.56, 0.60, 0.63, 0.67], dtype=float)
@@ -154,42 +159,13 @@ def _extract_trace(
     result: Any,
     n_shots: int | None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    if algorithm == "bae":
-        history = getattr(result, "history", {}) or {}
-        queries = np.asarray(history.get("queries", []), dtype=float)
-        estimations = np.asarray(history.get("estimations", []), dtype=float)
-        usable = min(len(queries), len(estimations))
-        return queries[:usable], estimations[:usable]
-
-    powers = np.asarray(getattr(result, "powers", []) or [], dtype=float)
-    estimate_intervals = getattr(result, "estimate_intervals", []) or []
-    usable = min(len(powers), max(0, len(estimate_intervals) - 1))
-    if usable <= 0:
-        return np.asarray([], dtype=float), np.asarray([], dtype=float)
-
-    # estimate_intervals includes an initial [0, 1] interval before the first shot.
-    interval_array = np.asarray(estimate_intervals[1 : 1 + usable], dtype=float)
-    if interval_array.ndim != 2 or interval_array.shape[1] != 2:
-        return np.asarray([], dtype=float), np.asarray([], dtype=float)
-
-    estimations = np.mean(interval_array, axis=1)
-    effective_n_shots = _effective_n_shots(algorithm, n_shots)
-    queries = np.cumsum(effective_n_shots * (2.0 * powers[:usable] + 1.0))
-    return queries.astype(float), estimations.astype(float)
-
-
-def _interpolate_nsqe(
-    queries: np.ndarray,
-    normalized_sq_errors: np.ndarray,
-    query_grid: np.ndarray,
-) -> np.ndarray:
-    idx = np.searchsorted(queries, query_grid, side="right") - 1
-    valid = idx >= 0
-    idx = np.clip(idx, 0, len(queries) - 1)
-
-    curve = np.full(len(query_grid), np.nan, dtype=float)
-    curve[valid] = normalized_sq_errors[idx[valid]]
-    return curve
+    queries, estimations, _ = extract_trace(
+        algorithm,
+        result,
+        n_shots,
+        _effective_n_shots,
+    )
+    return queries, estimations
 
 
 def run_experiment() -> None:
@@ -197,16 +173,14 @@ def run_experiment() -> None:
     Compare BAE, BIQAE, IQAE and CABIQAE_latentt in an ideal regime with
     the canonical 3-qubit AE topology used by the hardware experiment.
     """
-    n_rep = 500    
+    n_rep = 25    
 
     alpha = 0.05
     max_queries = 1e6
-    query_grid = np.logspace(2, np.log10(max_queries), num=120)
 
-    interpolated_nsqe = {
-        algorithm: np.full((n_rep, len(query_grid)), np.nan, dtype=float)
-        for algorithm in ALGORITHMS
-    }
+    trace_rows_all: list[dict[str, Any]] = []
+    final_rows: list[dict[str, Any]] = []
+    error_rows: list[dict[str, Any]] = []
     rng = np.random.default_rng(1234)
     print(
         "Running ideal amplitude-estimation benchmark "
@@ -246,6 +220,7 @@ def run_experiment() -> None:
             )
 
             try:
+                start_time = time.perf_counter()
                 if algorithm == "bae":
                     np.random.seed(seed)
                     estimate_kwargs: dict[str, Any] = {
@@ -262,7 +237,20 @@ def run_experiment() -> None:
                     if configured_n_shots is not None:
                         estimate_kwargs["n_shots"] = configured_n_shots
                     result = solver.estimate(problem, **estimate_kwargs)
+                elapsed_runtime_seconds = time.perf_counter() - start_time
             except Exception as exc:
+                error_rows.append(
+                    {
+                        "run_kind": "ideal_simulation",
+                        "repetition": rep,
+                        "algorithm": ALGORITHM_LABELS[algorithm],
+                        "algorithm_key": algorithm,
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                        "objective_ry_offset": objective_ry_offset,
+                        "a_true": target_a,
+                    }
+                )
                 print(
                     f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
                     f"failed ({exc})"
@@ -271,43 +259,68 @@ def run_experiment() -> None:
 
             queries, estimations = _extract_trace(algorithm, result, configured_n_shots)
             if len(queries) == 0:
+                error_rows.append(
+                    {
+                        "run_kind": "ideal_simulation",
+                        "repetition": rep,
+                        "algorithm": ALGORITHM_LABELS[algorithm],
+                        "algorithm_key": algorithm,
+                        "error_type": "EmptyTrace",
+                        "error": "no trajectory returned",
+                        "objective_ry_offset": objective_ry_offset,
+                        "a_true": target_a,
+                    }
+                )
                 print(
                     f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
                     "no trajectory returned"
                 )
                 continue
 
-            normalized_sq_errors = np.square((estimations / target_a) - 1.0)
-            rep_curve = _interpolate_nsqe(queries, normalized_sq_errors, query_grid)
-            interpolated_nsqe[algorithm][rep, :] = rep_curve
+            trace_rows, final_row = trace_rows_from_result(
+                result,
+                algorithm=algorithm,
+                algorithm_labels=ALGORITHM_LABELS,
+                repetition=rep,
+                a_true=target_a,
+                objective_ry_offset=objective_ry_offset,
+                n_shots=configured_n_shots,
+                elapsed_wall_seconds=elapsed_runtime_seconds,
+                effective_n_shots=_effective_n_shots,
+            )
+            trace_rows_all.extend(trace_rows)
+            final_rows.append(final_row)
 
             print(
                 f"Rep {rep + 1}/{n_rep} | {ALGORITHM_LABELS[algorithm]}: "
                 f"offset={objective_ry_offset:+.3f}, a={target_a:.3f}, "
-                f"final nRMSE={np.sqrt(normalized_sq_errors[-1]):.3e}, "
-                f"queries={int(queries[-1])}"
+                f"final nAE={final_row['final_normalized_abs_error']:.3e}, "
+                f"queries={int(queries[-1])}, "
+                f"runtime={elapsed_runtime_seconds:.3f}s"
             )
 
+    output_prefix = "bae_biqae_iqae_cabiqae_latentt_ideal"
+    budget_summary = aggregate_budget_summary(
+        trace_rows_all,
+        total_repetitions=n_rep,
+    )
+    save_csv(trace_rows_all, os.path.join(current_dir, f"{output_prefix}_trace_rows.csv"))
+    save_csv(final_rows, os.path.join(current_dir, f"{output_prefix}_final_rows.csv"))
+    save_csv(trace_rows_all, os.path.join(current_dir, f"{output_prefix}_budget_rows.csv"))
+    save_csv(budget_summary, os.path.join(current_dir, f"{output_prefix}_budget_summary.csv"))
+    save_csv(error_rows, os.path.join(current_dir, f"{output_prefix}_errors.csv"))
+
     out_path = os.path.join(current_dir, "bae_biqae_iqae_cabiqae_latentt_ideal_rmse.png")
-    rmse_curves = {
-        algorithm: np.sqrt(interpolated_nsqe[algorithm])
-        for algorithm in ALGORITHMS
-    }
-    plot_query_benchmark_with_confidence_bands(
-        query_grid=query_grid,
-        curves_by_algorithm=rmse_curves,
+    plot_budget_summary(
+        budget_summary,
         algorithms=ALGORITHMS,
         algorithm_labels=ALGORITHM_LABELS,
         algorithm_styles=ALGORITHM_STYLES,
         output_path=out_path,
-        ylabel="Median normalized RMSE",
         title="Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE_latentt",
-        confidence_level=0.95,
-        statistic="median",
-        bootstrap_samples=1000,
-        show=True,
     )
     print(f"Saved plot to {out_path}")
+    print(f"Saved CSV outputs with prefix {os.path.join(current_dir, output_prefix)}")
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ import types
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, qasm3
@@ -547,6 +547,8 @@ class ReplayCountSampler:
         *,
         seed: int,
         max_calls: int = 128,
+        extrapolate_probability: Callable[[int], float] | None = None,
+        extrapolated_cache: dict[int, float] | None = None,
     ):
         self.p_by_k = {int(k): float(v) for k, v in p_by_k.items()}
         self.state = state
@@ -554,6 +556,9 @@ class ReplayCountSampler:
         self.max_calls = int(max_calls)
         self.context = "replay"
         self.calls = 0
+        self.extrapolate_probability = extrapolate_probability
+        self.extrapolated_cache = extrapolated_cache if extrapolated_cache is not None else {}
+        self.extrapolated_ks_used: set[int] = set()
 
     def set_context(self, context: str) -> None:
         self.context = str(context)
@@ -567,12 +572,18 @@ class ReplayCountSampler:
             if k is None:
                 raise RuntimeError("Replay sampler requires circuit.metadata['grover_power'].")
             if k not in self.p_by_k:
-                available = ", ".join(str(x) for x in sorted(self.p_by_k))
-                raise KeyError(
-                    f"Replay requested k={k}, but no premeasured hardware probability exists "
-                    f"for that Grover power. Available k values: [{available}]."
-                )
-            p_one = float(np.clip(self.p_by_k[k], 0.0, 1.0))
+                if self.extrapolate_probability is None:
+                    available = ", ".join(str(x) for x in sorted(self.p_by_k))
+                    raise KeyError(
+                        f"Replay requested k={k}, but no premeasured hardware probability exists "
+                        f"for that Grover power. Available k values: [{available}]."
+                    )
+                if int(k) not in self.extrapolated_cache:
+                    self.extrapolated_cache[int(k)] = float(self.extrapolate_probability(int(k)))
+                p_one = float(np.clip(self.extrapolated_cache[int(k)], 0.0, 1.0))
+                self.extrapolated_ks_used.add(int(k))
+            else:
+                p_one = float(np.clip(self.p_by_k[k], 0.0, 1.0))
             one = int(self.rng.binomial(int(shots), p_one))
             pub_results.append(_PubResult({"0": int(shots) - one, "1": one}))
         self.calls += 1
@@ -941,6 +952,57 @@ def effective_t_for_algorithms(summary: Mapping[str, Any]) -> float | None:
     return value
 
 
+def empirical_contrast_model(summary: Mapping[str, Any]) -> tuple[str, float, float]:
+    prefactor = summary.get("contrast_prefactor")
+    t_free = summary.get("t_eff_free_intercept")
+    if prefactor is not None and t_free is not None:
+        prefactor_f = float(prefactor)
+        t_free_f = float(t_free)
+        if np.isfinite(prefactor_f) and prefactor_f > 0.0 and np.isfinite(t_free_f) and t_free_f > 0.0:
+            return "free_intercept", prefactor_f, t_free_f
+
+    t_zero = summary.get("t_eff_zero_intercept")
+    if t_zero is not None:
+        t_zero_f = float(t_zero)
+        if np.isfinite(t_zero_f) and t_zero_f > 0.0:
+            return "zero_intercept", 1.0, t_zero_f
+
+    raise ValueError(
+        "Cannot extrapolate replay probabilities without a valid empirical contrast model "
+        "in calibration_summary.json."
+    )
+
+
+def make_replay_probability_extrapolator(
+    *,
+    a_true: float,
+    problem: Any,
+    calibration_summary: Mapping[str, Any],
+) -> tuple[Callable[[int], float], dict[str, Any]]:
+    model_name, prefactor, t_eff = empirical_contrast_model(calibration_summary)
+    a = float(np.clip(float(a_true), 0.0, 1.0))
+    theta = float(np.arcsin(np.sqrt(a))) if np.isfinite(a) else np.nan
+
+    def _ideal_probability(k: int) -> float:
+        if np.isfinite(theta):
+            return float(np.sin((2 * int(k) + 1) * theta) ** 2)
+        return float(ideal_good_probability(problem, int(k)))
+
+    def _extrapolate(k: int) -> float:
+        amplification_factor = 2 * int(k) + 1
+        contrast = float(np.clip(prefactor * np.exp(-float(amplification_factor) / float(t_eff)), 0.0, 1.0))
+        p_ideal = _ideal_probability(int(k))
+        return float(np.clip(0.5 + contrast * (p_ideal - 0.5), 0.0, 1.0))
+
+    metadata = {
+        "model": model_name,
+        "contrast_prefactor": float(prefactor),
+        "t_eff": float(t_eff),
+        "a_true": float(a),
+    }
+    return _extrapolate, metadata
+
+
 def build_solver(
     algorithm: str,
     sampler: Any,
@@ -1014,12 +1076,28 @@ def trace_rows_from_result(
     a_true: float,
     objective_ry_offset: float,
     n_shots: int,
+    elapsed_wall_seconds: float | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     queries, estimates, amp_factors = extract_trace(algorithm, result, int(n_shots))
+    final_queries_for_timing = float(
+        getattr(result, "num_state_prep_calls", queries[-1] if len(queries) else np.nan)
+    )
     rows: list[dict[str, Any]] = []
     for idx, (query, estimate, amp) in enumerate(zip(queries, estimates, amp_factors)):
         amp_int = int(round(float(amp)))
         k = max(0, (amp_int - 1) // 2)
+        prefix_amplification = np.asarray(amp_factors[: idx + 1], dtype=float)
+        k_max_budget = max(
+            0,
+            int((int(round(float(np.nanmax(prefix_amplification)))) - 1) // 2),
+        )
+        if elapsed_wall_seconds is None or not np.isfinite(final_queries_for_timing) or final_queries_for_timing <= 0:
+            runtime_wall_seconds = np.nan
+        else:
+            runtime_wall_seconds = float(elapsed_wall_seconds) * min(
+                max(float(query) / float(final_queries_for_timing), 0.0),
+                1.0,
+            )
         rows.append(
             {
                 "run_kind": run_kind,
@@ -1027,14 +1105,19 @@ def trace_rows_from_result(
                 "algorithm": algorithm_labels.get(algorithm, algorithm),
                 "algorithm_key": algorithm,
                 "step_index": int(idx),
+                "budget": int(round(float(query))),
                 "query_budget": float(query),
+                "query_budget_actual": float(query),
                 "estimate": float(estimate),
                 "abs_error": float(abs(float(estimate) - float(a_true))),
                 "normalized_abs_error": float(abs(float(estimate) - float(a_true)) / max(float(a_true), 1e-12)),
                 "grover_power": int(k),
+                "k_max_budget": int(k_max_budget),
                 "amplification_factor": int(amp_int),
                 "a_true": float(a_true),
                 "objective_ry_offset": float(objective_ry_offset),
+                "runtime_wall_seconds": runtime_wall_seconds,
+                "time_to_budget_seconds": runtime_wall_seconds,
             }
         )
 
@@ -1067,6 +1150,9 @@ def trace_rows_from_result(
         "coverage": coverage,
         "k_max": k_max,
         "amplification_factor_max": int(2 * k_max + 1),
+        "runtime_wall_seconds": float(elapsed_wall_seconds)
+        if elapsed_wall_seconds is not None and np.isfinite(elapsed_wall_seconds)
+        else np.nan,
     }
     return rows, final_row
 
@@ -1101,6 +1187,7 @@ def run_algorithm_once(
         t_eff=t_eff,
         seed=seed,
     )
+    start = time.perf_counter()
     if algorithm == "bae":
         result = solver.estimate(
             problem,
@@ -1110,6 +1197,7 @@ def run_algorithm_once(
         )
     else:
         result = solver.estimate(problem, bayes=True, n_shots=int(n_shots), show_details=False)
+    elapsed_wall_seconds = time.perf_counter() - start
     return trace_rows_from_result(
         result,
         algorithm=algorithm,
@@ -1119,6 +1207,7 @@ def run_algorithm_once(
         a_true=a_true,
         objective_ry_offset=objective_ry_offset,
         n_shots=n_shots,
+        elapsed_wall_seconds=elapsed_wall_seconds,
     )
 
 
@@ -1140,6 +1229,7 @@ def print_compact_trace(
             f"alg={alg} iter={step:02d}/{total_steps:02d} "
             f"k={int(row['grover_power'])} amp={int(row['amplification_factor'])} "
             f"queries={float(row['query_budget']):.0f} "
+            f"runtime={float(row.get('runtime_wall_seconds', np.nan)):.3f}s "
             f"estimate={float(row['estimate']):.8f} "
             f"abs_error={float(row['abs_error']):.8f} "
             f"normalized_abs_error={float(row['normalized_abs_error']):.6f}",
@@ -1275,6 +1365,8 @@ def run_replay(
     alpha: float,
     t_eff: float | None,
     seed: int,
+    extrapolate: bool = False,
+    calibration_summary: Mapping[str, Any] | None = None,
     verbose: bool = False,
 ) -> None:
     state.replay_trace_rows.clear()
@@ -1283,6 +1375,18 @@ def run_replay(
     state.error_rows = [r for r in state.error_rows if str(r.get("phase")) != "hardware_replay"]
     budget_rows: list[dict[str, Any]] = []
     max_queries = max(int(x) for x in budgets)
+    extrapolate_probability: Callable[[int], float] | None = None
+    extrapolated_cache: dict[int, float] = {}
+    extrapolation_metadata: dict[str, Any] = {}
+    if bool(extrapolate):
+        extrapolate_probability, extrapolation_metadata = make_replay_probability_extrapolator(
+            a_true=float(a_true),
+            problem=problem,
+            calibration_summary=calibration_summary or state.calibration_summary,
+        )
+    state.config["replay_extrapolate"] = bool(extrapolate)
+    if extrapolation_metadata:
+        state.config["replay_extrapolation_model"] = extrapolation_metadata
     for rep in range(int(repetitions)):
         replay_rng = np.random.default_rng(int(seed) + 7919 * rep)
         rep_p_by_k = sample_replay_probabilities(
@@ -1298,6 +1402,8 @@ def run_replay(
                 state,
                 seed=int(seed) + 1009 * rep + 17 * alg_index,
                 max_calls=128,
+                extrapolate_probability=extrapolate_probability,
+                extrapolated_cache=extrapolated_cache,
             )
             try:
                 trace_rows, final_row = run_algorithm_once(
@@ -1317,6 +1423,21 @@ def run_replay(
                     seed=int(seed) + rep + alg_index,
                     verbose=verbose,
                 )
+                if bool(extrapolate) and getattr(sampler, "extrapolated_ks_used", None):
+                    used_ks = set(int(k) for k in sampler.extrapolated_ks_used)
+                    for row in trace_rows:
+                        row["replay_probability_source"] = (
+                            "extrapolated" if int(row["grover_power"]) in used_ks else "measured"
+                        )
+                        row["replay_probability_extrapolated"] = int(row["grover_power"]) in used_ks
+                    final_row["extrapolated_replay_ks_json"] = json.dumps(sorted(used_ks))
+                    final_row["n_extrapolated_replay_ks"] = len(used_ks)
+                elif bool(extrapolate):
+                    for row in trace_rows:
+                        row["replay_probability_source"] = "measured"
+                        row["replay_probability_extrapolated"] = False
+                    final_row["extrapolated_replay_ks_json"] = "[]"
+                    final_row["n_extrapolated_replay_ks"] = 0
                 if verbose:
                     print_compact_trace(
                         trace_rows,
@@ -1327,7 +1448,7 @@ def run_replay(
                 )
                 state.replay_trace_rows.extend(trace_rows)
                 state.replay_final_rows.append(final_row)
-                budget_rows.extend(rows_at_budgets(trace_rows, budgets))
+                budget_rows.extend(trace_rows)
             except Exception as exc:
                 state.error_rows.append(
                     {
@@ -1345,11 +1466,25 @@ def run_replay(
                 total_repetitions=int(repetitions),
             )
             state.persist()
+            if verbose:
+                print_budget_runtime_summary(
+                    state.budget_summary_rows,
+                    prefix=f"hardware_replay runtime summary after rep {rep + 1}/{int(repetitions)}",
+                )
     state.budget_summary_rows = aggregate_budget_summary(
         budget_rows,
         total_repetitions=int(repetitions),
     )
+    if bool(extrapolate):
+        state.config["replay_extrapolated_probabilities"] = {
+            str(k): float(v) for k, v in sorted(extrapolated_cache.items())
+        }
+        state.config["replay_extrapolated_k_values"] = sorted(int(k) for k in extrapolated_cache)
     state.persist()
+    print_budget_runtime_summary(
+        state.budget_summary_rows,
+        prefix="hardware_replay final runtime summary by budget",
+    )
 
 
 def rows_at_budgets(trace_rows: list[dict[str, Any]], budgets: list[int]) -> list[dict[str, Any]]:
@@ -1377,9 +1512,31 @@ def rows_at_budgets(trace_rows: list[dict[str, Any]], budgets: list[int]) -> lis
             "grover_power": int(chosen["grover_power"]),
             "amplification_factor": int(chosen["amplification_factor"]),
             "a_true": float(chosen["a_true"]),
+            "runtime_wall_seconds": float(chosen.get("runtime_wall_seconds", np.nan)),
+            "replay_probability_source": str(chosen.get("replay_probability_source", "measured")),
+            "replay_probability_extrapolated": bool(chosen.get("replay_probability_extrapolated", False)),
         }
         rows.append(out)
     return rows
+
+
+def print_budget_runtime_summary(rows: list[dict[str, Any]], *, prefix: str) -> None:
+    if not rows:
+        print(f"[{prefix}] no budget rows available", flush=True)
+        return
+    print(f"[{prefix}]", flush=True)
+    for row in sorted(rows, key=lambda r: (int(r["budget"]), str(r["algorithm"]))):
+        runtime = float(row.get("runtime_wall_seconds_median", np.nan))
+        runtime_mean = float(row.get("runtime_wall_seconds_mean", np.nan))
+        err = float(row.get("normalized_abs_error_median", np.nan))
+        success = float(row.get("success_rate", np.nan))
+        n_runs = int(float(row.get("n_runs", 0)))
+        print(
+            f"  budget={int(row['budget']):>7d} alg={str(row['algorithm']):<8s} "
+            f"runtime_median={runtime:.3f}s runtime_mean={runtime_mean:.3f}s "
+            f"nae_median={err:.6g} success={success:.3f} n={n_runs}",
+            flush=True,
+        )
 
 
 def bootstrap_mean_ci(values: np.ndarray, n_boot: int = 2000, alpha: float = 0.05, rng: Any = None) -> tuple[float, float, float]:
@@ -1426,52 +1583,133 @@ def bootstrap_median_ci(values: np.ndarray, n_boot: int = 2000, alpha: float = 0
     return median, low, high
 
 
+def _as_float(value: Any, default: float = np.nan) -> float:
+    if value is None or value == "":
+        return float(default)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def _query_budget(row: Mapping[str, Any]) -> float:
+    for key in ("query_budget", "query_budget_actual", "budget", "final_queries"):
+        value = _as_float(row.get(key))
+        if np.isfinite(value):
+            return value
+    return np.nan
+
+
 def aggregate_budget_summary(
     rows: list[dict[str, Any]],
     *,
     total_repetitions: int | None = None,
+    max_bins: int = 12,
+    min_points_per_bin: int = 100,
 ) -> list[dict[str, Any]]:
     summary: list[dict[str, Any]] = []
     if not rows:
         return summary
-    budgets = sorted({int(r["budget"]) for r in rows})
     algorithms = sorted({str(r["algorithm"]) for r in rows})
-    for budget in budgets:
-        for algorithm in algorithms:
-            subset = [r for r in rows if int(r["budget"]) == budget and str(r["algorithm"]) == algorithm]
+    for algorithm in algorithms:
+        alg_rows = [row for row in rows if str(row["algorithm"]) == algorithm]
+        query_budget = np.asarray([_query_budget(row) for row in alg_rows], dtype=float)
+        error_values = np.asarray([_as_float(row.get("normalized_abs_error")) for row in alg_rows], dtype=float)
+        valid = (
+            np.isfinite(query_budget)
+            & np.isfinite(error_values)
+            & (query_budget > 0.0)
+            & (error_values > 0.0)
+        )
+        if not np.any(valid):
+            continue
+
+        valid_indices = np.flatnonzero(valid)
+        q_valid = query_budget[valid]
+        q_min = float(np.nanmin(q_valid))
+        q_max = float(np.nanmax(q_valid))
+        if q_valid.size <= max_bins or not np.isfinite(q_min) or not np.isfinite(q_max) or q_max <= q_min:
+            bin_indices = [np.asarray([idx], dtype=int) for idx in valid_indices[np.argsort(q_valid)]]
+        else:
+            edges = np.geomspace(q_min, q_max, num=int(max_bins) + 1)
+            local_bins = np.digitize(q_valid, edges, right=False) - 1
+            local_bins = np.clip(local_bins, 0, int(max_bins) - 1)
+            bin_indices = [
+                valid_indices[np.flatnonzero(local_bins == bin_idx)]
+                for bin_idx in range(int(max_bins))
+            ]
+
+        for indices in bin_indices:
+            if indices.size == 0:
+                continue
+            if indices.size < int(min_points_per_bin) and q_valid.size > max_bins:
+                continue
+            subset = [alg_rows[int(idx)] for idx in indices]
             if not subset:
                 continue
-            normalized_abs_error = np.asarray([float(r["normalized_abs_error"]) for r in subset], dtype=float)
-            abs_error = np.asarray([float(r["abs_error"]) for r in subset], dtype=float)
-            estimates = np.asarray([float(r["estimate"]) for r in subset], dtype=float)
-            k_vals = np.asarray([float(r["grover_power"]) for r in subset], dtype=float)
-            amplification_factors = np.asarray(
-                [float(r["amplification_factor"]) for r in subset],
+            normalized_abs_error = np.asarray(
+                [_as_float(r.get("normalized_abs_error")) for r in subset],
                 dtype=float,
             )
+            abs_error = np.asarray([_as_float(r.get("abs_error")) for r in subset], dtype=float)
+            estimates = np.asarray([_as_float(r.get("estimate")) for r in subset], dtype=float)
+            k_vals = np.asarray(
+                [_as_float(r.get("k_max_budget"), _as_float(r.get("grover_power"))) for r in subset],
+                dtype=float,
+            )
+            amplification_factors = np.asarray(
+                [_as_float(r.get("amplification_factor")) for r in subset],
+                dtype=float,
+            )
+            query_budget_actual = np.asarray(
+                [_query_budget(r) for r in subset],
+                dtype=float,
+            )
+            runtime_wall_seconds = np.asarray(
+                [_as_float(r.get("time_to_budget_seconds", r.get("runtime_wall_seconds", np.nan))) for r in subset],
+                dtype=float,
+            )
+            extrapolated_flags = np.asarray(
+                [bool(r.get("replay_probability_extrapolated", False)) for r in subset],
+                dtype=bool,
+            )
             n_subset = int(len(subset))
+            repetitions = {
+                int(_as_float(r.get("repetition")))
+                for r in subset
+                if np.isfinite(_as_float(r.get("repetition")))
+            }
+            n_runs = int(len(repetitions)) if repetitions else n_subset
             estimate_std = float(np.nanstd(estimates, ddof=1)) if n_subset > 1 else 0.0
             abs_error_std = float(np.nanstd(abs_error, ddof=1)) if n_subset > 1 else 0.0
             normalized_abs_error_std = (
                 float(np.nanstd(normalized_abs_error, ddof=1)) if n_subset > 1 else 0.0
             )
+            runtime_std = float(np.nanstd(runtime_wall_seconds, ddof=1)) if n_subset > 1 else 0.0
             _, mae_low, mae_high = bootstrap_mean_ci(abs_error)
             nae_mean, nae_low, nae_high = bootstrap_mean_ci(normalized_abs_error)
             nae_median, nae_median_low, nae_median_high = bootstrap_median_ci(normalized_abs_error)
+            runtime_mean, runtime_mean_low, runtime_mean_high = bootstrap_mean_ci(runtime_wall_seconds)
+            runtime_median, runtime_median_low, runtime_median_high = bootstrap_median_ci(runtime_wall_seconds)
             summary.append(
                 {
                     "run_kind": "hardware_replay",
-                    "budget": int(budget),
+                    "budget": int(round(float(np.nanmedian(query_budget_actual)))),
                     "algorithm": algorithm,
+                    "algorithm_key": str(subset[0].get("algorithm_key", algorithm)),
                     "n_points": n_subset,
-                    "n_runs": n_subset,
+                    "n_runs": n_runs,
                     "total_repetitions": np.nan if total_repetitions is None else int(total_repetitions),
                     "success_rate": np.nan
                     if total_repetitions is None or int(total_repetitions) <= 0
-                    else float(n_subset / int(total_repetitions)),
+                    else float(n_runs / int(total_repetitions)),
                     "estimate_mean": float(np.nanmean(estimates)),
                     "estimate_std": estimate_std,
                     "estimate_se": float(estimate_std / math.sqrt(n_subset)) if n_subset > 0 else np.nan,
+                    "query_budget_actual_mean": float(np.nanmean(query_budget_actual)),
+                    "query_budget_actual_median": float(np.nanmedian(query_budget_actual)),
+                    "query_budget_actual_q25": float(np.nanquantile(query_budget_actual, 0.25)),
+                    "query_budget_actual_q75": float(np.nanquantile(query_budget_actual, 0.75)),
                     "abs_error_mean": float(np.nanmean(abs_error)),
                     "abs_error_median": float(np.nanmedian(abs_error)),
                     "abs_error_std": abs_error_std,
@@ -1492,6 +1730,21 @@ def aggregate_budget_summary(
                     "normalized_abs_error_q75": float(np.nanquantile(normalized_abs_error, 0.75)),
                     "grover_power_max_median": float(np.nanmedian(k_vals)),
                     "amplification_factor_median": float(np.nanmedian(amplification_factors)),
+                    "runtime_wall_seconds_mean": runtime_mean,
+                    "runtime_wall_seconds_std": runtime_std,
+                    "runtime_wall_seconds_se": float(runtime_std / math.sqrt(n_subset))
+                    if n_subset > 0
+                    else np.nan,
+                    "runtime_wall_seconds_ci_low": runtime_mean_low,
+                    "runtime_wall_seconds_ci_high": runtime_mean_high,
+                    "runtime_wall_seconds_median": runtime_median,
+                    "runtime_wall_seconds_median_ci_low": runtime_median_low,
+                    "runtime_wall_seconds_median_ci_high": runtime_median_high,
+                    "runtime_wall_seconds_q25": float(np.nanquantile(runtime_wall_seconds, 0.25)),
+                    "runtime_wall_seconds_q75": float(np.nanquantile(runtime_wall_seconds, 0.75)),
+                    "replay_extrapolated_fraction": float(np.mean(extrapolated_flags))
+                    if n_subset > 0
+                    else np.nan,
                 }
             )
     return summary
@@ -1556,6 +1809,7 @@ def run_replay_only(args: argparse.Namespace) -> None:
     state.config["replay_repetitions"] = int(args.replay_repetitions)
     state.config["replay_probability_mode"] = str(args.replay_probability_mode)
     state.config["replay_probability_se_scale"] = float(args.replay_probability_se_scale)
+    state.config["replay_extrapolate"] = bool(getattr(args, "extrapolate", False))
     state.config["epsilon_target"] = float(args.epsilon_target)
     state.config["verbose"] = bool(args.verbose)
     run_replay(
@@ -1576,6 +1830,8 @@ def run_replay_only(args: argparse.Namespace) -> None:
         alpha=float(args.alpha),
         t_eff=t_eff,
         seed=int(args.seed),
+        extrapolate=bool(getattr(args, "extrapolate", False)),
+        calibration_summary=summary,
         verbose=bool(args.verbose),
     )
     if not args.skip_plots:
@@ -1719,6 +1975,8 @@ def run_hardware_topup(args: argparse.Namespace) -> None:
             alpha=float(args.alpha),
             t_eff=t_eff,
             seed=int(args.seed),
+            extrapolate=bool(getattr(args, "extrapolate", False)),
+            calibration_summary=state.calibration_summary,
             verbose=bool(args.verbose),
         )
 
@@ -1895,6 +2153,8 @@ def run_experiment(args: argparse.Namespace) -> None:
             alpha=float(args.alpha),
             t_eff=t_eff,
             seed=int(args.seed),
+            extrapolate=bool(getattr(args, "extrapolate", False)),
+            calibration_summary=state.calibration_summary,
             verbose=bool(args.verbose),
         )
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import importlib.util
 import time
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,16 +20,19 @@ from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
 
 AMPLITUDE_EXPERIMENTS_DIR = Path(__file__).resolve().parents[1]
 CANONICAL_TOY_DIR = AMPLITUDE_EXPERIMENTS_DIR / "noise_aware_regime" / "3qubit_toy"
-for path in (CANONICAL_TOY_DIR, AMPLITUDE_EXPERIMENTS_DIR):
-    path_str = str(path)
-    if path_str not in sys.path:
-        sys.path.insert(0, path_str)
-
-from ae_circuit_utils import (  # noqa: E402
-    CANONICAL_OBJECTIVE_RY_OFFSET,
-    OBJECTIVE_QUBITS,
-    build_problem_with_true_amplitude,
+_AE_CIRCUIT_UTILS_PATH = CANONICAL_TOY_DIR / "ae_circuit_utils.py"
+_AE_CIRCUIT_UTILS_SPEC = importlib.util.spec_from_file_location(
+    "canonical_3qubit_ae_circuit_utils",
+    _AE_CIRCUIT_UTILS_PATH,
 )
+if _AE_CIRCUIT_UTILS_SPEC is None or _AE_CIRCUIT_UTILS_SPEC.loader is None:
+    raise ImportError(f"Cannot load ae_circuit_utils from {_AE_CIRCUIT_UTILS_PATH}")
+_ae_circuit_utils = importlib.util.module_from_spec(_AE_CIRCUIT_UTILS_SPEC)
+_AE_CIRCUIT_UTILS_SPEC.loader.exec_module(_ae_circuit_utils)
+
+CANONICAL_OBJECTIVE_RY_OFFSET = _ae_circuit_utils.CANONICAL_OBJECTIVE_RY_OFFSET
+OBJECTIVE_QUBITS = _ae_circuit_utils.OBJECTIVE_QUBITS
+build_problem_with_true_amplitude = _ae_circuit_utils.build_problem_with_true_amplitude
 
 
 ALGORITHM_LABELS = {
@@ -230,6 +233,7 @@ def _build_solver(
                 T_known=None if T is None or np.isinf(T) else float(T),
                 cap_kappa=cap_kappa,
                 max_shots_same_k=max_shots_same_k,
+                estimate_T=False,
             ),
             True,
         )

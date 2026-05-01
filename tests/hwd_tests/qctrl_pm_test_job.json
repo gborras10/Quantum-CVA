@@ -1,0 +1,7 @@
+{
+  "backend": "ibm_basquecountry",
+  "channel": "ibm_quantum_platform",
+  "shots": 32,
+  "job_id": "682756b0-dc00-4d2d-8e5b-67a35c11e6f1",
+  "status_initial": "QUEUED"
+}

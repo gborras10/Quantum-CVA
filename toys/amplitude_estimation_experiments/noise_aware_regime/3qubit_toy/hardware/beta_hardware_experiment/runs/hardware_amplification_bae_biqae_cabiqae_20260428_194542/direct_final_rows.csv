@@ -1,3 +1,0 @@
-a_true,algorithm,algorithm_key,amplification_factor_max,ci_high,ci_low,coverage,final_abs_error,final_estimate,final_normalized_abs_error,final_queries,k_max,objective_ry_offset,repetition,run_kind
-0.07232750360492672,CABIQAE,cabiqae_latentt,1,0.1580859970702247,0.005242356333630784,1.0,0.009336673097001022,0.08166417670192774,0.12908883386879452,32.0,0,-0.1,0,direct_live
-0.07232750360492672,BIQAE,biqae,3,0.09438063607714589,0.0211321219348087,1.0,0.014571124598949423,0.0577563790059773,0.20146035564203937,80.0,1,-0.1,0,direct_live

@@ -1,0 +1,196 @@
+{
+  "mode": "dry-run",
+  "created_at_epoch": 1777404847.3010898,
+  "topup_sessions": [
+    {
+      "session_id": "a3ce3623-31cc-4e22-9903-7d37c49d1180",
+      "recovered_from_runtime": true,
+      "recovered_at_epoch": 1777453842.2210698,
+      "scan_grover_powers": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "scan_repeats": 3,
+      "scan_shots": 4096,
+      "job_ids": [
+        "d7or6lttq41c73a8rq60",
+        "d7osan5pb8as73c2tv0g",
+        "d7osaqdtq41c73a8spo0",
+        "d7osasru0eis73bm8f80",
+        "d7osavdtq41c73a8spt0",
+        "d7osb1ju0eis73bm8fcg",
+        "d7osb55tq41c73a8sq30",
+        "d7osb7ru0eis73bm8fj0",
+        "d7osba5tq41c73a8sq90",
+        "d7osbcmm3bns73cdgd90",
+        "d7osbf5pb8as73c2tvo0",
+        "d7osbilpb8as73c2tvr0",
+        "d7osbl5tq41c73a8sqj0",
+        "d7osbo3u0eis73bm8g20",
+        "d7osbrem3bns73cdgdmg",
+        "d7osbultq41c73a8sqsg",
+        "d7osc15pb8as73c2u090",
+        "d7osc3ttq41c73a8sr2g",
+        "d7osc6em3bns73cdge1g",
+        "d7osc8tpb8as73c2u0g0",
+        "d7oscbju0eis73bm8glg",
+        "d7oscf6m3bns73cdgea0",
+        "d7oschju0eis73bm8grg",
+        "d7oscl6m3bns73cdgegg",
+        "d7osco3u0eis73bm8h20",
+        "d7oscqju0eis73bm8h4g",
+        "d7oscu5tq41c73a8srqg"
+      ],
+      "schedule": [
+        {
+          "job_id": "d7or6lttq41c73a8rq60",
+          "grover_power": 33,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7osan5pb8as73c2tv0g",
+          "grover_power": 40,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osaqdtq41c73a8spo0",
+          "grover_power": 37,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osasru0eis73bm8f80",
+          "grover_power": 30,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osavdtq41c73a8spt0",
+          "grover_power": 38,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osb1ju0eis73bm8fcg",
+          "grover_power": 32,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osb55tq41c73a8sq30",
+          "grover_power": 30,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osb7ru0eis73bm8fj0",
+          "grover_power": 28,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osba5tq41c73a8sq90",
+          "grover_power": 34,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osbcmm3bns73cdgd90",
+          "grover_power": 31,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7osbf5pb8as73c2tvo0",
+          "grover_power": 34,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osbilpb8as73c2tvr0",
+          "grover_power": 32,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7osbl5tq41c73a8sqj0",
+          "grover_power": 35,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osbo3u0eis73bm8g20",
+          "grover_power": 29,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osbrem3bns73cdgdmg",
+          "grover_power": 38,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7osbultq41c73a8sqsg",
+          "grover_power": 28,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7osc15pb8as73c2u090",
+          "grover_power": 26,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osc3ttq41c73a8sr2g",
+          "grover_power": 35,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7osc6em3bns73cdge1g",
+          "grover_power": 39,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osc8tpb8as73c2u0g0",
+          "grover_power": 38,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7oscbju0eis73bm8glg",
+          "grover_power": 33,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7oscf6m3bns73cdgea0",
+          "grover_power": 28,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7oschju0eis73bm8grg",
+          "grover_power": 32,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7oscl6m3bns73cdgegg",
+          "grover_power": 37,
+          "repeat_index": 0
+        },
+        {
+          "job_id": "d7osco3u0eis73bm8h20",
+          "grover_power": 27,
+          "repeat_index": 2
+        },
+        {
+          "job_id": "d7oscqju0eis73bm8h4g",
+          "grover_power": 26,
+          "repeat_index": 1
+        },
+        {
+          "job_id": "d7oscu5tq41c73a8srqg",
+          "grover_power": 29,
+          "repeat_index": 2
+        }
+      ]
+    }
+  ]
+}

@@ -2,11 +2,6 @@
 
 import argparse
 
-'''
-
-
-'''
-
 DEFAULT_BACKEND = "ibm_basquecountry"
 DEFAULT_CHANNEL = "ibm_quantum_platform"
 DEFAULT_OBJECTIVE_RY_OFFSET = -0.10
@@ -19,6 +14,17 @@ ALGORITHM_LABELS = {
     "biqae": "BIQAE",
     "bae": "BAE",
 }
+
+
+def parse_bool(raw: bool | str) -> bool:
+    if isinstance(raw, bool):
+        return raw
+    normalized = str(raw).strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected a boolean value, received {raw!r}.")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -45,10 +51,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--replay-repetitions", type=int, default=200)
     parser.add_argument("--replay-probability-mode", choices=("fixed", "normal"), default="normal")
     parser.add_argument("--replay-probability-se-scale", type=float, default=1.0)
+    parser.add_argument("--extrapolate", type=parse_bool, nargs="?", const=True, default=False)
     parser.add_argument("--budgets", default=",".join(str(x) for x in DEFAULT_BUDGETS))
     parser.add_argument("--alpha", type=float, default=0.10)
     parser.add_argument("--epsilon-target", type=float, default=0.08)
-    parser.add_argument("--soft-wallclock-limit", type=float, default=240.0)
+    parser.add_argument("--soft-wallclock-limit", type=float, default=7000.0)
     parser.add_argument("--max-isa-depth", type=int, default=2700)
     parser.add_argument("--max-isa-2q", type=int, default=750)
     parser.add_argument("--optimization-level", type=int, default=3)
