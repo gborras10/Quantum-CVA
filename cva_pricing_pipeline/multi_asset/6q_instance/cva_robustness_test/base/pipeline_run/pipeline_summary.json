@@ -1,0 +1,32 @@
+{
+  "classical": {
+    "C_p": 0.9975283755255839,
+    "C_q": 0.00019708755276215406,
+    "C_v": 9594.595338514682,
+    "continuous_elapsed_s": 0.1944653999962611,
+    "cva_by_grid_size_values": [
+      0.4036157944202089,
+      0.5215900006813697,
+      0.79678574362191,
+      0.9433380237359139,
+      1.0170081501152284,
+      1.0537408318368655
+    ],
+    "cva_limit": 1.0811248672478813,
+    "cva_mc_continuous": 1.0905349423731814,
+    "cva_small": 0.5215957830237072,
+    "cva_small_scaled": 0.5215957825559318,
+    "cva_std_err_mc_continuous": 0.000980329399868266,
+    "grid_sizes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "limit_elapsed_s": 0.13172520000080112,
+    "path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\base\\benchmark\\benchmark.npz",
+    "stage_elapsed_s": 10.193013600000995
+  }
+}

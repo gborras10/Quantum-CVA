@@ -42,6 +42,11 @@ from ae_circuit_utils import (  # noqa: E402
     construct_measured_circuit,
     true_amplitude,
 )
+from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (  # noqa: E402
+    add_query_scaling_guides,
+    plot_median_se_errorbar,
+    standard_error,
+)
 from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta  # noqa: E402
 from quantum_cva.algorithms.third_party.biae import BayesianIQAE as BIQAE  # noqa: E402
 from quantum_cva.quantum_hardware_utilities.transpile_utils import (  # noqa: E402
@@ -679,6 +684,11 @@ def aggregate_budget_rows(
                 mae_mean, mae_low, mae_high = bootstrap_mean_ci(abs_err)
                 nae_mean, nae_low, nae_high = bootstrap_mean_ci(normalized_abs_error)
                 nae_median, nae_median_low, nae_median_high = bootstrap_median_ci(normalized_abs_error)
+                nae_std = (
+                    float(np.nanstd(normalized_abs_error, ddof=1))
+                    if len(normalized_abs_error) > 1
+                    else 0.0
+                )
                 time_mean, time_low, time_high = bootstrap_mean_ci(time_budget)
                 kmax_mean, kmax_low, kmax_high = bootstrap_mean_ci(kmax_budget)
 
@@ -694,6 +704,8 @@ def aggregate_budget_rows(
                         "mae_ci_low": mae_low,
                         "mae_ci_high": mae_high,
                         "normalized_abs_error_median": nae_median,
+                        "normalized_abs_error_std": nae_std,
+                        "normalized_abs_error_se": standard_error(normalized_abs_error),
                         "normalized_abs_error_median_ci_low": nae_median_low,
                         "normalized_abs_error_median_ci_high": nae_median_high,
                         "normalized_abs_error_mean": nae_mean,
@@ -797,6 +809,7 @@ def plot_budget_panels(
     algorithm_styles: dict[str, dict[str, str]],
     budgets_reference: np.ndarray,
 ) -> None:
+    del budgets_reference
     profile_names = list(profile_names)
     fig_width = max(9.5, 7.2 * len(profile_names))
     fig, axes = plt.subplots(
@@ -809,6 +822,7 @@ def plot_budget_panels(
     for j, profile in enumerate(profile_names):
         ax = axes[0, j]
         prof_rows = [r for r in summary_rows if str(r["profile"]) == profile]
+        guide_points: list[tuple[float, float]] = []
 
         for alg in algorithms:
             alg_name = algorithm_labels[alg]
@@ -825,24 +839,12 @@ def plot_budget_panels(
                 dtype=float,
             )
             kmax = np.asarray([float(r.get("k_max_budget_median", np.nan)) for r in subset], dtype=float)
-            nae_low = np.asarray(
+            normalized_abs_error_se = np.asarray(
                 [
                     float(
                         r.get(
-                            "normalized_abs_error_median_ci_low",
-                            r.get("nrmse_median_ci_low", np.nan),
-                        )
-                    )
-                    for r in subset
-                ],
-                dtype=float,
-            )
-            nae_high = np.asarray(
-                [
-                    float(
-                        r.get(
-                            "normalized_abs_error_median_ci_high",
-                            r.get("nrmse_median_ci_high", np.nan),
+                            "normalized_abs_error_se",
+                            r.get("nrmse_se", 0.0),
                         )
                     )
                     for r in subset
@@ -854,35 +856,30 @@ def plot_budget_panels(
             budgets = budgets[order]
             normalized_abs_error = normalized_abs_error[order]
             kmax = kmax[order]
-            nae_low = nae_low[order]
-            nae_high = nae_high[order]
+            normalized_abs_error_se = normalized_abs_error_se[order]
 
             style = algorithm_styles[alg]
-            valid_band = (
-                np.isfinite(nae_low)
-                & np.isfinite(nae_high)
-                & (nae_low > 0.0)
-                & (nae_high > 0.0)
+            valid = (
+                np.isfinite(budgets)
+                & np.isfinite(normalized_abs_error)
+                & (budgets > 0.0)
+                & (normalized_abs_error > 0.0)
             )
-            if np.any(valid_band):
-                ax.fill_between(
-                    budgets[valid_band],
-                    nae_low[valid_band],
-                    nae_high[valid_band],
-                    color=style["color"],
-                    alpha=0.14,
-                    linewidth=0.0,
-                    zorder=1,
-                )
-
-            ax.loglog(
-                budgets,
-                normalized_abs_error,
-                color=style["color"],
-                marker=style["marker"],
-                linewidth=1.8,
-                markersize=4,
+            if not np.any(valid):
+                continue
+            guide_points.extend(
+                (float(x), float(y))
+                for x, y in zip(budgets[valid], normalized_abs_error[valid])
+            )
+            plot_median_se_errorbar(
+                ax,
+                budgets[valid],
+                normalized_abs_error[valid],
+                normalized_abs_error_se[valid],
+                style=style,
                 label=alg_name,
+                linewidth=1.8,
+                markersize=4.0,
             )
 
             for x_val, y_val, k_val in zip(budgets, normalized_abs_error, kmax):
@@ -897,28 +894,9 @@ def plot_budget_panels(
                         alpha=0.9,
                     )
 
-        reference_budgets = budgets_reference[
-            np.isfinite(budgets_reference) & (budgets_reference > 0.0)
-        ]
-        if reference_budgets.size == 0:
-            raise ValueError("budgets_reference must contain at least one positive finite value.")
-        reference_anchor = float(reference_budgets[0])
-        ax.loglog(
-            reference_budgets,
-            1.0 / np.sqrt(reference_budgets),
-            "--",
-            color="gray",
-            alpha=0.6,
-            label=r"$O(1/\sqrt{N_q})$",
-        )
-        ax.loglog(
-            reference_budgets,
-            np.sqrt(reference_anchor) / reference_budgets,
-            "-.",
-            color="black",
-            alpha=0.5,
-            label=r"$O(1/N_q)$",
-        )
+        add_query_scaling_guides(ax, guide_points)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
         ax.set_xlabel("Common query budget")
         ax.set_ylabel("Median normalized absolute error")
         ax.grid(True, which="both", alpha=0.2)

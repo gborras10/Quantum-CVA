@@ -42,6 +42,10 @@ from ae_pipeline_utils import (  # noqa: E402
     extract_trace,
     ideal_good_probability,
 )
+from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (  # noqa: E402
+    log_query_bin_indices,
+    standard_error,
+)
 from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta  # noqa: E402
 from quantum_cva.algorithms.third_party.biae import BayesianIQAE as BIQAE  # noqa: E402
 
@@ -1624,25 +1628,15 @@ def aggregate_budget_summary(
         if not np.any(valid):
             continue
 
-        valid_indices = np.flatnonzero(valid)
-        q_valid = query_budget[valid]
-        q_min = float(np.nanmin(q_valid))
-        q_max = float(np.nanmax(q_valid))
-        if q_valid.size <= max_bins or not np.isfinite(q_min) or not np.isfinite(q_max) or q_max <= q_min:
-            bin_indices = [np.asarray([idx], dtype=int) for idx in valid_indices[np.argsort(q_valid)]]
-        else:
-            edges = np.geomspace(q_min, q_max, num=int(max_bins) + 1)
-            local_bins = np.digitize(q_valid, edges, right=False) - 1
-            local_bins = np.clip(local_bins, 0, int(max_bins) - 1)
-            bin_indices = [
-                valid_indices[np.flatnonzero(local_bins == bin_idx)]
-                for bin_idx in range(int(max_bins))
-            ]
+        bin_indices = log_query_bin_indices(
+            query_budget,
+            error_values,
+            max_bins=max_bins,
+            min_points_per_bin=min_points_per_bin,
+        )
 
         for indices in bin_indices:
             if indices.size == 0:
-                continue
-            if indices.size < int(min_points_per_bin) and q_valid.size > max_bins:
                 continue
             subset = [alg_rows[int(idx)] for idx in indices]
             if not subset:
@@ -1718,9 +1712,7 @@ def aggregate_budget_summary(
                     "mae_ci_high": mae_high,
                     "normalized_abs_error_mean": nae_mean,
                     "normalized_abs_error_std": normalized_abs_error_std,
-                    "normalized_abs_error_se": float(normalized_abs_error_std / math.sqrt(n_subset))
-                    if n_subset > 0
-                    else np.nan,
+                    "normalized_abs_error_se": standard_error(normalized_abs_error),
                     "normalized_abs_error_ci_low": nae_low,
                     "normalized_abs_error_ci_high": nae_high,
                     "normalized_abs_error_median": nae_median,

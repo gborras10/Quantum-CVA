@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
+
+EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+if str(EXPERIMENTS_DIR) not in sys.path:
+    sys.path.insert(0, str(EXPERIMENTS_DIR))
+
+from common_utils.plotting_utils import (  # noqa: E402
+    add_query_scaling_guides,
+    log_binned_median_se,
+    plot_median_se_errorbar,
+)
 
 
 FINAL_ERROR_STYLE = {
@@ -105,39 +116,6 @@ def _plot_log_gaussian_contours(
         )
 
 
-def _add_query_reference(ax: plt.Axes, x_values: np.ndarray, y_values: np.ndarray) -> Line2D | None:
-    valid = (
-        np.isfinite(x_values)
-        & np.isfinite(y_values)
-        & (x_values > 0.0)
-        & (y_values > 0.0)
-    )
-    x_values = x_values[valid]
-    y_values = y_values[valid]
-    if x_values.size == 0:
-        return None
-
-    x0 = float(np.nanmedian(x_values))
-    y0 = float(np.nanmedian(y_values))
-    x_min = float(np.nanmin(x_values))
-    x_max = float(np.nanmax(x_values))
-    if not np.isfinite(x0) or not np.isfinite(y0) or x_min <= 0.0 or x_max <= x_min:
-        return None
-
-    x_ref = np.geomspace(x_min, x_max, 300)
-    y_ref = y0 * np.sqrt(x0 / x_ref)
-    (line,) = ax.loglog(
-        x_ref,
-        y_ref,
-        color="0.25",
-        linestyle=":",
-        linewidth=1.6,
-        label=r"$O(1/\sqrt{N})$",
-        zorder=1,
-    )
-    return line
-
-
 def _summary_text(summary: pd.DataFrame, *, x_kind: str) -> str:
     lines: list[str] = []
     for algorithm in ALGORITHM_ORDER:
@@ -162,6 +140,10 @@ def plot_final_error_scatter(
     title: str,
     summary_path: Path | None = None,
     pdf_path: Path | None = None,
+    max_points_per_algorithm: int | None = None,
+    point_sample_seed: int = 12345,
+    draw_query_median_lines: bool = True,
+    draw_query_scaling_guides: bool = True,
 ) -> pd.DataFrame:
     if final_rows.empty:
         raise ValueError("final_rows is empty")
@@ -213,6 +195,9 @@ def plot_final_error_scatter(
     legend_handles: list[Line2D] = []
     all_x: list[float] = []
     all_y: list[float] = []
+    query_guide_points: list[tuple[float, float]] = []
+    query_reference_handles: list[Line2D] = []
+    rng = np.random.default_rng(int(point_sample_seed))
 
     for algorithm in ALGORITHM_ORDER:
         group = df[df["algorithm"] == algorithm]
@@ -221,12 +206,22 @@ def plot_final_error_scatter(
         style = FINAL_ERROR_STYLE[algorithm]
         x_values = group[x_col].to_numpy(dtype=float)
         y_values = group[error_col].to_numpy(dtype=float)
-        all_x.extend(x_values.tolist())
-        all_y.extend(y_values.tolist())
+        plot_x_values = x_values
+        plot_y_values = y_values
+        if max_points_per_algorithm is not None and x_values.size > int(max_points_per_algorithm):
+            selected = rng.choice(
+                x_values.size,
+                size=max(1, int(max_points_per_algorithm)),
+                replace=False,
+            )
+            plot_x_values = x_values[selected]
+            plot_y_values = y_values[selected]
+        all_x.extend(plot_x_values.tolist())
+        all_y.extend(plot_y_values.tolist())
 
         ax.scatter(
-            x_values,
-            y_values,
+            plot_x_values,
+            plot_y_values,
             s=28,
             marker=style["marker"],
             color=style["color"],
@@ -235,7 +230,7 @@ def plot_final_error_scatter(
             linewidths=0.35,
             zorder=3,
         )
-        _plot_log_gaussian_contours(ax, x_values, y_values, color=style["color"])
+        _plot_log_gaussian_contours(ax, plot_x_values, plot_y_values, color=style["color"])
 
         median_x = float(np.nanmedian(x_values))
         median_y = float(np.nanmedian(y_values))
@@ -255,20 +250,45 @@ def plot_final_error_scatter(
                 [0],
                 color=style["color"],
                 marker=style["marker"],
-                linewidth=1.7,
+                linestyle="None",
                 markersize=8,
-                label=f"{algorithm} (n={len(group)})",
+                label=f"{algorithm} (n={plot_x_values.size}/{len(group)})"
+                if plot_x_values.size != len(group)
+                else f"{algorithm} (n={len(group)})",
             )
         )
 
-    if x_kind == "queries":
-        query_reference = _add_query_reference(
-            ax,
-            np.asarray(all_x, dtype=float),
-            np.asarray(all_y, dtype=float),
-        )
-    else:
-        query_reference = None
+        if x_kind == "queries" and draw_query_median_lines:
+            x_bins, y_bins, yerr_bins, _ = log_binned_median_se(
+                x_values,
+                y_values,
+                max_bins=8,
+                min_points_per_bin=3,
+            )
+            if x_bins.size:
+                order = np.argsort(x_bins)
+                x_bins = x_bins[order]
+                y_bins = y_bins[order]
+                yerr_bins = yerr_bins[order]
+                query_guide_points.extend(
+                    (float(x), float(y))
+                    for x, y in zip(x_bins, y_bins)
+                    if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
+                )
+                plot_median_se_errorbar(
+                    ax,
+                    x_bins,
+                    y_bins,
+                    yerr_bins,
+                    style=style,
+                    label="_nolegend_",
+                    linewidth=2.1,
+                    markersize=5.8,
+                    zorder=6,
+                )
+
+    if x_kind == "queries" and draw_query_scaling_guides:
+        query_reference_handles = add_query_scaling_guides(ax, query_guide_points)
 
     median_handle = Line2D(
         [0],
@@ -289,8 +309,7 @@ def plot_final_error_scatter(
         label="Gaussian contours",
     )
     legend_handles.extend([median_handle, contour_handle])
-    if query_reference is not None:
-        legend_handles.append(query_reference)
+    legend_handles.extend(query_reference_handles)
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -331,7 +350,10 @@ def plot_final_error_scatter(
     fig.savefig(output_path, dpi=300)
     if pdf_path is not None:
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(pdf_path)
+        try:
+            fig.savefig(pdf_path)
+        except PermissionError as exc:
+            print(f"Skipped locked PDF output {pdf_path}: {exc}")
     plt.close(fig)
     return summary
 
@@ -342,6 +364,10 @@ def plot_final_error_figures(
     *,
     title_suffix: str,
     output_prefix: str = "triple_gaussian_error",
+    max_points_per_algorithm: int | None = None,
+    point_sample_seed: int = 12345,
+    draw_query_median_lines: bool = True,
+    draw_query_scaling_guides: bool = True,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     final_rows = pd.read_csv(final_rows_path)
     queries_summary = plot_final_error_scatter(
@@ -351,13 +377,23 @@ def plot_final_error_figures(
         title=f"Final error versus query cost {title_suffix}",
         summary_path=output_dir / f"{output_prefix}_queries_summary.csv",
         pdf_path=output_dir / f"{output_prefix}_queries.pdf",
+        max_points_per_algorithm=max_points_per_algorithm,
+        point_sample_seed=point_sample_seed,
+        draw_query_median_lines=draw_query_median_lines,
+        draw_query_scaling_guides=draw_query_scaling_guides,
     )
-    runtime_summary = plot_final_error_scatter(
-        final_rows,
-        output_dir / f"{output_prefix}_runtime.png",
-        x_kind="runtime",
-        title=f"Final error versus runtime {title_suffix}",
-        summary_path=output_dir / f"{output_prefix}_runtime_summary.csv",
-        pdf_path=output_dir / f"{output_prefix}_runtime.pdf",
-    )
+    runtime_summary = pd.DataFrame()
+    if "runtime_wall_seconds" in final_rows or "runtime_seconds" in final_rows:
+        runtime_summary = plot_final_error_scatter(
+            final_rows,
+            output_dir / f"{output_prefix}_runtime.png",
+            x_kind="runtime",
+            title=f"Final error versus runtime {title_suffix}",
+            summary_path=output_dir / f"{output_prefix}_runtime_summary.csv",
+            pdf_path=output_dir / f"{output_prefix}_runtime.pdf",
+            max_points_per_algorithm=max_points_per_algorithm,
+            point_sample_seed=point_sample_seed,
+            draw_query_median_lines=draw_query_median_lines,
+            draw_query_scaling_guides=draw_query_scaling_guides,
+        )
     return queries_summary, runtime_summary

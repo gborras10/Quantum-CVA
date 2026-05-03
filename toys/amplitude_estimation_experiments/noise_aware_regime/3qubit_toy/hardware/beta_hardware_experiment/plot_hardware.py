@@ -9,10 +9,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+EXPERIMENTS_DIR = Path(__file__).resolve().parents[4]
+if str(EXPERIMENTS_DIR) not in sys.path:
+    sys.path.insert(0, str(EXPERIMENTS_DIR))
 TOY_DIR = Path(__file__).resolve().parents[2]
 if str(TOY_DIR) not in sys.path:
     sys.path.insert(0, str(TOY_DIR))
 
+from common_utils.plotting_utils import (  # noqa: E402
+    add_query_scaling_guides,
+    log_binned_median_se,
+    plot_median_se_errorbar,
+)
+from ae_actual_query_plots import plot_actual_query_error
 from ae_final_error_plots import plot_final_error_figures
 
 
@@ -86,124 +95,6 @@ def actual_trace_label(algorithm: str, group: pd.DataFrame) -> str:
     return f"{algorithm} ({n_repetitions} reps)"
 
 
-def log_binned_trace_summary(
-    query_budget: np.ndarray,
-    error: np.ndarray,
-    *,
-    max_bins: int = 14,
-    min_points_per_bin: int = 5,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    valid = (
-        np.isfinite(query_budget)
-        & np.isfinite(error)
-        & (query_budget > 0.0)
-        & (error > 0.0)
-    )
-    query_budget = query_budget[valid]
-    error = error[valid]
-    if query_budget.size == 0:
-        return np.asarray([]), np.asarray([]), np.asarray([])
-
-    if query_budget.size <= max_bins:
-        order = np.argsort(query_budget)
-        return query_budget[order], error[order], np.zeros(query_budget.size, dtype=float)
-
-    q_min = float(np.nanmin(query_budget))
-    q_max = float(np.nanmax(query_budget))
-    if not np.isfinite(q_min) or not np.isfinite(q_max) or q_min <= 0.0 or q_max <= q_min:
-        return np.asarray([]), np.asarray([]), np.asarray([])
-
-    edges = np.geomspace(q_min, q_max, num=max_bins + 1)
-    bin_index = np.digitize(query_budget, edges, right=False) - 1
-    bin_index = np.clip(bin_index, 0, max_bins - 1)
-
-    x_values: list[float] = []
-    y_values: list[float] = []
-    yerr_values: list[float] = []
-    for idx in range(max_bins):
-        mask = bin_index == idx
-        n_points = int(np.sum(mask))
-        if n_points < min_points_per_bin:
-            continue
-        q_bin = query_budget[mask]
-        e_bin = error[mask]
-        x_values.append(float(np.nanmedian(q_bin)))
-        y_values.append(float(np.nanmedian(e_bin)))
-        err_std = float(np.nanstd(e_bin, ddof=1)) if n_points > 1 else 0.0
-        yerr_values.append(err_std / np.sqrt(n_points))
-
-    return (
-        np.asarray(x_values, dtype=float),
-        np.asarray(y_values, dtype=float),
-        np.asarray(yerr_values, dtype=float),
-    )
-
-
-def bootstrap_median_ci(values: np.ndarray, n_boot: int = 2000, alpha: float = 0.05) -> tuple[float, float, float]:
-    values = np.asarray(values, dtype=float)
-    values = values[np.isfinite(values)]
-    if len(values) == 0:
-        return np.nan, np.nan, np.nan
-    median = float(np.median(values))
-    if len(values) == 1:
-        return median, median, median
-    rng = np.random.default_rng(12345)
-    boot_medians = np.empty(n_boot, dtype=float)
-    for i in range(n_boot):
-        boot_medians[i] = np.median(rng.choice(values, size=len(values), replace=True))
-    low = float(np.quantile(boot_medians, alpha / 2))
-    high = float(np.quantile(boot_medians, 1 - alpha / 2))
-    return median, low, high
-
-
-def replay_trace_error_band(run_dir: Path, group: pd.DataFrame) -> tuple[np.ndarray, np.ndarray] | None:
-    trace = maybe_read(run_dir / "replay_trace_rows.csv")
-    if trace.empty or "algorithm" not in trace or "repetition" not in trace:
-        return None
-    if "normalized_abs_error" not in trace and "nrmse" not in trace:
-        return None
-    error_col = "normalized_abs_error" if "normalized_abs_error" in trace else "nrmse"
-    algorithm = str(group["algorithm"].iloc[0])
-    alg_trace = trace[trace["algorithm"].astype(str) == algorithm].copy()
-    if alg_trace.empty:
-        return None
-    alg_trace["query_budget"] = alg_trace["query_budget"].astype(float)
-    alg_trace[error_col] = alg_trace[error_col].astype(float)
-
-    lows: list[float] = []
-    highs: list[float] = []
-    for budget in group["budget"].to_numpy(dtype=float):
-        values: list[float] = []
-        for _, rep_rows in alg_trace.groupby("repetition"):
-            ordered = rep_rows.sort_values("query_budget")
-            if float(ordered["query_budget"].iloc[-1]) < float(budget):
-                continue
-            candidates = ordered[ordered["query_budget"] <= float(budget)]
-            if candidates.empty:
-                continue
-            chosen = candidates.iloc[-1]
-            values.append(float(chosen[error_col]))
-        _, low, high = bootstrap_median_ci(np.asarray(values, dtype=float))
-        lows.append(low)
-        highs.append(high)
-    return np.asarray(lows, dtype=float), np.asarray(highs, dtype=float)
-
-
-def median_ci_band(run_dir: Path, group: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-    if "normalized_abs_error_median_ci_low" in group and "normalized_abs_error_median_ci_high" in group:
-        return (
-            group["normalized_abs_error_median_ci_low"].to_numpy(dtype=float),
-            group["normalized_abs_error_median_ci_high"].to_numpy(dtype=float),
-        )
-    trace_band = replay_trace_error_band(run_dir, group)
-    if trace_band is not None:
-        return trace_band
-    return (
-        column(group, "normalized_abs_error_q25", "nrmse_q25").to_numpy(dtype=float),
-        column(group, "normalized_abs_error_q75", "nrmse_q75").to_numpy(dtype=float),
-    )
-
-
 def plot_amplification(run_dir: Path, out_dir: Path) -> None:
     points = maybe_read(run_dir / "amplification_points.csv")
     if points.empty:
@@ -252,6 +143,7 @@ def plot_direct_trace(run_dir: Path, out_dir: Path) -> None:
         return
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.5))
     a_true = float(trace["a_true"].dropna().iloc[0])
+    error_guide_points: list[tuple[float, float]] = []
     for algorithm, group in trace.groupby("algorithm"):
         group = group.sort_values("query_budget")
         style = STYLE.get(str(algorithm), {"color": None, "marker": "o"})
@@ -262,20 +154,42 @@ def plot_direct_trace(run_dir: Path, out_dir: Path) -> None:
             color=style["color"],
             label=algorithm,
         )
-        axes[1].semilogy(
-            group["query_budget"],
-            column(group, "normalized_abs_error", "nrmse"),
-            marker=style["marker"],
-            color=style["color"],
-            label=algorithm,
+        error = column(group, "normalized_abs_error", "nrmse").to_numpy(dtype=float)
+        query_budget = group["query_budget"].to_numpy(dtype=float)
+        x_bins, y_bins, yerr_bins, _ = log_binned_median_se(
+            query_budget,
+            error,
+            max_bins=14,
+            min_points_per_bin=1,
         )
+        if x_bins.size:
+            order = np.argsort(x_bins)
+            x_bins = x_bins[order]
+            y_bins = y_bins[order]
+            yerr_bins = yerr_bins[order]
+            error_guide_points.extend(
+                (float(x), float(y))
+                for x, y in zip(x_bins, y_bins)
+                if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
+            )
+            plot_median_se_errorbar(
+                axes[1],
+                x_bins,
+                y_bins,
+                yerr_bins,
+                style=style,
+                label=algorithm,
+            )
     axes[0].axhline(a_true, color="black", linestyle="--", linewidth=1.0)
+    add_query_scaling_guides(axes[1], error_guide_points)
     axes[0].set_xlabel("State-preparation calls")
     axes[0].set_ylabel("Estimate")
     axes[0].set_title("Direct live estimate")
     axes[1].set_xlabel("State-preparation calls")
     axes[1].set_ylabel("Normalized absolute error")
     axes[1].set_title("Direct live error")
+    axes[1].set_xscale("log")
+    axes[1].set_yscale("log")
     for ax in axes:
         ax.grid(True, which="both", alpha=0.25)
         ax.legend(frameon=False)
@@ -293,6 +207,12 @@ def plot_replay_actual_queries(
     out_dir: Path,
     *,
     output_stem: str = "hardware_replay_actual_queries",
+    max_bins: int = 20,
+    min_points_per_bin: int = 15,
+    bootstrap_samples: int = 2000,
+    confidence_level: float = 0.95,
+    bootstrap_seed: int = 12345,
+    drop_binned_point_indices: dict[str, tuple[int, ...]] | None = None,
 ) -> None:
     trace = maybe_read(run_dir / "replay_trace_rows.csv")
     if trace.empty or "algorithm" not in trace or "query_budget" not in trace:
@@ -300,101 +220,18 @@ def plot_replay_actual_queries(
     if "normalized_abs_error" not in trace and "nrmse" not in trace:
         return
 
-    error_col = "normalized_abs_error" if "normalized_abs_error" in trace else "nrmse"
-    fig, ax = plt.subplots(figsize=(6.8, 4.2))
-    guide_points: list[tuple[float, float]] = []
-
-    for algorithm, group in trace.groupby("algorithm"):
-        group = group.copy()
-        group["query_budget"] = pd.to_numeric(group["query_budget"], errors="coerce")
-        group[error_col] = pd.to_numeric(group[error_col], errors="coerce")
-        group = group[
-            np.isfinite(group["query_budget"])
-            & np.isfinite(group[error_col])
-            & (group["query_budget"] > 0.0)
-            & (group[error_col] > 0.0)
-        ]
-        if group.empty:
-            continue
-
-        style = STYLE.get(str(algorithm), {"color": None, "marker": "o"})
-        query_budget = group["query_budget"].to_numpy(dtype=float)
-        error = group[error_col].to_numpy(dtype=float)
-
-        x_values, y_values, yerr = log_binned_trace_summary(
-            query_budget,
-            error,
-            max_bins=12,
-            min_points_per_bin=100,
-        )
-        if x_values.size == 0:
-            continue
-        order = np.argsort(x_values)
-        x_values = x_values[order]
-        y_values = y_values[order]
-        yerr = yerr[order]
-        yerr = np.where(np.isfinite(yerr), yerr, 0.0)
-        yerr = np.minimum(yerr, np.maximum(0.0, 0.95 * y_values))
-
-        guide_points.extend(
-            (float(x), float(y))
-            for x, y in zip(x_values, y_values)
-            if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
-        )
-        ax.errorbar(
-            x_values,
-            y_values,
-            yerr=yerr,
-            marker=style["marker"],
-            color=style["color"],
-            linewidth=2.0,
-            markersize=5.6,
-            elinewidth=1.0,
-            capsize=2.8,
-            label=actual_trace_label(str(algorithm), group),
-        )
-
-    if guide_points:
-        x_values = np.asarray([x for x, _ in guide_points], dtype=float)
-        y_values = np.asarray([y for _, y in guide_points], dtype=float)
-        valid = np.isfinite(x_values) & np.isfinite(y_values) & (x_values > 0.0) & (y_values > 0.0)
-        x_values = x_values[valid]
-        y_values = y_values[valid]
-        if x_values.size:
-            x0 = float(np.nanmin(x_values))
-            y0_values = y_values[np.isclose(x_values, x0)]
-            y0 = float(np.nanmedian(y0_values)) if y0_values.size else float(np.nanmedian(y_values))
-            guide_x = np.geomspace(x0, float(np.nanmax(x_values)), num=200)
-            ax.loglog(
-                guide_x,
-                y0 * (x0 / guide_x),
-                color="black",
-                linestyle="--",
-                linewidth=1.15,
-                alpha=0.82,
-                label=r"$O(1/N)$",
-            )
-            ax.loglog(
-                guide_x,
-                y0 * np.sqrt(x0 / guide_x),
-                color="black",
-                linestyle=":",
-                linewidth=1.35,
-                alpha=0.82,
-                label=r"$O(1/\sqrt{N})$",
-            )
-
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(r"Actual query cost $N_q$")
-    ax.set_ylabel("Median normalized absolute error")
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
-    ax.legend(frameon=False, loc="lower left")
-    fig.tight_layout()
-    fig.savefig(out_dir / f"{output_stem}.png", dpi=300)
-    fig.savefig(out_dir / f"{output_stem}.pdf")
-    plt.close(fig)
+    plot_actual_query_error(
+        trace,
+        out_dir / f"{output_stem}.png",
+        summary_path=out_dir / f"{output_stem}_summary.csv",
+        pdf_path=out_dir / f"{output_stem}.pdf",
+        max_bins=max_bins,
+        min_points_per_bin=min_points_per_bin,
+        bootstrap_samples=bootstrap_samples,
+        confidence_level=confidence_level,
+        bootstrap_seed=bootstrap_seed,
+        drop_binned_point_indices=drop_binned_point_indices,
+    )
 
 
 def plot_final_comparison(run_dir: Path, out_dir: Path) -> None:

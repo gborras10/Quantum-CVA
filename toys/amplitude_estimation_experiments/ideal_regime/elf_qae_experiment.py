@@ -24,9 +24,10 @@ from toys.amplitude_estimation_experiments.common_utils.experiment_utils import 
     build_problem,
     true_amplitude_for_offset,
 )
-from toys.amplitude_estimation_experiments.ideal_regime.ideal_benchmark_outputs import (
+from toys.amplitude_estimation_experiments.ideal_regime.ideal_utils import (
     aggregate_budget_summary,
     extract_trace,
+    plot_final_runtime_scatter_from_budget_rows,
     plot_budget_summary,
     save_csv,
     trace_rows_from_result,
@@ -370,19 +371,21 @@ def run_experiment() -> None:
             f"n={runtimes.size}"
         )
 
+    output_dir = os.path.join(current_dir, "elf_experiment_results")
+    os.makedirs(output_dir, exist_ok=True)
     output_prefix = "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal"
     budget_summary = aggregate_budget_summary(
         trace_rows_all,
         total_repetitions=n_rep,
     )
-    save_csv(trace_rows_all, os.path.join(current_dir, f"{output_prefix}_trace_rows.csv"))
-    save_csv(final_rows, os.path.join(current_dir, f"{output_prefix}_final_rows.csv"))
-    save_csv(trace_rows_all, os.path.join(current_dir, f"{output_prefix}_budget_rows.csv"))
-    save_csv(budget_summary, os.path.join(current_dir, f"{output_prefix}_budget_summary.csv"))
-    save_csv(error_rows, os.path.join(current_dir, f"{output_prefix}_errors.csv"))
+    save_csv(trace_rows_all, os.path.join(output_dir, f"{output_prefix}_trace_rows.csv"))
+    save_csv(final_rows, os.path.join(output_dir, f"{output_prefix}_final_rows.csv"))
+    save_csv(trace_rows_all, os.path.join(output_dir, f"{output_prefix}_budget_rows.csv"))
+    save_csv(budget_summary, os.path.join(output_dir, f"{output_prefix}_budget_summary.csv"))
+    save_csv(error_rows, os.path.join(output_dir, f"{output_prefix}_errors.csv"))
 
     out_path = os.path.join(
-        current_dir,
+        output_dir,
         "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal_rmse.png",
     )
     plot_budget_summary(
@@ -393,8 +396,25 @@ def run_experiment() -> None:
         output_path=out_path,
         title="Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE_latentt vs ELF-QAE",
     )
+    runtime_scatter_path = os.path.join(
+        output_dir,
+        "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal_final_error_runtime_scatter.png",
+    )
+    plot_final_runtime_scatter_from_budget_rows(
+        trace_rows_all,
+        algorithms=ALGORITHMS,
+        algorithm_labels=ALGORITHM_LABELS,
+        algorithm_styles=ALGORITHM_STYLES,
+        output_path=runtime_scatter_path,
+        title="Final error versus runtime: ideal ELF-QAE comparison",
+        summary_path=os.path.join(
+            output_dir,
+            "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal_final_error_runtime_scatter_summary.csv",
+        ),
+    )
     print(f"Saved plot to {out_path}")
-    print(f"Saved CSV outputs with prefix {os.path.join(current_dir, output_prefix)}")
+    print(f"Saved runtime scatter plot to {runtime_scatter_path}")
+    print(f"Saved CSV outputs with prefix {os.path.join(output_dir, output_prefix)}")
 
 
 if __name__ == "__main__":

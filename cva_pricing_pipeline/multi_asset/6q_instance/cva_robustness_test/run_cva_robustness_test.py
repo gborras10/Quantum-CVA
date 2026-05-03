@@ -31,7 +31,7 @@ def _bootstrap_src_path() -> pathlib.Path:
 REPO_ROOT = _bootstrap_src_path()
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
-from BETA_full_cva_pipeline import CONFIG as BASE_CONFIG  # noqa: E402
+from full_cva_pipeline import CONFIG as BASE_CONFIG  # noqa: E402
 from quantum_cva.multi_asset.pipeline_cfg.cfg_utilities import (  # noqa: E402
     CVAPipelineRunner,
     InstrumentConfig,
