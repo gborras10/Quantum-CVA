@@ -1,0 +1,38 @@
+run_kind,simulation_regime,noise_profile,noise_scale,instance_name,repetition,algorithm,algorithm_key,error,error_type
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,0,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,0,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,1,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,2,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,2,BAE,bae,Refusing circuit with grover_power=9; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,3,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,3,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,4,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,4,BAE,bae,Refusing circuit with grover_power=6; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,5,BAE,bae,Refusing circuit with grover_power=6; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,6,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,6,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,7,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,7,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,8,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,8,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,9,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,9,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,10,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,10,BAE,bae,Refusing circuit with grover_power=8; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,11,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,12,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,12,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,13,CABIQAE,cabiqae_latentt,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,13,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,14,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,14,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,15,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,15,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,16,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,16,BAE,bae,Refusing circuit with grover_power=7; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,17,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,17,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,18,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,18,BAE,bae,Refusing circuit with grover_power=5; cap is 4.,RuntimeError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,19,BIQAE,biqae,'The job was not completed successfully.',AlgorithmError
+simulated_noise,simulated_noise,realistic,1.0,6q_instance,19,BAE,bae,Refusing circuit with grover_power=8; cap is 4.,RuntimeError

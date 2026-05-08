@@ -165,5 +165,31 @@
     "contrast_prefactor": 1.1603033548425015,
     "t_eff": 33.95611070080546,
     "a_true": 0.3602728053304129
-  }
+  },
+  "cabiqae_replay_topups": [
+    {
+      "started_at_epoch": 1778053333.9829438,
+      "finished_at_epoch": 1778056461.180399,
+      "algorithm": "cabiqae_latentt",
+      "start_repetition": 286,
+      "extra_repetitions_requested": 1000,
+      "extra_final_rows_added": 1000,
+      "extra_trace_rows_added": 19995,
+      "extra_budget_rows_added": 0,
+      "seed": 12345,
+      "direct_shots": 256,
+      "epsilon_target": 0.001,
+      "alpha": 0.1,
+      "replay_probability_mode": "normal",
+      "replay_probability_se_scale": 1.0,
+      "extrapolate": true,
+      "extrapolation_model": {
+        "model": "free_intercept",
+        "contrast_prefactor": 1.1603033548425015,
+        "t_eff": 33.95611070080546,
+        "a_true": 0.3602728053304129
+      },
+      "backup_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\toys\\amplitude_estimation_experiments\\noise_aware_regime\\3qubit_toy\\hardware\\beta_hardware_experiment\\experiment_results\\csv_results\\backup_before_cabiqae_replay_topup_20260506_094213"
+    }
+  ]
 }

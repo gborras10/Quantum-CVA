@@ -188,6 +188,16 @@ class SamplerCountsAdapter:
 
     def __init__(self, sampler_or_backend: Any):
         self._sampler_or_backend = sampler_or_backend
+        self.supports_grover_power_counts = hasattr(
+            sampler_or_backend,
+            "counts_for_grover_power",
+        )
+
+    def counts_for_grover_power(self, k: int, shots: int) -> Mapping[str, int]:
+        source = self._sampler_or_backend
+        if not hasattr(source, "counts_for_grover_power"):
+            raise AttributeError("Wrapped sampler does not expose counts_for_grover_power.")
+        return _normalize_counts(source.counts_for_grover_power(int(k), int(shots)))
 
     def __call__(self, circuit: QuantumCircuit, shots: int) -> Mapping[str, int]:
         source = self._sampler_or_backend
@@ -227,6 +237,7 @@ class HardwareQAEmodel(QAEmodel):
         problem: Any,
         counts_provider: CountsProvider,
         Tcrange: tuple[float, float] | None,
+        noise_floor: float = 0.5,
     ) -> None:
         # ``a`` and ``Tc`` are not used for data generation here.
         super().__init__(a=0.5, Tc=None, Tcrange=Tcrange)
@@ -234,6 +245,11 @@ class HardwareQAEmodel(QAEmodel):
         self._counts_provider = counts_provider
         self._circuit_cache: dict[int, QuantumCircuit] = {}
         self.execution_log: list[_MeasurementRecord] = []
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
+        self.noise_floor = float(noise_floor)
 
         objective_qubits = getattr(problem, "objective_qubits", None)
         if objective_qubits is None:
@@ -246,7 +262,7 @@ class HardwareQAEmodel(QAEmodel):
         Tc = self.Tc if whichTc == "real" else self.Tc_est
         probing_times = 2.0 * np.asarray(ctrls, dtype=float) + 1.0
         exps = np.exp(-probing_times / float(Tc))
-        return exps * fun + (1.0 - exps) / 2.0
+        return exps * fun + (1.0 - exps) * self.noise_floor
 
     def _build_measured_circuit(self, control: int) -> QuantumCircuit:
         if control in self._circuit_cache:
@@ -309,8 +325,20 @@ class HardwareQAEmodel(QAEmodel):
             raise ValueError(f"nshots must be positive, received {nshots}.")
 
         control = max(0, int(round(float(m))))
-        circuit = self._build_measured_circuit(control)
-        counts = _normalize_counts(self._counts_provider(circuit, int(nshots)))
+        supports_direct_counts = bool(
+            getattr(
+                self._counts_provider,
+                "supports_grover_power_counts",
+                hasattr(self._counts_provider, "counts_for_grover_power"),
+            )
+        )
+        if supports_direct_counts:
+            counts = _normalize_counts(
+                self._counts_provider.counts_for_grover_power(control, int(nshots))
+            )
+        else:
+            circuit = self._build_measured_circuit(control)
+            counts = _normalize_counts(self._counts_provider(circuit, int(nshots)))
         one_counts = self._count_good_states(counts)
 
         self.execution_log.append(
@@ -337,6 +365,7 @@ class StandaloneBAEHardware:
         cap_kappa: float = 1.0,
         max_shots_same_k: int | None = None,
         counts_adapter: CountsProvider | None = None,
+        noise_floor: float = 0.5,
         **kwargs: Any,
     ) -> None:
         self.epsilon_target = float(epsilon_target)
@@ -347,6 +376,11 @@ class StandaloneBAEHardware:
         self.T_known = T_known
         self.cap_kappa = float(cap_kappa)
         self.max_shots_same_k = max_shots_same_k
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
+        self.noise_floor = float(noise_floor)
 
         default_estimate_T = bool(
             self.T_known is not None
@@ -498,7 +532,12 @@ class StandaloneBAEHardware:
         strategy["capk"] = float(max(strategy.get("capk", 1.0), self.cap_kappa))
 
         def _execute_inference() -> tuple[list[float], list[float], list[int], LegacyBAE, HardwareQAEmodel]:
-            model = HardwareQAEmodel(problem=problem, counts_provider=counts_provider, Tcrange=T_range)
+            model = HardwareQAEmodel(
+                problem=problem,
+                counts_provider=counts_provider,
+                Tcrange=T_range,
+                noise_floor=self.noise_floor,
+            )
             estimator = LegacyBAE(model, Tc_precalc=Tc_precalc, Tcrange=T_range)
             smc_sampler = get_sampler(self.sampler_kind, model, dict(self.sampler_kwargs))
 

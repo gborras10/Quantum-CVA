@@ -69,6 +69,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-direct", action="store_true")
     parser.add_argument("--skip-replay", action="store_true")
     parser.add_argument("--skip-plots", action="store_true")
+    parser.add_argument(
+        "--plot-max-queries",
+        type=float,
+        default=None,
+        help="Only include replay plot points with query cost at or below this value.",
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
     args.algorithms = ALGORITHMS

@@ -1,0 +1,2 @@
+algorithm,algorithm_key,mean_final_normalized_abs_error,mean_runtime_seconds,median_final_normalized_abs_error,median_runtime_seconds,n
+CABIQAE,cabiqae_latentt,0.010323825207030535,2.619715786789984,0.0018056597954471004,0.23116689200014662,100

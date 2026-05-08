@@ -46,6 +46,7 @@ class CABIQAE(AmplitudeEstimator):
         cap_kappa: float = 1.0,
         use_noise_cap: bool = True,
         max_shots_same_k: int | None = None,
+        noise_floor: float = 0.5,
     ) -> None:
         r"""
         Args:
@@ -60,6 +61,9 @@ class CABIQAE(AmplitudeEstimator):
             cap_kappa: The kappa parameter for the noise cap.
             use_noise_cap: Whether to use the noise cap in the algorithm.
             max_shots_same_k: The maximum number of shots to use for each value of k.
+            noise_floor: Asymptotic observed success probability when contrast
+                has fully decayed. The default ``0.5`` preserves the legacy
+                two-outcome noise model.
         Raises:
             AlgorithmError: if the method to compute the interval estimates is not supported
             ValueError: If the target epsilon is not in (0, 0.5]
@@ -91,6 +95,11 @@ class CABIQAE(AmplitudeEstimator):
         if T_known is not None and T_known <= 0:
             raise ValueError(f"T_known must be positive, but is {T_known}.")
 
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
+
         if confint_method not in {"chernoff", "beta"}:
             raise ValueError(
                 f"The interval estimation method must be `chernoff` or `beta`, but is {confint_method}."
@@ -109,6 +118,7 @@ class CABIQAE(AmplitudeEstimator):
         self._cap_kappa = cap_kappa
         self._use_noise_cap = use_noise_cap
         self._max_shots_same_k = max_shots_same_k
+        self._noise_floor = float(noise_floor)
 
     @property
     def noise_model(self) -> str:
@@ -119,6 +129,11 @@ class CABIQAE(AmplitudeEstimator):
     def is_noise_aware(self) -> bool:
         """Whether the algorithm uses an explicit noise model."""
         return self._noise_model != "ideal"
+
+    @property
+    def noise_floor(self) -> float:
+        """Return the asymptotic success probability under full contrast loss."""
+        return self._noise_floor
 
     @property
     def sampler(self) -> SamplerV2 | None:
@@ -214,7 +229,8 @@ class CABIQAE(AmplitudeEstimator):
         c = self._contrast(k)
 
         # Invert noisy observation model
-        q = (p_obs - 0.5) / c + 0.5
+        b = self._noise_floor
+        q = (p_obs - b) / c + b
 
         # Clip to valid probability range
         return float(np.clip(q, 0.0, 1.0))
@@ -240,7 +256,8 @@ class CABIQAE(AmplitudeEstimator):
             raise ValueError("The ideal probability q must be in [0, 1].")
         
         c = self._contrast(k)
-        p_obs = c * q + (1.0 - c) * 0.5
+        b = self._noise_floor
+        p_obs = c * q + (1.0 - c) * b
 
         return float(np.clip(p_obs, 0.0, 1.0))
 
@@ -274,8 +291,9 @@ class CABIQAE(AmplitudeEstimator):
         
         c = self._contrast(k)
 
-        q_l = (p_l - 0.5) / c + 0.5
-        q_u = (p_u - 0.5) / c + 0.5
+        b = self._noise_floor
+        q_l = (p_l - b) / c + b
+        q_u = (p_u - b) / c + b
 
         # Clip to probability domain
         q_l = float(np.clip(q_l, 0.0, 1.0))

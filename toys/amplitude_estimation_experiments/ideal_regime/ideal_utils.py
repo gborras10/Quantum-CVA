@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import csv
 import math
+import sys
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
+
+CURRENT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = CURRENT_DIR.parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (
     log_query_bin_indices,
@@ -356,8 +362,8 @@ def aggregate_budget_summary(
                     "normalized_standard_deviation": normalized_standard_deviation,
                     "normalized_abs_error_q25": float(np.nanquantile(normalized_abs_error, 0.25)),
                     "normalized_abs_error_q75": float(np.nanquantile(normalized_abs_error, 0.75)),
-                    "grover_power_max_median": float(np.nanmedian(k_vals)),
-                    "amplification_factor_median": float(np.nanmedian(amplification_factors)),
+                    "grover_power_max_median": _finite_median(k_vals),
+                    "amplification_factor_median": _finite_median(amplification_factors),
                     "runtime_wall_seconds_mean": float(np.nanmean(runtime_wall_seconds)),
                     "runtime_wall_seconds_median": float(np.nanmedian(runtime_wall_seconds)),
                     "runtime_wall_seconds_std": runtime_std,
@@ -411,6 +417,14 @@ def _normalized_standard_deviation(estimates: np.ndarray, a_true: np.ndarray) ->
     return float(np.sqrt(np.nanmean(np.concatenate(normalized_centered_sq))))
 
 
+def _finite_median(values: np.ndarray) -> float:
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        return np.nan
+    return float(np.nanmedian(values))
+
+
 def _bootstrap_median_ci(
     values: np.ndarray,
     *,
@@ -460,7 +474,8 @@ def plot_budget_summary(
     algorithm_styles: Mapping[str, Mapping[str, Any]],
     output_path: str | Path,
     title: str,
-    max_points_per_algorithm: int = 14,
+    max_points_per_algorithm: int | None = 14,
+    connect_points: bool = True,
 ) -> None:
     if not summary_rows:
         return
@@ -496,11 +511,14 @@ def plot_budget_summary(
         valid = np.isfinite(x_values) & np.isfinite(y_values) & (x_values > 0.0) & (y_values > 0.0)
         if not np.any(valid):
             continue
-        selected = select_log_spaced_indices(
-            x_values,
-            valid,
-            max(2, int(max_points_per_algorithm)),
-        )
+        if max_points_per_algorithm is None:
+            selected = np.flatnonzero(valid)
+        else:
+            selected = select_log_spaced_indices(
+                x_values,
+                valid,
+                max(2, int(max_points_per_algorithm)),
+            )
 
         valid_points = [(float(x), float(y)) for x, y in zip(x_values[selected], y_values[selected])]
         guide_points.extend(valid_points)
@@ -524,8 +542,9 @@ def plot_budget_summary(
             x_values[selected],
             y_values[selected],
             yerr=yerr_selected,
+            fmt=style.get("marker", "o"),
             color=style.get("color"),
-            marker=style.get("marker", "o"),
+            linestyle="-" if connect_points else "None",
             linewidth=2.0,
             markersize=5.6,
             elinewidth=1.0,
@@ -536,7 +555,7 @@ def plot_budget_summary(
     _add_power_fit_query_scaling_guides(ax, guide_points)
 
     ax.set_xscale("log")
-    ax.set_yscale("log")
+    ax.set_yscale("linear")
     ax.set_xlabel(r"Actual query cost $N_q$")
     ax.set_ylabel("Median normalized absolute error")
     ax.grid(True, which="major", alpha=0.24)

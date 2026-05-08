@@ -19,12 +19,20 @@ from quantum_cva.amplitude_estimation.utils.models import QAEmodel
 class ProbingTimeQAEmodel(QAEmodel):
     """QAEmodel variant with contrast decay based on probing time 2k+1."""
 
+    def __init__(self, *args: Any, noise_floor: float = 0.5, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
+        self.noise_floor = float(noise_floor)
+
     def damp_fun(self, ctrls: Any, fun: Any, whichTc: str):
         assert whichTc in ["real", "est"]
         Tc = self.Tc if whichTc == "real" else self.Tc_est
         probing_times = 2.0 * np.asarray(ctrls, dtype=float) + 1.0
         exps = np.exp(-probing_times / float(Tc))
-        return exps * fun + (1.0 - exps) / 2.0
+        return exps * fun + (1.0 - exps) * self.noise_floor
 
 
 @dataclass
@@ -53,6 +61,7 @@ class StandaloneBAE:
         T_known: float | None = None,
         cap_kappa: float = 1.0,
         max_shots_same_k: int | None = None,
+        noise_floor: float = 0.5,
         **kwargs: Any,
     ) -> None:
         self.epsilon_target = float(epsilon_target)
@@ -62,6 +71,11 @@ class StandaloneBAE:
         self.T_known = T_known
         self.cap_kappa = float(cap_kappa)
         self.max_shots_same_k = max_shots_same_k
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
+        self.noise_floor = float(noise_floor)
 
         # If True, emulate the original BAE notebook setup with Tc learning.
         default_estimate_T = bool(
@@ -162,7 +176,12 @@ class StandaloneBAE:
         strategy["capk"] = float(max(strategy.get("capk", 1.0), self.cap_kappa))
 
         def _execute_inference():
-            model = ProbingTimeQAEmodel(a_true, Tc=Tc_real, Tcrange=T_range)
+            model = ProbingTimeQAEmodel(
+                a_true,
+                Tc=Tc_real,
+                Tcrange=T_range,
+                noise_floor=self.noise_floor,
+            )
             estimator = LegacyBAE(model, Tc_precalc=Tc_precalc, Tcrange=T_range)
             sampler = get_sampler(self.sampler_kind, model, dict(self.sampler_kwargs))
 

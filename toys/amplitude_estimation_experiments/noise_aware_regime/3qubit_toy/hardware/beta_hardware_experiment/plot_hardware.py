@@ -21,8 +21,12 @@ from common_utils.plotting_utils import (  # noqa: E402
     log_binned_median_se,
     plot_median_se_errorbar,
 )
-from ae_actual_query_plots import plot_actual_query_error
 from ae_final_error_plots import plot_final_error_figures
+from hardware_replay_query_plot import (
+    DEFAULT_BUDGETS,
+    budget_rows_from_trace_rows,
+    plot_hardware_replay_actual_queries,
+)
 
 
 STYLE = {
@@ -198,8 +202,13 @@ def plot_direct_trace(run_dir: Path, out_dir: Path) -> None:
     plt.close(fig)
 
 
-def plot_replay_budget(run_dir: Path, out_dir: Path) -> None:
-    plot_replay_actual_queries(run_dir, out_dir, output_stem="hardware_replay_budget")
+def plot_replay_budget(run_dir: Path, out_dir: Path, *, max_queries: float | None = None) -> None:
+    plot_replay_actual_queries(
+        run_dir,
+        out_dir,
+        output_stem="hardware_replay_budget",
+        max_queries=max_queries,
+    )
 
 
 def plot_replay_actual_queries(
@@ -207,30 +216,36 @@ def plot_replay_actual_queries(
     out_dir: Path,
     *,
     output_stem: str = "hardware_replay_actual_queries",
-    max_bins: int = 20,
-    min_points_per_bin: int = 15,
+    max_bins: int = 12,
+    min_points_per_bin: int = 100,
     bootstrap_samples: int = 2000,
     confidence_level: float = 0.95,
     bootstrap_seed: int = 12345,
+    max_queries: float | None = None,
     drop_binned_point_indices: dict[str, tuple[int, ...]] | None = None,
 ) -> None:
-    trace = maybe_read(run_dir / "replay_trace_rows.csv")
-    if trace.empty or "algorithm" not in trace or "query_budget" not in trace:
+    del drop_binned_point_indices
+    budget_rows = maybe_read(run_dir / "replay_budget_rows.csv")
+    if budget_rows.empty:
+        trace = maybe_read(run_dir / "replay_trace_rows.csv")
+        if trace.empty or "algorithm" not in trace or "query_budget" not in trace:
+            return
+        budget_rows = budget_rows_from_trace_rows(trace, DEFAULT_BUDGETS)
+    if budget_rows.empty or "algorithm" not in budget_rows:
         return
-    if "normalized_abs_error" not in trace and "nrmse" not in trace:
+    if "normalized_abs_error" not in budget_rows and "nrmse" not in budget_rows:
         return
 
-    plot_actual_query_error(
-        trace,
+    plot_hardware_replay_actual_queries(
+        budget_rows,
         out_dir / f"{output_stem}.png",
         summary_path=out_dir / f"{output_stem}_summary.csv",
-        pdf_path=out_dir / f"{output_stem}.pdf",
+        max_queries=max_queries,
         max_bins=max_bins,
         min_points_per_bin=min_points_per_bin,
         bootstrap_samples=bootstrap_samples,
         confidence_level=confidence_level,
         bootstrap_seed=bootstrap_seed,
-        drop_binned_point_indices=drop_binned_point_indices,
     )
 
 
@@ -282,14 +297,20 @@ def plot_replay_final_error_figures(run_dir: Path, out_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plot beta hardware experiment artifacts.")
     parser.add_argument("--run-dir", required=True)
+    parser.add_argument(
+        "--max-queries",
+        type=float,
+        default=None,
+        help="Only plot replay error-vs-queries rows with query cost at or below this value.",
+    )
     args = parser.parse_args()
     run_dir = Path(args.run_dir).expanduser().resolve()
     out_dir = run_dir / "plots"
     out_dir.mkdir(exist_ok=True)
     plot_amplification(run_dir, out_dir)
     plot_direct_trace(run_dir, out_dir)
-    plot_replay_budget(run_dir, out_dir)
-    plot_replay_actual_queries(run_dir, out_dir)
+    plot_replay_budget(run_dir, out_dir, max_queries=args.max_queries)
+    plot_replay_actual_queries(run_dir, out_dir, max_queries=args.max_queries)
     plot_final_comparison(run_dir, out_dir)
     plot_replay_final_error_figures(run_dir, out_dir)
     print(f"Plots saved in: {out_dir}")

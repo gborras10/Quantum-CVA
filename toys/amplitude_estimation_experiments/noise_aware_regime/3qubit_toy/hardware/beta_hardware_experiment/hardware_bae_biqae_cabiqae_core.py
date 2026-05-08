@@ -308,6 +308,10 @@ class RunPaths:
         return self.run_dir / "replay_final_rows.csv"
 
     @property
+    def replay_budget(self) -> Path:
+        return self.run_dir / "replay_budget_rows.csv"
+
+    @property
     def budget_summary(self) -> Path:
         return self.run_dir / "budget_summary.csv"
 
@@ -341,6 +345,7 @@ class ExperimentState:
     direct_final_rows: list[dict[str, Any]] = field(default_factory=list)
     replay_trace_rows: list[dict[str, Any]] = field(default_factory=list)
     replay_final_rows: list[dict[str, Any]] = field(default_factory=list)
+    replay_budget_rows: list[dict[str, Any]] = field(default_factory=list)
     budget_summary_rows: list[dict[str, Any]] = field(default_factory=list)
     calibration_summary: dict[str, Any] = field(default_factory=dict)
     session_details: dict[str, Any] = field(default_factory=dict)
@@ -358,6 +363,7 @@ class ExperimentState:
         save_csv(self.direct_final_rows, self.paths.direct_final)
         save_csv(self.replay_trace_rows, self.paths.replay_trace)
         save_csv(self.replay_final_rows, self.paths.replay_final)
+        save_csv(self.replay_budget_rows, self.paths.replay_budget)
         save_csv(self.budget_summary_rows, self.paths.budget_summary)
         manifest = {
             "run_dir": str(self.paths.run_dir),
@@ -373,6 +379,7 @@ class ExperimentState:
             "direct_final_rows_csv": str(self.paths.direct_final),
             "replay_trace_rows_csv": str(self.paths.replay_trace),
             "replay_final_rows_csv": str(self.paths.replay_final),
+            "replay_budget_rows_csv": str(self.paths.replay_budget),
             "budget_summary_csv": str(self.paths.budget_summary),
             "runtime_jobs_csv": str(self.paths.runtime_jobs),
             "errors_csv": str(self.paths.errors),
@@ -401,10 +408,11 @@ def write_trace_bundle(state: ExperimentState) -> None:
     for prefix, rows in (
         ("direct", state.direct_trace_rows),
         ("replay", state.replay_trace_rows),
+        ("replay_budget", state.replay_budget_rows),
     ):
         if rows:
             payload[f"{prefix}_query_budget"] = np.asarray(
-                [float(r["query_budget"]) for r in rows],
+                [float(r.get("query_budget", r.get("query_budget_actual"))) for r in rows],
                 dtype=float,
             )
             payload[f"{prefix}_estimate"] = np.asarray(
@@ -1375,6 +1383,7 @@ def run_replay(
 ) -> None:
     state.replay_trace_rows.clear()
     state.replay_final_rows.clear()
+    state.replay_budget_rows.clear()
     state.budget_summary_rows.clear()
     state.error_rows = [r for r in state.error_rows if str(r.get("phase")) != "hardware_replay"]
     budget_rows: list[dict[str, Any]] = []
@@ -1452,7 +1461,9 @@ def run_replay(
                 )
                 state.replay_trace_rows.extend(trace_rows)
                 state.replay_final_rows.append(final_row)
-                budget_rows.extend(trace_rows)
+                budget_snapshots = rows_at_budgets(trace_rows, budgets)
+                state.replay_budget_rows.extend(budget_snapshots)
+                budget_rows.extend(budget_snapshots)
             except Exception as exc:
                 state.error_rows.append(
                     {
@@ -1468,6 +1479,7 @@ def run_replay(
             state.budget_summary_rows = aggregate_budget_summary(
                 budget_rows,
                 total_repetitions=int(repetitions),
+                group_by_budget=True,
             )
             state.persist()
             if verbose:
@@ -1478,6 +1490,7 @@ def run_replay(
     state.budget_summary_rows = aggregate_budget_summary(
         budget_rows,
         total_repetitions=int(repetitions),
+        group_by_budget=True,
     )
     if bool(extrapolate):
         state.config["replay_extrapolated_probabilities"] = {
@@ -1610,6 +1623,7 @@ def aggregate_budget_summary(
     total_repetitions: int | None = None,
     max_bins: int = 12,
     min_points_per_bin: int = 100,
+    group_by_budget: bool = False,
 ) -> list[dict[str, Any]]:
     summary: list[dict[str, Any]] = []
     if not rows:
@@ -1628,12 +1642,19 @@ def aggregate_budget_summary(
         if not np.any(valid):
             continue
 
-        bin_indices = log_query_bin_indices(
-            query_budget,
-            error_values,
-            max_bins=max_bins,
-            min_points_per_bin=min_points_per_bin,
-        )
+        if group_by_budget:
+            budgets_for_rows = np.asarray([_as_float(row.get("budget")) for row in alg_rows], dtype=float)
+            bin_indices = [
+                np.flatnonzero(valid & (budgets_for_rows == budget_value)).astype(int)
+                for budget_value in sorted({float(x) for x in budgets_for_rows[valid] if np.isfinite(x)})
+            ]
+        else:
+            bin_indices = log_query_bin_indices(
+                query_budget,
+                error_values,
+                max_bins=max_bins,
+                min_points_per_bin=min_points_per_bin,
+            )
 
         for indices in bin_indices:
             if indices.size == 0:
@@ -1688,7 +1709,9 @@ def aggregate_budget_summary(
             summary.append(
                 {
                     "run_kind": "hardware_replay",
-                    "budget": int(round(float(np.nanmedian(query_budget_actual)))),
+                    "budget": int(round(float(_as_float(subset[0].get("budget"), np.nanmedian(query_budget_actual)))))
+                    if group_by_budget
+                    else int(round(float(np.nanmedian(query_budget_actual)))),
                     "algorithm": algorithm,
                     "algorithm_key": str(subset[0].get("algorithm_key", algorithm)),
                     "n_points": n_subset,
@@ -1742,11 +1765,14 @@ def aggregate_budget_summary(
     return summary
 
 
-def run_plotter(run_dir: Path) -> None:
+def run_plotter(run_dir: Path, *, max_queries: float | None = None) -> None:
     import subprocess
 
     plotter = BETA_DIR / "plot_hardware.py"
-    subprocess.run([sys.executable, str(plotter), "--run-dir", str(run_dir)], check=False)
+    command = [sys.executable, str(plotter), "--run-dir", str(run_dir)]
+    if max_queries is not None:
+        command.extend(["--max-queries", str(float(max_queries))])
+    subprocess.run(command, check=False)
 
 
 def create_run_dir(args: argparse.Namespace) -> Path:
@@ -1827,7 +1853,7 @@ def run_replay_only(args: argparse.Namespace) -> None:
         verbose=bool(args.verbose),
     )
     if not args.skip_plots:
-        run_plotter(run_dir)
+        run_plotter(run_dir, max_queries=getattr(args, "plot_max_queries", None))
 
 
 def load_existing_state(run_dir: Path) -> ExperimentState:
@@ -1847,6 +1873,7 @@ def load_existing_state(run_dir: Path) -> ExperimentState:
     state.direct_final_rows = load_csv(paths.direct_final) if paths.direct_final.exists() else []
     state.replay_trace_rows = load_csv(paths.replay_trace) if paths.replay_trace.exists() else []
     state.replay_final_rows = load_csv(paths.replay_final) if paths.replay_final.exists() else []
+    state.replay_budget_rows = load_csv(paths.replay_budget) if paths.replay_budget.exists() else []
     state.budget_summary_rows = load_csv(paths.budget_summary) if paths.budget_summary.exists() else []
     state.calibration_summary = (
         json.loads(paths.calibration_summary.read_text(encoding="utf-8"))
@@ -1973,7 +2000,7 @@ def run_hardware_topup(args: argparse.Namespace) -> None:
         )
 
     if not args.skip_plots:
-        run_plotter(paths.run_dir)
+        run_plotter(paths.run_dir, max_queries=getattr(args, "plot_max_queries", None))
 
 
 def run_experiment(args: argparse.Namespace) -> None:
@@ -2151,7 +2178,7 @@ def run_experiment(args: argparse.Namespace) -> None:
         )
 
     if not args.skip_plots:
-        run_plotter(paths.run_dir)
+        run_plotter(paths.run_dir, max_queries=getattr(args, "plot_max_queries", None))
 
 
 def execute_non_replay_phases(

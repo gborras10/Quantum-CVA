@@ -1,0 +1,139 @@
+{
+  "run_id": "experiment_results",
+  "run_uuid": "c3ea6b3d-6bb9-4335-9ae3-6a616c7ed2dd",
+  "mode": "simulated_noise",
+  "pipeline": "6q_cva_ae_noisy_simulation",
+  "instance_name": "6q_instance",
+  "target_name": "cva",
+  "good_bitstring": "111",
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "a_true": 0.1328730942948926,
+  "processed_true_value": 0.5864946085782612,
+  "cva_true": 0.5864946085782612,
+  "algorithms": [
+    "cabiqae_latentt",
+    "biqae",
+    "bae"
+  ],
+  "algorithm_labels": {
+    "cabiqae_latentt": "CABIQAE",
+    "biqae": "BIQAE",
+    "bae": "BAE"
+  },
+  "repetitions": 20,
+  "epsilon_target": 0.02,
+  "alpha": 0.05,
+  "n_shots": 128,
+  "max_queries": 16384,
+  "budgets": [
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "budget_policy": "last_trace_point_with_Nq_less_or_equal_budget",
+  "actual_query_summary_policy": "log_query_bins_with_median_query_and_median_error",
+  "noise_profile": "realistic",
+  "noise_scale": 1.0,
+  "noise_floor": 0.125,
+  "noise_floor_arg": "uniform_objective",
+  "aer_method": "density_matrix",
+  "seed": 12345,
+  "calibrate": true,
+  "t_eff_override": null,
+  "readout_shots": 512,
+  "scan_repeats": 1,
+  "scan_shots": 512,
+  "max_grover_power": 20,
+  "calibration_max_grover_power": 20,
+  "execution_max_grover_power": null,
+  "execution_k_cap_enforced": false,
+  "max_isa_depth": 1000000000,
+  "max_isa_2q": 1000000000,
+  "reference_ks": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "transpile_backend_name": "local_aer",
+  "transpile_backend_mode": "aer_simulator",
+  "transpilation": {
+    "strategy": "aer_preset",
+    "fallback_used": false,
+    "initial_layout": null,
+    "seed_transpiler": 1234,
+    "optimization_level": 3,
+    "reference_ks": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "cap_kappa": 2.0,
+  "created_at_epoch": 1778161406.6216524,
+  "repo_root": "C:\\Users\\guilb\\Desktop\\Quantum-CVA",
+  "problem_metadata": {
+    "target_name": "cva",
+    "good_bitstring": "111",
+    "num_qubits_time": 2,
+    "num_qubits_underlying": 4,
+    "total_state_qubits": 6,
+    "objective_qubits": [
+      6,
+      7,
+      8
+    ],
+    "cva_scaling": {
+      "recovery_rate": 0.415,
+      "C_v": 9594.595338514682,
+      "C_q": 0.00019708755276215406,
+      "C_p": 0.9975283755255839
+    },
+    "builder": "6q_cva",
+    "qcbm_topology": "qcbm_heavyhex6",
+    "qcbm_n_layers": 6,
+    "exposure_ansatz": "heavy_hex_star",
+    "exposure_n_layers": 2,
+    "artifact_paths": {
+      "benchmark": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\benchmark\\three_asset_instance.npz",
+      "qcbm": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+      "crca_default": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_discount": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_exposure": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+    }
+  },
+  "max_grover_power_after_preflight": 20,
+  "preflight_limits": {
+    "max_isa_depth": 1000000000,
+    "max_isa_2q": 1000000000
+  },
+  "t_eff": 17.427375623514756,
+  "calibration_summary": {
+    "readout": {
+      "p_obs_good_given_bad": 0.0,
+      "p_obs_good_given_good": 0.998046875,
+      "readout_denom": 0.998046875,
+      "readout_usable": 1.0
+    },
+    "calibration_status": "ok",
+    "fit_points": 13,
+    "t_eff_zero_intercept": 17.427375623514756,
+    "t_eff_free_intercept": 18.747009042517917,
+    "contrast_prefactor": 0.8976085605925963,
+    "free_intercept_slope": -0.05334184230305837,
+    "k_visible": 20,
+    "contrast_baseline": 0.125
+  }
+}

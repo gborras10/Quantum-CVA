@@ -1,0 +1,22 @@
+{
+  "run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results",
+  "config_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\config.json",
+  "backend_snapshot_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\backend_snapshot.json",
+  "session_details_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\session_details.json",
+  "transpilation_report_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\transpilation_report.csv",
+  "readout_calibration_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\readout_calibration.csv",
+  "amplification_counts_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\amplification_counts.csv",
+  "amplification_points_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\amplification_points.csv",
+  "calibration_summary_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\calibration_summary.json",
+  "direct_trace_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\direct_trace_rows.csv",
+  "direct_final_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\direct_final_rows.csv",
+  "replay_trace_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\replay_trace_rows.csv",
+  "replay_final_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\replay_final_rows.csv",
+  "replay_budget_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\replay_budget_rows.csv",
+  "budget_summary_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\budget_summary.csv",
+  "runtime_jobs_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\runtime_jobs.csv",
+  "errors_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\errors.csv",
+  "trace_bundle_npz": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\trace_bundle.npz",
+  "qasm3_isa_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\qasm3_isa",
+  "plots_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noseless_simulation\\experiment_results\\plots"
+}

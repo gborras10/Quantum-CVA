@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -12,8 +13,12 @@ TOY_DIR = CURRENT_DIR.parents[1]
 if str(TOY_DIR) not in sys.path:
     sys.path.insert(0, str(TOY_DIR))
 
-from ae_actual_query_plots import plot_actual_query_error  # noqa: E402
 from ae_final_error_plots import plot_final_error_scatter  # noqa: E402
+from hardware_replay_query_plot import (  # noqa: E402
+    DEFAULT_BUDGETS,
+    budget_rows_from_trace_rows,
+    plot_hardware_replay_actual_queries,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -27,24 +32,20 @@ GENERATE_FINAL_ERROR_VS_RUNTIME_SCATTER = True
 # Source data directory.
 INPUT_DIR = CURRENT_DIR / "experiment_results" / "csv_results"
 TRACE_ROWS_CSV = INPUT_DIR / "replay_trace_rows.csv"
+REPLAY_BUDGET_ROWS_CSV = INPUT_DIR / "replay_budget_rows.csv"
 FINAL_ROWS_CSV = INPUT_DIR / "replay_final_rows.csv"
 
 # Output directory.
 OUTPUT_DIR = CURRENT_DIR / "experiment_results" / "plots"
 
 # Binned median normalized absolute error vs actual queries.
+# These defaults intentionally match ideal_regime.ideal_utils.aggregate_budget_summary.
 QUERY_MAX_BINS = 12
-QUERY_MIN_POINTS_PER_BIN = 50
+QUERY_MIN_POINTS_PER_BIN = 100
 QUERY_BOOTSTRAP_SAMPLES = 2000
 QUERY_BOOTSTRAP_CONFIDENCE_LEVEL = 0.95
 QUERY_BOOTSTRAP_SEED = 12345
-
-# Drop binned points after sorting by actual query cost.
-# Example:
-# QUERY_DROP_BINNED_POINT_INDICES = {"BAE": (0,), "BIQAE": (1,)}
-QUERY_DROP_BINNED_POINT_INDICES: dict[str, tuple[int, ...]] = {
-    "BIQAE": (2,)
-}
+QUERY_MAX_QUERIES: float | None = None
 
 # Final scatter plots with Gaussian contours.
 # Use None to plot all final points per algorithm. Use an integer to subsample.
@@ -109,22 +110,32 @@ def load_final_rows() -> pd.DataFrame:
     return final_rows_from_trace(TRACE_ROWS_CSV)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Build hardware replay plots.")
+    parser.add_argument(
+        "--max-queries",
+        type=float,
+        default=QUERY_MAX_QUERIES,
+        help="Only plot error-vs-queries rows with query cost at or below this value.",
+    )
+    args = parser.parse_args(argv)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if GENERATE_ERROR_VS_QUERIES:
-        trace_rows = pd.read_csv(TRACE_ROWS_CSV)
-        plot_actual_query_error(
-            trace_rows,
+        if REPLAY_BUDGET_ROWS_CSV.exists() and REPLAY_BUDGET_ROWS_CSV.stat().st_size > 0:
+            plot_rows = pd.read_csv(REPLAY_BUDGET_ROWS_CSV)
+        else:
+            plot_rows = budget_rows_from_trace_rows(pd.read_csv(TRACE_ROWS_CSV), DEFAULT_BUDGETS)
+        plot_hardware_replay_actual_queries(
+            plot_rows,
             ERROR_VS_QUERIES_PNG,
             summary_path=ERROR_VS_QUERIES_SUMMARY_CSV,
-            pdf_path=ERROR_VS_QUERIES_PNG.with_suffix(".pdf"),
+            max_queries=args.max_queries,
             max_bins=QUERY_MAX_BINS,
             min_points_per_bin=QUERY_MIN_POINTS_PER_BIN,
             bootstrap_samples=QUERY_BOOTSTRAP_SAMPLES,
             confidence_level=QUERY_BOOTSTRAP_CONFIDENCE_LEVEL,
             bootstrap_seed=QUERY_BOOTSTRAP_SEED,
-            drop_binned_point_indices=QUERY_DROP_BINNED_POINT_INDICES,
         )
         print(f"Saved error-vs-queries plot: {ERROR_VS_QUERIES_PNG}")
         print(f"Saved error-vs-queries summary: {ERROR_VS_QUERIES_SUMMARY_CSV}")

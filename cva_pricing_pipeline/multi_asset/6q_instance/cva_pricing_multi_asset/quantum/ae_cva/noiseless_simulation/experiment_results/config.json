@@ -1,0 +1,83 @@
+{
+  "mode": "ideal_noiseless",
+  "pipeline": "6q_cva_ae_noseless_simulation",
+  "instance_name": "6q_instance",
+  "target_name": "cva",
+  "good_bitstring": "111",
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "a_true": 0.1328730942948926,
+  "processed_true_value": 0.5864946085782612,
+  "cva_true": 0.5864946085782612,
+  "algorithms": [
+    "cabiqae_latentt",
+    "biqae",
+    "iqae",
+    "bae"
+  ],
+  "algorithm_labels": {
+    "cabiqae_latentt": "CABIQAE",
+    "biqae": "BIQAE",
+    "iqae": "IQAE",
+    "bae": "BAE"
+  },
+  "repetitions": 300,
+  "epsilon_target": 1e-05,
+  "alpha": 0.05,
+  "n_shots": 10,
+  "max_queries": 300000,
+  "budgets": [
+    64,
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384,
+    32768,
+    65536
+  ],
+  "sampler": false,
+  "sampler_mode": "fast_ideal_formula",
+  "fast_circuits": true,
+  "construct_circuit_mode": "metadata_only",
+  "cap_kappa": 1000.0,
+  "seed": 12345,
+  "created_at_epoch": 1778081876.1963263,
+  "repo_root": "C:\\Users\\guilb\\Desktop\\Quantum-CVA",
+  "problem_metadata": {
+    "target_name": "cva",
+    "good_bitstring": "111",
+    "num_qubits_time": 2,
+    "num_qubits_underlying": 4,
+    "total_state_qubits": 6,
+    "objective_qubits": [
+      6,
+      7,
+      8
+    ],
+    "cva_scaling": {
+      "recovery_rate": 0.415,
+      "C_v": 9594.595338514682,
+      "C_q": 0.00019708755276215406,
+      "C_p": 0.9975283755255839
+    },
+    "builder": "6q_cva",
+    "qcbm_topology": "qcbm_heavyhex6",
+    "qcbm_n_layers": 6,
+    "exposure_ansatz": "heavy_hex_star",
+    "exposure_n_layers": 2,
+    "artifact_paths": {
+      "benchmark": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\benchmark\\three_asset_instance.npz",
+      "qcbm": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+      "crca_default": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_discount": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_exposure": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+    }
+  }
+}

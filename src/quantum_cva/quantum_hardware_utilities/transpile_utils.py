@@ -7,7 +7,7 @@ from qiskit import QuantumCircuit, qasm3
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 
-DEFAULT_TRANSPILER_SEEDS: tuple[int, ...] = (11, 23, 37, 101, 211)
+DEFAULT_TRANSPILER_SEEDS: tuple[int, ...] = (1234,)
 
 
 @dataclass(frozen=True)
@@ -61,6 +61,17 @@ def stable_circuit_key(circuit: QuantumCircuit) -> str:
     return qasm3.dumps(circuit)
 
 
+def _reference_label(circuit: QuantumCircuit, index: int) -> str:
+    metadata = getattr(circuit, "metadata", None) or {}
+    grover_power = metadata.get("grover_power")
+    if grover_power is not None:
+        return f"k={int(grover_power)}"
+    amplification_factor = metadata.get("amplification_factor")
+    if amplification_factor is not None:
+        return f"K={int(amplification_factor)}"
+    return f"ref={int(index)}"
+
+
 def transpilation_metrics(circuit: QuantumCircuit) -> dict[str, int]:
     ops = circuit.count_ops()
     two_qubit_gates = sum(1 for inst in circuit.data if len(inst.qubits) == 2)
@@ -102,11 +113,20 @@ def collect_sabre_layout_candidates(
     optimization_level: int = 3,
     routing_method: str | None = "sabre",
     seed_candidates: Sequence[int] = DEFAULT_TRANSPILER_SEEDS,
+    verbose: bool = True,
 ) -> list[LayoutCandidate]:
     num_qubits = _validate_reference_circuits(reference_circuits)
     candidates: dict[tuple[int, ...], LayoutCandidate] = {}
+    if verbose:
+        print(
+            "[pass_manager] discovering SABRE layouts: "
+            f"{len(seed_candidates)} seeds x {len(reference_circuits)} reference circuits",
+            flush=True,
+        )
 
     for seed in seed_candidates:
+        if verbose:
+            print(f"[pass_manager][discovery] seed={int(seed)}: building SABRE pass manager", flush=True)
         pm = generate_preset_pass_manager(
             backend=backend,
             optimization_level=optimization_level,
@@ -115,11 +135,27 @@ def collect_sabre_layout_candidates(
             seed_transpiler=int(seed),
         )
         for ref_idx, circuit in enumerate(reference_circuits):
+            label = _reference_label(circuit, ref_idx)
+            if verbose:
+                print(
+                    "[pass_manager][discovery] "
+                    f"seed={int(seed)} {label} ({ref_idx + 1}/{len(reference_circuits)}): transpiling",
+                    flush=True,
+                )
             transpiled = pm.run(circuit)
             initial_layout = extract_initial_layout(
                 transpiled,
                 logical_qubit_count=num_qubits,
             )
+            if verbose:
+                metrics = transpilation_metrics(transpiled)
+                print(
+                    "[pass_manager][discovery] "
+                    f"seed={int(seed)} {label}: "
+                    f"layout={initial_layout}, swaps={metrics['swap_count']}, "
+                    f"2q={metrics['two_qubit_gates']}, depth={metrics['depth']}",
+                    flush=True,
+                )
             candidates.setdefault(
                 initial_layout,
                 LayoutCandidate(
@@ -128,6 +164,8 @@ def collect_sabre_layout_candidates(
                 ),
             )
 
+    if verbose:
+        print(f"[pass_manager] discovered {len(candidates)} unique layout candidates", flush=True)
     return list(candidates.values())
 
 
@@ -141,6 +179,7 @@ def select_best_fixed_transpilation_plan(
     discovery_seeds: Sequence[int] = DEFAULT_TRANSPILER_SEEDS,
     evaluation_seeds: Sequence[int] = DEFAULT_TRANSPILER_SEEDS,
     include_sabre_candidates: bool = True,
+    verbose: bool = True,
 ) -> FixedTranspilationPlan:
     num_qubits = _validate_reference_circuits(reference_circuits)
     normalized_candidates = _normalize_candidate_layouts(candidate_layouts, num_qubits)
@@ -152,6 +191,7 @@ def select_best_fixed_transpilation_plan(
             optimization_level=optimization_level,
             routing_method=routing_method,
             seed_candidates=discovery_seeds,
+            verbose=verbose,
         ):
             normalized_candidates.setdefault(candidate.initial_layout, candidate)
 
@@ -161,8 +201,16 @@ def select_best_fixed_transpilation_plan(
     best_score: tuple[int, ...] | None = None
     best_plan: FixedTranspilationPlan | None = None
     evaluated_plans = 0
+    layout_count = len(normalized_candidates)
+    if verbose:
+        print(
+            "[pass_manager] evaluating fixed layouts: "
+            f"{layout_count} layouts x {len(evaluation_seeds)} seeds x "
+            f"{len(reference_circuits)} reference circuits",
+            flush=True,
+        )
 
-    for initial_layout, candidate in normalized_candidates.items():
+    for layout_idx, (initial_layout, candidate) in enumerate(normalized_candidates.items(), start=1):
         layout_span = max(initial_layout) - min(initial_layout)
 
         for seed in evaluation_seeds:
@@ -182,7 +230,15 @@ def select_best_fixed_transpilation_plan(
                 seed_transpiler=int(seed),
             )
 
-            for circuit in reference_circuits:
+            for ref_idx, circuit in enumerate(reference_circuits):
+                label = _reference_label(circuit, ref_idx)
+                if verbose:
+                    print(
+                        "[pass_manager][eval] "
+                        f"layout={layout_idx}/{layout_count} seed={int(seed)} "
+                        f"{label} ({ref_idx + 1}/{len(reference_circuits)}): transpiling",
+                        flush=True,
+                    )
                 transpiled = pm.run(circuit)
                 metrics = transpilation_metrics(transpiled)
                 for key, value in metrics.items():
@@ -197,6 +253,14 @@ def select_best_fixed_transpilation_plan(
                 int(sum(initial_layout)),
                 int(seed),
             )
+            if verbose:
+                print(
+                    "[pass_manager][eval] "
+                    f"plan={evaluated_plans}: swaps={aggregate_metrics['swap_count']}, "
+                    f"2q={aggregate_metrics['two_qubit_gates']}, "
+                    f"depth={aggregate_metrics['depth']}, size={aggregate_metrics['size']}",
+                    flush=True,
+                )
 
             if best_score is not None and score >= best_score:
                 continue
@@ -216,6 +280,15 @@ def select_best_fixed_transpilation_plan(
                 evaluated_plans=int(evaluated_plans),
                 reference_circuit_count=int(len(reference_circuits)),
             )
+            if verbose:
+                print(
+                    "[pass_manager][eval] "
+                    f"new best plan={evaluated_plans}: layout={initial_layout}, "
+                    f"seed={int(seed)}, swaps={aggregate_metrics['swap_count']}, "
+                    f"2q={aggregate_metrics['two_qubit_gates']}, "
+                    f"depth={aggregate_metrics['depth']}",
+                    flush=True,
+                )
 
     if best_plan is None:
         raise RuntimeError("Failed to select a fixed transpilation plan.")

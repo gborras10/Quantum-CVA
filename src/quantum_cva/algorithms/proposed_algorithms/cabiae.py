@@ -55,6 +55,7 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         cap_kappa: float = 1.0,
         use_noise_cap: bool = True,
         max_shots_same_k: int | None = None,
+        noise_floor: float = 0.5,
         latent_grid_size: int = 2049,
         latent_resampling_size: int = 2000,
         scheduler_grid_size: int = 129,
@@ -81,6 +82,9 @@ class CABIQAELatentTheta(AmplitudeEstimator):
                 noise-aware depth cap.
             max_shots_same_k: Optional limit on the cumulative number of shots
                 spent at a fixed Grover depth.
+            noise_floor: Asymptotic observed success probability when contrast
+                has fully decayed. The default ``0.5`` preserves the legacy
+                two-outcome noise model.
             latent_grid_size: Number of grid points used to reconstruct latent
                 theta densities.
             latent_resampling_size: Number of latent-theta samples used when
@@ -117,6 +121,11 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         
         if T_known is not None and T_known <= 0:
             raise ValueError(f"T_known must be positive, but is {T_known}.")
+
+        if not np.isfinite(float(noise_floor)) or not 0.0 <= float(noise_floor) <= 1.0:
+            raise ValueError(
+                f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
+            )
         
         if confint_method not in {"chernoff", "beta"}:
             raise ValueError(
@@ -149,6 +158,7 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         self._cap_kappa = cap_kappa
         self._use_noise_cap = use_noise_cap
         self._max_shots_same_k = max_shots_same_k
+        self._noise_floor = float(noise_floor)
         self._latent_grid_size = latent_grid_size
         self._latent_resampling_size = latent_resampling_size
         self._scheduler_grid_size = scheduler_grid_size
@@ -164,6 +174,11 @@ class CABIQAELatentTheta(AmplitudeEstimator):
     def is_noise_aware(self) -> bool:
         """Return whether the estimator is running with explicit noise awareness."""
         return self._noise_model != "ideal"
+
+    @property
+    def noise_floor(self) -> float:
+        """Return the asymptotic success probability under full contrast loss."""
+        return self._noise_floor
 
     @property
     def sampler(self) -> SamplerV2 | None:
@@ -239,7 +254,8 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         """
         q = self._theta_to_ideal_prob(theta, k)
         c = self._contrast(k)
-        p = 0.5 + c * (np.asarray(q, dtype=float) - 0.5)
+        b = self._noise_floor
+        p = b + c * (np.asarray(q, dtype=float) - b)
         p = np.clip(p, 0.0, 1.0)
         if np.ndim(theta) == 0:
             return float(p)
@@ -280,7 +296,8 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         if not (0.0 <= p_obs <= 1.0):
             raise ValueError("The observed probability p_obs must be in [0, 1].")
         c = self._contrast(k)
-        q = (p_obs - 0.5) / c + 0.5
+        b = self._noise_floor
+        q = (p_obs - b) / c + b
         return float(np.clip(q, 0.0, 1.0))
 
     def _ideal_to_obs_prob(self, q: float, k: int) -> float:
@@ -299,7 +316,8 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         if not (0.0 <= q <= 1.0):
             raise ValueError("The ideal probability q must be in [0, 1].")
         c = self._contrast(k)
-        p_obs = c * q + (1.0 - c) * 0.5
+        b = self._noise_floor
+        p_obs = c * q + (1.0 - c) * b
         return float(np.clip(p_obs, 0.0, 1.0))
 
     def _obs_interval_to_ideal_interval(
@@ -327,8 +345,9 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         if p_l > p_u:
             raise ValueError("Lower bound must not exceed upper bound.")
         c = self._contrast(k)
-        q_l = (p_l - 0.5) / c + 0.5
-        q_u = (p_u - 0.5) / c + 0.5
+        b = self._noise_floor
+        q_l = (p_l - b) / c + b
+        q_u = (p_u - b) / c + b
         return float(np.clip(q_l, 0.0, 1.0)), float(np.clip(q_u, 0.0, 1.0))
 
     def _build_theta_grid(
