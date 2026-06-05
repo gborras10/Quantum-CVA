@@ -677,26 +677,82 @@ def test_no_sys_path_mutation_in_ae_experiments_package() -> None:
         assert "sys.path.insert" not in text
 
 
-def test_toy_ae_tree_has_no_source_or_generated_artifacts() -> None:
+def test_toy_ae_tree_is_absent_or_thin_compatibility_launchers() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     toy_dir = repo_root / "toys" / "amplitude_estimation_experiments"
     if not toy_dir.exists():
         return
 
-    forbidden_suffixes = {".csv", ".json", ".png", ".pdf", ".npz", ".qasm3"}
+    forbidden_suffixes = {".csv", ".json", ".png", ".pdf", ".npz", ".qasm", ".qasm3"}
     forbidden_dirs = {"experiment_results", "csv_results", "backup_before"}
-    remaining = [
+    generated_artifacts = [
         path
         for path in toy_dir.rglob("*")
         if path.is_file()
         and (
             path.suffix.lower() in forbidden_suffixes
-            or path.suffix == ".py"
             or any(part.startswith("backup_before") for part in path.parts)
             or any(part in forbidden_dirs for part in path.parts)
         )
     ]
-    assert not remaining
+    assert not generated_artifacts
+
+    launcher_files = [path for path in toy_dir.rglob("*.py") if path.name != "__init__.py"]
+    assert launcher_files
+    for path in launcher_files:
+        text = path.read_text(encoding="utf-8")
+        assert len(text.splitlines()) <= 12
+        assert "sys.path" not in text
+        assert "importlib" not in text
+        assert "quantum_cva.amplitude_estimation.experiments.legacy_launchers" in text
+        assert "common_utils" not in text
+        assert "ideal_utils" not in text
+        assert "ae_pipeline_utils" not in text
+
+
+def test_restored_toy_ae_experiment_launchers_exist() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    toy_dir = repo_root / "toys" / "amplitude_estimation_experiments"
+    if not toy_dir.exists():
+        return
+
+    expected_paths = [
+        "ideal_regime/elf_qae_experiment.py",
+        "ideal_regime/ideal_bae_biqae_iqae_cabiqae_latentt_experiment.py",
+        "ideal_regime/ideal_bae_biqae_iqae_cabiqae_latentt_experiment_v2.py",
+        "ideal_regime/ideal_plots.py",
+        "noise_aware_regime/3qubit_toy/ae_actual_query_plots.py",
+        "noise_aware_regime/3qubit_toy/ae_final_error_plots.py",
+        "noise_aware_regime/3qubit_toy/simulations/simulated_noise_experiment.py",
+        "noise_aware_regime/3qubit_toy/simulations/simulated_noise_experiment_v2.py",
+        "noise_aware_regime/3qubit_toy/simulations/simulated_noise_plots.py",
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "hardware_bae_biqae_cabiqae_experiment.py"
+        ),
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "plot_hardware.py"
+        ),
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "topup_cabiqae_replay.py"
+        ),
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "recover_runtime_topup_session.py"
+        ),
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "rebuild_replay_trace_plots.py"
+        ),
+    ]
+    missing = [
+        relative_path
+        for relative_path in expected_paths
+        if not (toy_dir / relative_path).exists()
+    ]
+    assert not missing
 
 
 def test_query_scaling_guides_use_power_fit_anchor() -> None:
