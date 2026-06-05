@@ -1,8 +1,7 @@
 """Shared helpers for the 6q hardware CVA experiment package.
 
 This file contains only reusable plumbing:
-- path bootstrapping so scripts launched from the experiment folder can import
-  both `src/quantum_cva` and the `6q_instance` pipeline config modules;
+- repository-root discovery for resolving default experiment paths;
 - dynamic config loading from `module:attribute` or a Python file;
 - CLI list parsers;
 - CVA alias columns and preferred CSV field order.
@@ -16,7 +15,6 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import pathlib
-import sys
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -42,28 +40,18 @@ def find_repo_root(start: str | pathlib.Path | None = None) -> pathlib.Path:
     raise RuntimeError(f"Could not find repository root from {current}")
 
 
-def bootstrap_paths(start: str | pathlib.Path | None = None) -> pathlib.Path:
-    # The hardware launchers live outside `src`, while the reusable code lives
-    # inside `src`.  The 6q pipeline config also lives under `6q_instance`.
-    # This function makes those imports deterministic regardless of cwd.
-    repo_root = find_repo_root(start)
-    src_path = repo_root / "src"
-    if str(src_path) not in sys.path:
-        sys.path.insert(0, str(src_path))
-
-    instance_dir = repo_root / "cva_pricing_pipeline" / "multi_asset" / "6q_instance"
-    if str(instance_dir) not in sys.path:
-        sys.path.insert(0, str(instance_dir))
-
-    script_dir = repo_root / HARDWARE_RELATIVE_DIR
-    if str(script_dir) not in sys.path:
-        sys.path.insert(0, str(script_dir))
-    return repo_root
-
-
-REPO_ROOT = bootstrap_paths()
+REPO_ROOT = find_repo_root()
 CURRENT_DIR = REPO_ROOT / HARDWARE_RELATIVE_DIR
 DEFAULT_RUN_DIR = CURRENT_DIR / "experiment_results"
+DEFAULT_6Q_CONFIG_PATH = (
+    REPO_ROOT
+    / "cva_pricing_pipeline"
+    / "multi_asset"
+    / "6q_instance"
+    / "cva_pricing_multi_asset"
+    / "quantum"
+    / "full_cva_pipeline.py"
+)
 
 
 def _resolve_from_repo(path_like: str | pathlib.Path) -> pathlib.Path:
@@ -75,11 +63,28 @@ def load_object(spec: str) -> Any:
     if ":" not in str(spec):
         raise ValueError("Object specs must use 'module:attribute' syntax.")
     module_name, attr_name = str(spec).split(":", 1)
-    module = importlib.import_module(module_name)
+    try:
+        module = importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        module = _load_module_from_known_6q_path(module_name)
     obj: Any = module
     for part in attr_name.split("."):
         obj = getattr(obj, part)
     return obj
+
+
+def _load_module_from_known_6q_path(module_name: str) -> Any:
+    if "." in module_name:
+        raise ModuleNotFoundError(module_name)
+    module_path = DEFAULT_6Q_CONFIG_PATH.with_name(f"{module_name}.py")
+    if not module_path.exists():
+        raise ModuleNotFoundError(module_name)
+    spec = importlib.util.spec_from_file_location(module_path.stem, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def load_object_from_file(
@@ -110,7 +115,7 @@ def load_config(
         return load_object_from_file(config_path, config_attr)
     if config is not None:
         return load_object(config)
-    return load_object("full_cva_pipeline:CONFIG")
+    return load_object_from_file(DEFAULT_6Q_CONFIG_PATH, config_attr)
 
 
 def parse_name_list(raw: str | Sequence[str]) -> tuple[str, ...]:

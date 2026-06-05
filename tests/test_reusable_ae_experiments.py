@@ -18,8 +18,17 @@ from quantum_cva.amplitude_estimation.experiments.circuits import (
     construct_metadata_query_circuit,
     patch_construct_circuit,
 )
+from quantum_cva.amplitude_estimation.experiments.configs import (
+    AlgorithmRunConfig,
+    IdealExperimentConfig,
+    parse_int_csv,
+    parse_name_csv,
+)
 from quantum_cva.amplitude_estimation.experiments.cva import (
     build_6q_cva_problem_bundle,
+)
+from quantum_cva.amplitude_estimation.experiments.ideal_runner import (
+    IdealExperimentRunner,
 )
 from quantum_cva.amplitude_estimation.experiments.cva_hwd_experiments.cva_hardware_runner import (
     _find_qctrl_job,
@@ -74,6 +83,7 @@ from quantum_cva.algorithms.third_party.standalone_bae_hardware import (
 from quantum_cva.algorithms.proposed_algorithms.cabiae import CABIQAELatentTheta
 from quantum_cva.algorithms.proposed_algorithms.cabiae_known_t import CABIQAE
 from quantum_cva.amplitude_estimation.experiments.solvers import build_solver
+from quantum_cva.amplitude_estimation.experiments import run_ideal
 
 
 def _synthetic_bundle(*, post_scale: float = 1.0):
@@ -522,6 +532,171 @@ def test_io_statistics_and_plot_smoke(tmp_path: Path) -> None:
     )
     assert (tmp_path / "budget.png").exists()
     assert (tmp_path / "scatter.png").exists()
+
+
+def test_algorithm_config_serialization_round_trip(tmp_path: Path) -> None:
+    config = IdealExperimentConfig(
+        run_dir=tmp_path / "ideal",
+        algorithm=AlgorithmRunConfig(
+            algorithms=parse_name_csv("biqae, iqae"),
+            epsilon_target=0.25,
+            alpha=0.05,
+            seed=17,
+        ),
+        budgets=parse_int_csv("8,16"),
+        repetitions=2,
+        n_shots=5,
+        max_queries=32,
+    )
+
+    payload = config.to_dict()
+
+    assert payload["run_dir"] == str(tmp_path / "ideal")
+    assert payload["algorithm"]["algorithms"] == ["biqae", "iqae"]
+    assert payload["budgets"] == [8, 16]
+    assert payload["algorithm"]["seed"] == 17
+
+
+def test_ideal_experiment_runner_tiny_smoke(monkeypatch, tmp_path: Path) -> None:
+    bundle = _synthetic_bundle()
+
+    def _fake_run_algorithm_once(*_args, **kwargs):
+        row = {
+            "run_kind": kwargs["run_kind"],
+            "repetition": kwargs["repetition"],
+            "algorithm": "BIQAE",
+            "algorithm_key": "biqae",
+            "budget": 10,
+            "query_budget": 10.0,
+            "query_budget_actual": 10.0,
+            "estimate": 0.25,
+            "abs_error": 0.1,
+            "normalized_abs_error": 0.2,
+            "normalized_sq_error": 0.04,
+            "grover_power": 0,
+            "k_max_budget": 0,
+            "amplification_factor": 1,
+            "a_true": float(bundle.true_amplitude),
+            "runtime_wall_seconds": 0.01,
+            "time_to_budget_seconds": 0.01,
+            "target_name": bundle.target_name,
+            "processed_true_value": float(bundle.processed_true_value),
+            "processed_estimate": 0.25,
+            "processed_abs_error": 0.1,
+            "processed_relative_error": 0.2,
+        }
+        return [row], {
+            "run_kind": kwargs["run_kind"],
+            "repetition": kwargs["repetition"],
+            "algorithm": "BIQAE",
+            "algorithm_key": "biqae",
+            "final_estimate": 0.25,
+        }
+
+    monkeypatch.setattr(
+        "quantum_cva.amplitude_estimation.experiments.ideal_runner.run_algorithm_once",
+        _fake_run_algorithm_once,
+    )
+    config = IdealExperimentConfig(
+        run_dir=tmp_path / "ideal",
+        algorithm=AlgorithmRunConfig(
+            algorithms=("biqae",),
+            epsilon_target=0.2,
+            alpha=0.05,
+            seed=123,
+        ),
+        repetitions=1,
+        n_shots=4,
+        max_queries=16,
+        budgets=(10,),
+    )
+
+    paths = IdealExperimentRunner(config, bundle).run()
+
+    assert paths.config.exists()
+    assert load_csv(paths.direct_trace)[0]["algorithm_key"] == "biqae"
+    assert load_csv(paths.replay_budget)[0]["budget"] == "10"
+
+
+def test_run_ideal_cli_delegates_to_runner(monkeypatch, tmp_path: Path) -> None:
+    calls: list[IdealExperimentConfig] = []
+
+    class _Runner:
+        def __init__(self, config, bundle) -> None:
+            self.config = config
+            self.bundle = bundle
+
+        def run(self) -> None:
+            calls.append(self.config)
+
+    monkeypatch.setattr(run_ideal, "problem_bundle_from_args", lambda _args: object())
+    monkeypatch.setattr(run_ideal, "IdealExperimentRunner", _Runner)
+
+    run_ideal.main(
+        [
+            "--run-dir",
+            str(tmp_path),
+            "--algorithms",
+            "biqae,bae",
+            "--repetitions",
+            "1",
+            "--epsilon-target",
+            "0.3",
+            "--alpha",
+            "0.1",
+            "--n-shots",
+            "3",
+            "--max-queries",
+            "12",
+            "--budgets",
+            "6,12",
+            "--seed",
+            "9",
+        ]
+    )
+
+    assert len(calls) == 1
+    assert calls[0].algorithm.algorithms == ("biqae", "bae")
+    assert calls[0].budgets == (6, 12)
+    assert calls[0].algorithm.seed == 9
+
+
+def test_no_production_imports_from_toy_ae_experiments() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    forbidden = ".".join(("toys", "amplitude_estimation_experiments"))
+    for path in (repo_root / "src").rglob("*.py"):
+        assert forbidden not in path.read_text(encoding="utf-8")
+
+
+def test_no_sys_path_mutation_in_ae_experiments_package() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    experiments_dir = repo_root / "src" / "quantum_cva" / "amplitude_estimation" / "experiments"
+    for path in experiments_dir.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert "sys.path.append" not in text
+        assert "sys.path.insert" not in text
+
+
+def test_toy_ae_tree_has_no_source_or_generated_artifacts() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    toy_dir = repo_root / "toys" / "amplitude_estimation_experiments"
+    if not toy_dir.exists():
+        return
+
+    forbidden_suffixes = {".csv", ".json", ".png", ".pdf", ".npz", ".qasm3"}
+    forbidden_dirs = {"experiment_results", "csv_results", "backup_before"}
+    remaining = [
+        path
+        for path in toy_dir.rglob("*")
+        if path.is_file()
+        and (
+            path.suffix.lower() in forbidden_suffixes
+            or path.suffix == ".py"
+            or any(part.startswith("backup_before") for part in path.parts)
+            or any(part in forbidden_dirs for part in path.parts)
+        )
+    ]
+    assert not remaining
 
 
 def test_query_scaling_guides_use_power_fit_anchor() -> None:

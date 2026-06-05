@@ -1,9 +1,7 @@
 """Reusable amplitude-estimation experiment infrastructure.
 
-The modules in this package are source-code versions of the reusable pieces
-that were first developed under ``toys/amplitude_estimation_experiments``.
-They are intentionally problem-agnostic: toy circuits, CVA circuits, and
-hardware replay data all enter through an :class:`AEProblemBundle`.
+These modules are intentionally problem-agnostic: demo circuits, CVA circuits,
+and hardware replay data all enter through an :class:`AEProblemBundle`.
 """
 
 from quantum_cva.amplitude_estimation.experiments.problems import (
