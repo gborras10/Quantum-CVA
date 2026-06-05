@@ -1,5 +1,0 @@
-Project plotting preference:
-- When the user asks for a "paper-style" plot, use the KL-trajectory style established in
-  `cva_pricing_pipeline/multi_asset/6q_instance/training_multi_asset/state_preparation/layers_comparison`:
-  serif/LaTeX-like font, Computer Modern mathtext, full dark frame, inward ticks, major and minor grid on both axes,
-  no title unless explicitly requested, compact legend, and color changes only when requested.
