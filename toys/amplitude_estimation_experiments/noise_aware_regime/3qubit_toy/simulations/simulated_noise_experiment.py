@@ -74,7 +74,18 @@ MAX_VALID_A_TRUE = 0.96
 
 PROBE_KS = [0, 1, 2, 3, 4, 6, 8, 10, 12] 
 PROBE_SHOTS = 12_000
-              
+
+#! Posterior weighting for the CABIQAE latent-theta scheduler. !!!!!!!!!
+# 0.0 reproduces the legacy uniform score, 1.0 makes the expected-Fisher
+# scheduler fully posterior-averaged, and intermediate values blend both.
+# `lambda` itself cannot be used as a Python variable name.
+SCHEDULER_POSTERIOR_WEIGHT = 1.0
+if not 0.0 <= float(SCHEDULER_POSTERIOR_WEIGHT) <= 1.0:
+    raise ValueError("SCHEDULER_POSTERIOR_WEIGHT must lie in [0, 1].")
+OUTPUT_DIR = os.path.join(
+    current_dir,
+    f"lambda{float(SCHEDULER_POSTERIOR_WEIGHT)}_experiment_results",
+)
 
 # Default run: CABIQAE only. To compare baselines, edit this tuple, e.g.
 # ALGORITHMS = ("bae", "biqae", "cabiqae_latentt")
@@ -166,6 +177,7 @@ def print_transpiled_grover_depths(
 # Main experiment
 # --------------------------------------------------------------------------------------
 def run_experiment() -> None:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     scenarios = build_amplitude_scenarios()
     physical_backend = load_physical_transpile_backend()
     transpilation_plan = select_benchmark_transpilation_plan(
@@ -196,6 +208,8 @@ def run_experiment() -> None:
     print(f"BAE max analysis budget = {BAE_MAX_ANALYSIS_BUDGET}")
     print(f"Repetitions per scenario = {N_REP}")
     print(f"Probe ks = {PROBE_KS}, probe shots = {PROBE_SHOTS}")
+    print(f"CABIQAE scheduler posterior weight = {SCHEDULER_POSTERIOR_WEIGHT}")
+    print(f"Output directory = {OUTPUT_DIR}")
     print(
         "Execution circuits are transpiled with "
         f"optimization_level={TRANSPILER_OPTIMIZATION_LEVEL}, "
@@ -290,6 +304,8 @@ def run_experiment() -> None:
                         noisy_sampler,
                         t_eff,
                     )
+                    if alg_key == "cabiqae_latentt":
+                        solver._scheduler_posterior_weight = float(SCHEDULER_POSTERIOR_WEIGHT)
 
                     t0 = time.perf_counter()
 
@@ -405,16 +421,16 @@ def run_experiment() -> None:
     # --------------------------------------------------------------------------
     # Save
     # --------------------------------------------------------------------------
-    calibration_csv = os.path.join(current_dir, "large_realistic_calibration.csv")
+    calibration_csv = os.path.join(OUTPUT_DIR, "large_realistic_calibration.csv")
     save_csv(calibration_rows, calibration_csv)
 
-    budget_csv = os.path.join(current_dir, "large_realistic_budget_rows.csv")
+    budget_csv = os.path.join(OUTPUT_DIR, "large_realistic_budget_rows.csv")
     save_csv(trace_rows, budget_csv)
 
-    trace_csv = os.path.join(current_dir, "large_realistic_trace_rows.csv")
+    trace_csv = os.path.join(OUTPUT_DIR, "large_realistic_trace_rows.csv")
     save_csv(trace_rows, trace_csv)
 
-    final_csv = os.path.join(current_dir, "large_realistic_final_rows.csv")
+    final_csv = os.path.join(OUTPUT_DIR, "large_realistic_final_rows.csv")
     save_csv(final_rows, final_csv)
 
     print(f"\nSaved calibration rows  → {calibration_csv}")
@@ -427,12 +443,12 @@ def run_experiment() -> None:
     # --------------------------------------------------------------------------
     print_final_summary(final_rows, [NOISE_PROFILE_NAME], ALGORITHMS, ALGORITHM_LABELS)
 
-    actual_query_plot_path = os.path.join(current_dir, "large_realistic_actual_queries.png")
+    actual_query_plot_path = os.path.join(OUTPUT_DIR, "large_realistic_actual_queries.png")
     actual_summary = plot_actual_query_error(
         pd.DataFrame(trace_rows),
         Path(actual_query_plot_path),
-        summary_path=Path(current_dir) / "large_realistic_budget_summary.csv",
-        pdf_path=Path(current_dir) / "large_realistic_actual_queries.pdf",
+        summary_path=Path(OUTPUT_DIR) / "large_realistic_budget_summary.csv",
+        pdf_path=Path(OUTPUT_DIR) / "large_realistic_actual_queries.pdf",
     )
     _print_actual_budget_summary(actual_summary)
     print(f"Saved actual-query plot → {actual_query_plot_path}")

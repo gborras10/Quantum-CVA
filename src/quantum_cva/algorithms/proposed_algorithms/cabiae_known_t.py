@@ -47,6 +47,7 @@ class CABIQAE(AmplitudeEstimator):
         use_noise_cap: bool = True,
         max_shots_same_k: int | None = None,
         noise_floor: float = 0.5,
+        contrast_prefactor: float = 1.0,
     ) -> None:
         r"""
         Args:
@@ -64,6 +65,9 @@ class CABIQAE(AmplitudeEstimator):
             noise_floor: Asymptotic observed success probability when contrast
                 has fully decayed. The default ``0.5`` preserves the legacy
                 two-outcome noise model.
+            contrast_prefactor: Multiplicative prefactor of the exponential
+                contrast model. The default ``1.0`` preserves the zero-intercept
+                model.
         Raises:
             AlgorithmError: if the method to compute the interval estimates is not supported
             ValueError: If the target epsilon is not in (0, 0.5]
@@ -99,6 +103,8 @@ class CABIQAE(AmplitudeEstimator):
             raise ValueError(
                 f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
             )
+        if not np.isfinite(float(contrast_prefactor)) or float(contrast_prefactor) <= 0.0:
+            raise ValueError("contrast_prefactor must be finite and positive.")
 
         if confint_method not in {"chernoff", "beta"}:
             raise ValueError(
@@ -119,6 +125,7 @@ class CABIQAE(AmplitudeEstimator):
         self._use_noise_cap = use_noise_cap
         self._max_shots_same_k = max_shots_same_k
         self._noise_floor = float(noise_floor)
+        self._contrast_prefactor = float(contrast_prefactor)
 
     @property
     def noise_model(self) -> str:
@@ -183,7 +190,8 @@ class CABIQAE(AmplitudeEstimator):
             k: Number of Grover operator applications used in the circuit.
 
         Returns:
-            The contrast factor c = exp(-(2k + 1) / T_known), clipped to (0, 1].
+            The contrast factor c = prefactor * exp(-(2k + 1) / T_known),
+            clipped to (0, 1].
         """
         if k < 0:
             raise ValueError("k must be a non-negative integer.")
@@ -192,7 +200,7 @@ class CABIQAE(AmplitudeEstimator):
             return 1.0
 
         if self._noise_model == "exponential_contrast":
-            c = float(np.exp(-(2 * k + 1) / self._T_known))
+            c = float(self._contrast_prefactor * np.exp(-(2 * k + 1) / self._T_known))
             return min(max(c, 1e-15), 1.0)
 
         raise RuntimeError(f"Unsupported noise model: {self._noise_model}")

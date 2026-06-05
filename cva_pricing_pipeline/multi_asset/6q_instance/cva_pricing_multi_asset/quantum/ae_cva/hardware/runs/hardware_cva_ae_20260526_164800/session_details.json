@@ -1,0 +1,28 @@
+{
+  "mode": "hardware",
+  "created_at_epoch": 1779806880.2498736,
+  "session_id": "fcd2154a-7124-4b9e-a3a0-658dbfe0068c",
+  "hardware_executor": "runtime",
+  "session_started_at_epoch": 1779806936.2057116,
+  "session_finished_at_epoch": 1779807097.5998151,
+  "topup_sessions": [
+    {
+      "session_id": "520bfd8a-7275-4646-82a2-850e9e280ea4",
+      "hardware_executor": "runtime",
+      "session_started_at_epoch": 1779809846.72656,
+      "scan_grover_powers": [
+        5
+      ],
+      "session_finished_at_epoch": 1779810059.1713116
+    },
+    {
+      "session_id": "e7d9f2b8-5596-4a25-b5e2-4fbcd299b315",
+      "hardware_executor": "runtime",
+      "session_started_at_epoch": 1779810250.7316916,
+      "scan_grover_powers": [
+        7
+      ],
+      "session_finished_at_epoch": 1779810382.0337856
+    }
+  ]
+}

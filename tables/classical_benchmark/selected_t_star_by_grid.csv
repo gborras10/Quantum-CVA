@@ -1,0 +1,6 @@
+grid label,number of monitoring dates,selected t*,index of t*,EE at t*,Δq(t*),CVA_i at t*,percentage of total CVA represented by t*,source
+M=2 dense-subsampled,2,0.25,0,2276.853008889293,0.00039413626202078333,0.5223502794501244,100.0,dense path grid (32 dates) with nearest-date outputs
+M=4 saved benchmark,4,0.25,1,2278.9722802764195,0.00019704870925862927,0.2613924751823022,50.113991189380755,saved benchmark artifact: cva_pricing_pipeline\multi_asset\6q_instance\cva_robustness_test\base\benchmark\benchmark.npz
+M=8 dense-subsampled,8,0.0625,0,2278.1522219833764,9.854863229752375e-05,0.13117613643106127,25.124132321522648,dense path grid (32 dates) with nearest-date outputs
+M=16 dense-subsampled,16,0.03125,0,2315.0542825563457,4.9275530187742334e-05,0.06669320716995678,12.744796835232345,dense path grid (32 dates) with nearest-date outputs
+M=32 dense-subsampled,32,0.015625,0,2348.117512128115,2.463806861108253e-05,0.03383132298158587,6.4554342800855995,dense path grid (32 dates) with nearest-date outputs

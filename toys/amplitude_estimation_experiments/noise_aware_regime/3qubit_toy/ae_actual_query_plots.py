@@ -22,6 +22,49 @@ ACTUAL_QUERY_STYLE = {
     "BAE": {"color": "#E07A5F", "marker": "^"},
 }
 
+def _paper_style_rc_context() -> dict[str, object]:
+    return {
+        "font.family": "serif",
+        "font.serif": [
+            "Computer Modern Roman",
+            "CMU Serif",
+            "Latin Modern Roman",
+            "DejaVu Serif",
+        ],
+        "mathtext.fontset": "cm",
+        "axes.labelsize": 16,
+        "legend.fontsize": 11,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "axes.linewidth": 1.25,
+        "lines.solid_capstyle": "round",
+    }
+
+def _apply_paper_axes_style(ax: plt.Axes) -> None:
+    ax.minorticks_on()
+    ax.tick_params(
+        axis="both",
+        which="major",
+        direction="in",
+        length=6.0,
+        width=1.05,
+        top=True,
+        right=True,
+    )
+    ax.tick_params(
+        axis="both",
+        which="minor",
+        direction="in",
+        length=3.2,
+        width=0.85,
+        top=True,
+        right=True,
+    )
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color("#222222")
+        spine.set_linewidth(1.25)
+
 ALGORITHM_ORDER = ("BAE", "BIQAE", "CABIQAE")
 
 
@@ -165,6 +208,9 @@ def plot_actual_query_error(
     *,
     summary_path: Path | None = None,
     pdf_path: Path | None = None,
+    error_column_candidates: tuple[str, ...] | None = None,
+    summary_error_prefix: str = "normalized_abs_error",
+    y_label: str = "Median normalized absolute error",
     max_bins: int = 12,
     min_points_per_bin: int = 15,
     bootstrap_samples: int = 2000,
@@ -181,9 +227,16 @@ def plot_actual_query_error(
         df,
         ("query_budget", "query_budget_actual", "budget", "final_queries"),
     )
+    if error_column_candidates is None:
+        error_column_candidates = (
+            "normalized_abs_error",
+            "nrmse",
+            "final_normalized_abs_error",
+            "final_nrmse",
+        )
     error_col = first_existing_column(
         df,
-        ("normalized_abs_error", "nrmse", "final_normalized_abs_error", "final_nrmse"),
+        error_column_candidates,
     )
     df[query_col] = pd.to_numeric(df[query_col], errors="coerce")
     df[error_col] = pd.to_numeric(df[error_col], errors="coerce")
@@ -196,154 +249,156 @@ def plot_actual_query_error(
     if df.empty:
         raise ValueError("No positive finite rows are available for plotting")
 
-    fig, ax = plt.subplots(figsize=(6.8, 4.2))
-    guide_points: list[tuple[float, float]] = []
-    summary_rows: list[dict[str, float | int | str]] = []
-    rng = np.random.default_rng(int(bootstrap_seed))
-    drop_binned_point_indices = drop_binned_point_indices or {}
+    with plt.rc_context(_paper_style_rc_context()):
+        fig, ax = plt.subplots(figsize=(6.8, 4.2))
+        guide_points: list[tuple[float, float]] = []
+        summary_rows: list[dict[str, float | int | str]] = []
+        rng = np.random.default_rng(int(bootstrap_seed))
+        drop_binned_point_indices = drop_binned_point_indices or {}
 
-    for algorithm in ALGORITHM_ORDER:
-        group = df[df["algorithm"] == algorithm]
-        if group.empty:
-            continue
-
-        style = ACTUAL_QUERY_STYLE[algorithm]
-        query_budget = group[query_col].to_numpy(dtype=float)
-        error = group[error_col].to_numpy(dtype=float)
-        bin_indices = log_query_bin_indices(
-            query_budget,
-            error,
-            max_bins=max_bins,
-            min_points_per_bin=min_points_per_bin,
-        )
-        if not bin_indices:
-            continue
-
-        x_values: list[float] = []
-        x_median_values: list[float] = []
-        y_values: list[float] = []
-        ci_low_values: list[float] = []
-        ci_high_values: list[float] = []
-        n_values: list[int] = []
-        for indices in bin_indices:
-            q_bin = query_budget[indices]
-            e_bin = error[indices]
-            valid_bin = (
-                np.isfinite(q_bin)
-                & np.isfinite(e_bin)
-                & (q_bin > 0.0)
-                & (e_bin > 0.0)
-            )
-            q_bin = q_bin[valid_bin]
-            e_bin = e_bin[valid_bin]
-            if e_bin.size == 0:
+        for algorithm in ALGORITHM_ORDER:
+            group = df[df["algorithm"] == algorithm]
+            if group.empty:
                 continue
-            center, ci_low, ci_high = bootstrap_median_ci(
-                e_bin,
-                confidence_level=confidence_level,
-                bootstrap_samples=bootstrap_samples,
-                rng=rng,
+
+            style = ACTUAL_QUERY_STYLE[algorithm]
+            query_budget = group[query_col].to_numpy(dtype=float)
+            error = group[error_col].to_numpy(dtype=float)
+            bin_indices = log_query_bin_indices(
+                query_budget,
+                error,
+                max_bins=max_bins,
+                min_points_per_bin=min_points_per_bin,
             )
-            x_values.append(float(np.nanmean(q_bin)))
-            x_median_values.append(float(np.nanmedian(q_bin)))
-            y_values.append(center)
-            ci_low_values.append(ci_low)
-            ci_high_values.append(ci_high)
-            n_values.append(int(e_bin.size))
+            if not bin_indices:
+                continue
 
-        x_values_arr = np.asarray(x_values, dtype=float)
-        x_median_arr = np.asarray(x_median_values, dtype=float)
-        y_values_arr = np.asarray(y_values, dtype=float)
-        ci_low_arr = np.asarray(ci_low_values, dtype=float)
-        ci_high_arr = np.asarray(ci_high_values, dtype=float)
-        n_values_arr = np.asarray(n_values, dtype=int)
-        if x_values_arr.size == 0:
-            continue
+            x_values: list[float] = []
+            x_median_values: list[float] = []
+            y_values: list[float] = []
+            ci_low_values: list[float] = []
+            ci_high_values: list[float] = []
+            n_values: list[int] = []
+            for indices in bin_indices:
+                q_bin = query_budget[indices]
+                e_bin = error[indices]
+                valid_bin = (
+                    np.isfinite(q_bin)
+                    & np.isfinite(e_bin)
+                    & (q_bin > 0.0)
+                    & (e_bin > 0.0)
+                )
+                q_bin = q_bin[valid_bin]
+                e_bin = e_bin[valid_bin]
+                if e_bin.size == 0:
+                    continue
+                center, ci_low, ci_high = bootstrap_median_ci(
+                    e_bin,
+                    confidence_level=confidence_level,
+                    bootstrap_samples=bootstrap_samples,
+                    rng=rng,
+                )
+                x_values.append(float(np.nanmean(q_bin)))
+                x_median_values.append(float(np.nanmedian(q_bin)))
+                y_values.append(center)
+                ci_low_values.append(ci_low)
+                ci_high_values.append(ci_high)
+                n_values.append(int(e_bin.size))
 
-        order = np.argsort(x_values_arr)
-        x_values_arr = x_values_arr[order]
-        x_median_arr = x_median_arr[order]
-        y_values_arr = y_values_arr[order]
-        ci_low_arr = ci_low_arr[order]
-        ci_high_arr = ci_high_arr[order]
-        n_values_arr = n_values_arr[order]
+            x_values_arr = np.asarray(x_values, dtype=float)
+            x_median_arr = np.asarray(x_median_values, dtype=float)
+            y_values_arr = np.asarray(y_values, dtype=float)
+            ci_low_arr = np.asarray(ci_low_values, dtype=float)
+            ci_high_arr = np.asarray(ci_high_values, dtype=float)
+            n_values_arr = np.asarray(n_values, dtype=int)
+            if x_values_arr.size == 0:
+                continue
 
-        drop_indices = {
-            int(idx)
-            for idx in drop_binned_point_indices.get(algorithm, ())
-            if -x_values_arr.size <= int(idx) < x_values_arr.size
-        }
-        if drop_indices:
-            keep = np.ones(x_values_arr.size, dtype=bool)
-            for idx in drop_indices:
-                keep[idx % x_values_arr.size] = False
-            x_values_arr = x_values_arr[keep]
-            x_median_arr = x_median_arr[keep]
-            y_values_arr = y_values_arr[keep]
-            ci_low_arr = ci_low_arr[keep]
-            ci_high_arr = ci_high_arr[keep]
-            n_values_arr = n_values_arr[keep]
-        if x_values_arr.size == 0:
-            continue
+            order = np.argsort(x_values_arr)
+            x_values_arr = x_values_arr[order]
+            x_median_arr = x_median_arr[order]
+            y_values_arr = y_values_arr[order]
+            ci_low_arr = ci_low_arr[order]
+            ci_high_arr = ci_high_arr[order]
+            n_values_arr = n_values_arr[order]
 
-        guide_points.extend(
-            (float(x), float(y))
-            for x, y in zip(x_values_arr, y_values_arr)
-            if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
-        )
-        summary_rows.extend(
-            {
-                "algorithm": algorithm,
-                "query_cost_mean": float(x),
-                "query_cost_median": float(x_median),
-                "normalized_abs_error_median": float(y),
-                "normalized_abs_error_median_ci_low": float(ci_low),
-                "normalized_abs_error_median_ci_high": float(ci_high),
-                "n_points": int(n),
+            drop_indices = {
+                int(idx)
+                for idx in drop_binned_point_indices.get(algorithm, ())
+                if -x_values_arr.size <= int(idx) < x_values_arr.size
             }
-            for x, x_median, y, ci_low, ci_high, n in zip(
-                x_values_arr,
-                x_median_arr,
-                y_values_arr,
-                ci_low_arr,
-                ci_high_arr,
-                n_values_arr,
+            if drop_indices:
+                keep = np.ones(x_values_arr.size, dtype=bool)
+                for idx in drop_indices:
+                    keep[idx % x_values_arr.size] = False
+                x_values_arr = x_values_arr[keep]
+                x_median_arr = x_median_arr[keep]
+                y_values_arr = y_values_arr[keep]
+                ci_low_arr = ci_low_arr[keep]
+                ci_high_arr = ci_high_arr[keep]
+                n_values_arr = n_values_arr[keep]
+            if x_values_arr.size == 0:
+                continue
+
+            guide_points.extend(
+                (float(x), float(y))
+                for x, y in zip(x_values_arr, y_values_arr)
+                if np.isfinite(x) and np.isfinite(y) and x > 0.0 and y > 0.0
             )
-        )
-        ax.errorbar(
-            x_values_arr,
-            y_values_arr,
-            yerr=bootstrap_ci_errorbar(y_values_arr, ci_low_arr, ci_high_arr),
-            color=style.get("color"),
-            marker=style.get("marker", "o"),
-            linewidth=2.0,
-            markersize=5.6,
-            elinewidth=1.0,
-            capsize=2.8,
-            label=run_count_label(algorithm, group),
-            zorder=3,
-        )
+            summary_rows.extend(
+                {
+                    "algorithm": algorithm,
+                    "query_cost_mean": float(x),
+                    "query_cost_median": float(x_median),
+                    f"{summary_error_prefix}_median": float(y),
+                    f"{summary_error_prefix}_median_ci_low": float(ci_low),
+                    f"{summary_error_prefix}_median_ci_high": float(ci_high),
+                    "n_points": int(n),
+                }
+                for x, x_median, y, ci_low, ci_high, n in zip(
+                    x_values_arr,
+                    x_median_arr,
+                    y_values_arr,
+                    ci_low_arr,
+                    ci_high_arr,
+                    n_values_arr,
+                )
+            )
+            ax.errorbar(
+                x_values_arr,
+                y_values_arr,
+                yerr=bootstrap_ci_errorbar(y_values_arr, ci_low_arr, ci_high_arr),
+                color=style.get("color"),
+                marker=style.get("marker", "o"),
+                linewidth=2.0,
+                markersize=5.6,
+                elinewidth=1.0,
+                capsize=2.8,
+                label=run_count_label(algorithm, group),
+                zorder=3,
+            )
 
-    add_power_fit_query_scaling_guides(ax, guide_points)
+        add_power_fit_query_scaling_guides(ax, guide_points)
 
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(r"Actual query cost $N_q$")
-    ax.set_ylabel("Median normalized absolute error")
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
-    ax.legend(frameon=False, loc="lower left")
-    fig.tight_layout()
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel(r"Actual query cost $N_q$")
+        ax.set_ylabel(y_label)
+        ax.grid(True, which="major", axis="both", color="#c7c7c7", linewidth=0.8, alpha=0.72)
+        ax.grid(True, which="minor", axis="both", color="#e7e7e7", linewidth=0.45, alpha=0.85)
+        _apply_paper_axes_style(ax)
+        ax.legend(frameon=False, loc="lower left", handlelength=2.7)
+        fig.tight_layout(pad=0.45)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=300)
-    if pdf_path is not None:
-        pdf_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            fig.savefig(pdf_path)
-        except PermissionError as exc:
-            print(f"Skipped locked PDF output {pdf_path}: {exc}")
-    plt.close(fig)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(output_path, dpi=300)
+        if pdf_path is not None:
+            pdf_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                fig.savefig(pdf_path)
+            except PermissionError as exc:
+                print(f"Skipped locked PDF output {pdf_path}: {exc}")
+        plt.close(fig)
 
     summary = pd.DataFrame(summary_rows)
     if summary_path is not None:

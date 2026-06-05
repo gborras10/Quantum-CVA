@@ -1,0 +1,6 @@
+quantity,metric,ideal_train_noise_eval,noise_train_noise_eval,absolute_delta_noise_minus_ideal,ratio_noise_train_over_ideal_train
+QCBM,KL(target || p_theta),0.04737972747632506,0.07342485429932866,0.026045126823003598,1.5497103552572766
+CRCA default probabilities,"MSE(f_target, f_theta)",7.368000505291588e-05,7.079628081298194e-05,-2.8837242399339406e-06,0.960861508656753
+CRCA discount factors,"MSE(f_target, f_theta)",8.207388098372957e-05,3.194790127352494e-05,-5.012597971020463e-05,0.38925783563053795
+CRCA positive exposure,"MSE(f_target, f_theta)",0.0168879548481213,0.010188751137728186,-0.006699203710393113,0.6033146837114877
+CVA,relative error vs classical CVA,1.0,1.0,0.0,1.0

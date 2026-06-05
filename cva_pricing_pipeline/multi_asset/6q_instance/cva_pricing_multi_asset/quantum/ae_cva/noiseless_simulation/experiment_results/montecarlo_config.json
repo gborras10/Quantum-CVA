@@ -1,0 +1,46 @@
+{
+  "run_kind": "classical_monte_carlo",
+  "algorithm_key": "classical_mc",
+  "sample_model": "bernoulli_good_state",
+  "contrast_model": "ideal",
+  "contrast_baseline": null,
+  "contrast_prefactor": 1.0,
+  "t_eff": null,
+  "noise_amplification_factor": 1.0,
+  "noise_contrast": 1.0,
+  "run_dir": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noiseless_simulation\\experiment_results",
+  "output_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noiseless_simulation\\experiment_results\\montecarlo_budget_rows.csv",
+  "summary_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noiseless_simulation\\experiment_results\\montecarlo_budget_summary.csv",
+  "source_run_config": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noiseless_simulation\\experiment_results\\config.json",
+  "robustness_suite": false,
+  "robustness_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test",
+  "cases": [
+    {
+      "case_id": "base",
+      "call_strike": 4500.0,
+      "put_strike": 12500.0,
+      "a_true": 0.1328730942948926,
+      "a_sampling": 0.1328730942948926,
+      "cva_true": 0.5864946085782612
+    }
+  ],
+  "repetitions": 300,
+  "total_case_repetitions": 300,
+  "budgets": [
+    64,
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384,
+    32768,
+    65536
+  ],
+  "seed": 12345,
+  "cva_reference_source": "source_run_config",
+  "cva_scaling_factor": 4.413945589892121,
+  "rebuilt_bundle_cva_true_before_reference_alignment": 0.5856660811321932
+}

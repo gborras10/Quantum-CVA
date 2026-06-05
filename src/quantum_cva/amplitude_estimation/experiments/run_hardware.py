@@ -7,6 +7,7 @@ from quantum_cva.amplitude_estimation.experiments.hardware import (
     load_existing_state,
     run_dry_run_experiment,
     run_replay,
+    effective_contrast_prefactor_for_algorithms,
     effective_t_for_algorithms,
 )
 from quantum_cva.amplitude_estimation.experiments.runner_utils import (
@@ -85,6 +86,9 @@ def main(argv: list[str] | None = None) -> None:
         alpha=float(args.alpha),
         t_eff=effective_t_for_algorithms(state.calibration_summary),
         seed=int(args.seed),
+        contrast_prefactor=effective_contrast_prefactor_for_algorithms(
+            state.calibration_summary
+        ),
     )
 
 

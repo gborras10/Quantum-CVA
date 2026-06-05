@@ -158,7 +158,7 @@ def add_query_scaling_guides(
     ax: plt.Axes,
     guide_points: list[tuple[float, float]] | tuple[np.ndarray, np.ndarray],
     *,
-    include_linear: bool = True,
+    include_linear: bool = False,
     include_sqrt: bool = True,
 ) -> None:
     if isinstance(guide_points, tuple):
@@ -185,17 +185,6 @@ def add_query_scaling_guides(
         return
 
     guide_x = np.geomspace(x0, x_max, num=200)
-    if include_linear:
-        ax.loglog(
-            guide_x,
-            y0 * (x0 / guide_x),
-            color="black",
-            linestyle="--",
-            linewidth=1.15,
-            alpha=0.82,
-            label=r"$O(1/N)$",
-            zorder=1,
-        )
     if include_sqrt:
         ax.loglog(
             guide_x,
@@ -347,6 +336,40 @@ def _log_limits(values: np.ndarray, pad_fraction: float = 0.08) -> tuple[float, 
     )
 
 
+def _add_subtle_log_gaussian_contours(
+    ax: plt.Axes,
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    *,
+    color: str,
+) -> None:
+    points = np.column_stack([np.log10(x_values), np.log10(y_values)])
+    if points.shape[0] < 3:
+        return
+
+    lower, upper = np.quantile(points, [0.025, 0.975], axis=0)
+    central = points[np.all((points >= lower) & (points <= upper), axis=1)]
+    if central.shape[0] < 3:
+        central = points
+    covariance = np.cov(central, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    eigenvalues = np.maximum(eigenvalues, 1.0e-10)
+    center = np.median(points, axis=0)
+    angles = np.linspace(0.0, 2.0 * np.pi, 240)
+    circle = np.column_stack([np.cos(angles), np.sin(angles)])
+    transform = eigenvectors @ np.diag(np.sqrt(eigenvalues))
+    for radius, alpha in ((np.sqrt(2.30), 0.24), (np.sqrt(5.99), 0.14)):
+        outline = center + radius * (circle @ transform.T)
+        ax.plot(
+            10.0 ** outline[:, 0],
+            10.0 ** outline[:, 1],
+            color=color,
+            linewidth=0.85,
+            alpha=alpha,
+            zorder=1,
+        )
+
+
 def plot_final_runtime_scatter_from_budget_rows(
     budget_rows: Sequence[Mapping[str, Any]],
     *,
@@ -357,6 +380,8 @@ def plot_final_runtime_scatter_from_budget_rows(
     summary_path: str | Path | None = None,
     x_kind: str = "runtime",
     title: str = "",
+    gaussian_contours: bool = False,
+    paper_style: bool = False,
 ) -> list[dict[str, Any]]:
     if x_kind not in {"runtime", "queries"}:
         raise ValueError("x_kind must be 'runtime' or 'queries'.")
@@ -409,37 +434,43 @@ def plot_final_runtime_scatter_from_budget_rows(
         if x_values.size == 0:
             continue
         style = algorithm_styles.get(algorithm, {"color": "#333333", "marker": "o"})
+        color = str(style.get("color", "#333333"))
+        marker = str(style.get("marker", "o"))
         all_x.extend(x_values.tolist())
         all_y.extend(y_values.tolist())
+        if gaussian_contours:
+            _add_subtle_log_gaussian_contours(ax, x_values, y_values, color=color)
         ax.scatter(
             x_values,
             y_values,
-            s=30,
-            marker=style.get("marker", "o"),
-            color=style.get("color"),
-            alpha=0.45,
-            edgecolors="white",
-            linewidths=0.35,
+            s=16 if paper_style else 30,
+            marker=marker,
+            color=color,
+            alpha=0.30 if paper_style else 0.45,
+            edgecolors="none" if paper_style else "white",
+            linewidths=0.0 if paper_style else 0.35,
+            rasterized=paper_style,
+            zorder=2 if paper_style else None,
         )
         ax.scatter(
             [float(np.nanmedian(x_values))],
             [float(np.nanmedian(y_values))],
-            s=135,
-            marker=style.get("marker", "o"),
-            facecolor=style.get("color"),
-            edgecolor="black",
-            linewidth=1.1,
+            s=64 if paper_style else 135,
+            marker=marker,
+            facecolor=color,
+            edgecolor="white" if paper_style else "black",
+            linewidth=0.85 if paper_style else 1.1,
             zorder=5,
         )
         legend_handles.append(
             Line2D(
                 [0],
                 [0],
-                color=style.get("color"),
-                marker=style.get("marker", "o"),
+                color=color,
+                marker=marker,
                 linestyle="None",
-                markersize=8,
-                label=f"{label} (n={x_values.size})",
+                markersize=6.5 if paper_style else 8,
+                label=label if paper_style else f"{label} (n={x_values.size})",
             )
         )
         summary_row = {
@@ -471,8 +502,12 @@ def plot_final_runtime_scatter_from_budget_rows(
     ax.set_ylabel("Final normalized absolute error")
     if title:
         ax.set_title(title)
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
+    if paper_style:
+        ax.grid(True, which="major", color="#BFBFBF", linewidth=0.55, alpha=0.32)
+        ax.grid(True, which="minor", color="#D7D7D7", linewidth=0.40, alpha=0.16)
+    else:
+        ax.grid(True, which="major", alpha=0.24)
+        ax.grid(True, which="minor", alpha=0.12)
     if legend_handles:
         ax.legend(handles=legend_handles, frameon=False, loc="best")
     fig.tight_layout()

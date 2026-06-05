@@ -1,0 +1,6 @@
+active_physical_qubits,amplification_factor,decomposed_2q,decomposed_depth,grover_power,isa_2q,isa_depth,isa_size,isa_swap_count,logical_2q,logical_depth,p_ideal,within_2q_limit,within_depth_limit
+"[68, 69, 70, 78, 88, 89, 90]",1,76,110,0,54,146,319,0,38,31,0.05427214179198414,True,True
+"[68, 69, 70, 78, 88, 89, 90]",3,374,562,1,488,1161,2273,0,336,485,0.4203158145666547,True,True
+"[68, 69, 70, 78, 88, 89, 90]",5,672,1014,2,924,2134,4245,0,634,937,0.851798277762344,True,True
+"[68, 69, 70, 78, 88, 89, 90]",7,970,1466,3,1356,3128,6214,0,932,1389,0.9943745590881334,True,True
+"[68, 69, 70, 78, 88, 89, 90]",9,1268,1918,4,1786,4103,8172,0,1230,1841,0.7309571920417806,True,True

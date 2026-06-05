@@ -21,16 +21,18 @@ from toys.amplitude_estimation_experiments.ideal_regime.ideal_utils import (  # 
 )
 
 
-HARDWARE_REPLAY_ALGORITHMS = ("bae", "biqae", "cabiqae_latentt")
+HARDWARE_REPLAY_ALGORITHMS = ("bae", "biqae", "cabiqae_latentt", "classical_mc")
 HARDWARE_REPLAY_ALGORITHM_LABELS = {
     "bae": "BAE",
     "biqae": "BIQAE",
     "cabiqae_latentt": "CABIQAE",
+    "classical_mc": "DCS",
 }
 HARDWARE_REPLAY_ALGORITHM_STYLES = {
     "bae": {"color": "#E07A5F", "marker": "^"},
     "biqae": {"color": "#A23B72", "marker": "s"},
     "cabiqae_latentt": {"color": "#1F6F8B", "marker": "o"},
+    "classical_mc": {"color": "#2A9D8F", "marker": "X"},
 }
 DEFAULT_INPUT_DIR = CURRENT_DIR / "experiment_results" / "csv_results"
 DEFAULT_OUTPUT_DIR = CURRENT_DIR / "experiment_results" / "plots"
@@ -44,7 +46,7 @@ DEFAULT_BUDGETS = (
 
 # Plot parameters
 MAX_BINS = 12
-MIN_POINTS_PER_BIN = 5
+MIN_POINTS_PER_BIN = 10
 BOOTSTRAP_SAMPLES = 2000
 MAX_QUERIES = 50000
 
@@ -205,6 +207,27 @@ def budget_rows_from_trace_rows(
     return pd.DataFrame(rows)
 
 
+def append_monte_carlo_rows(
+    rows: pd.DataFrame | Sequence[Mapping[str, object]],
+    monte_carlo_path: str | Path,
+    *,
+    include_monte_carlo: bool,
+) -> pd.DataFrame:
+    frame = rows.copy() if isinstance(rows, pd.DataFrame) else pd.DataFrame(list(rows))
+    if not include_monte_carlo:
+        return frame
+    path = Path(monte_carlo_path)
+    if not path.exists() or path.stat().st_size == 0:
+        raise FileNotFoundError(
+            f"{path} does not exist. Run montecarlo_path.py first or pass "
+            "--monte-carlo-budget-rows to an existing CSV."
+        )
+    monte_carlo = pd.read_csv(path)
+    if monte_carlo.empty:
+        return frame
+    return pd.concat([frame, monte_carlo], ignore_index=True, sort=False)
+
+
 def aggregate_fixed_budget_summary(
     rows: pd.DataFrame,
     *,
@@ -303,7 +326,9 @@ def plot_hardware_replay_actual_queries(
     confidence_level: float = 0.95,
     bootstrap_seed: int = 12345,
     drop_points: set[tuple[str, int]] | None = None,
-    title: str = "Hardware replay comparison: BAE vs BIQAE vs CABIQAE",
+    drop_binned_point_indices: dict[str, tuple[int, ...]] | None = None,
+    x_query_stat: str = "mean",
+    title: str = "",
 ) -> list[dict[str, object]]:
     """Build the hardware replay query plot through the ideal-regime pipeline."""
     frame = rows.copy() if isinstance(rows, pd.DataFrame) else pd.DataFrame(list(rows))
@@ -353,6 +378,8 @@ def plot_hardware_replay_actual_queries(
         output_path=output_path,
         title=title,
         connect_points=True,
+        drop_binned_point_indices=drop_binned_point_indices,
+        x_query_stat=x_query_stat,
     )
     return summary_rows
 
@@ -362,6 +389,16 @@ def main() -> None:
         description="Build the hardware replay actual-query plot with the ideal-regime plotting pipeline."
     )
     parser.add_argument("--budget-rows", type=Path, default=DEFAULT_INPUT_DIR / "replay_budget_rows.csv")
+    parser.add_argument(
+        "--include-monte-carlo",
+        action="store_true",
+        help="Append montecarlo_budget_rows.csv as a Classical MC baseline.",
+    )
+    parser.add_argument(
+        "--monte-carlo-budget-rows",
+        type=Path,
+        default=DEFAULT_INPUT_DIR / "montecarlo_budget_rows.csv",
+    )
     parser.add_argument(
         "--budgets",
         default=",".join(str(budget) for budget in DEFAULT_BUDGETS),
@@ -396,6 +433,11 @@ def main() -> None:
         plot_rows = pd.read_csv(args.budget_rows)
     else:
         plot_rows = budget_rows_from_trace_rows(pd.read_csv(args.trace_rows), parse_budget_list(args.budgets))
+    plot_rows = append_monte_carlo_rows(
+        plot_rows,
+        args.monte_carlo_budget_rows,
+        include_monte_carlo=bool(args.include_monte_carlo),
+    )
     plot_hardware_replay_actual_queries(
         plot_rows,
         args.output,

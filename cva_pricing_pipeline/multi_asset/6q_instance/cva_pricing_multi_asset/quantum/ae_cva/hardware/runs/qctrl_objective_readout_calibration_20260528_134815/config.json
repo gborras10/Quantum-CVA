@@ -1,0 +1,24 @@
+{
+  "run_id": "qctrl_objective_readout_calibration_20260528_134815",
+  "pipeline": "6q_cva_objective_readout_calibration",
+  "backend": "ibm_pittsburgh",
+  "backend_name": "ibm_pittsburgh",
+  "instance_name": "premium_new_usa",
+  "channel": "ibm_cloud",
+  "hardware_executor": "qctrl",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "shots": 4096,
+  "repeats": 2,
+  "seed": 12345,
+  "include_k0_probe": true,
+  "submitted_circuit_kind": "abstract_logical",
+  "local_pass_manager_applied": false,
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "good_bitstring": "111",
+  "true_amplitude": 0.1328730942948926
+}

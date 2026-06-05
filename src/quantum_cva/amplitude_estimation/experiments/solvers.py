@@ -106,6 +106,7 @@ def build_solver(
     algorithm = normalize_algorithm_key(algorithm)
     kwargs = dict(solver_kwargs or {})
     noise_floor = float(kwargs.pop("noise_floor", 0.5))
+    contrast_prefactor = float(kwargs.pop("contrast_prefactor", 1.0))
     noise_model = _noise_model_name(t_eff)
     T_known = None if t_eff is None or np.isinf(t_eff) else float(t_eff)
 
@@ -158,6 +159,7 @@ def build_solver(
             use_noise_cap=kwargs.pop("use_noise_cap", True),
             max_shots_same_k=max_shots_same_k,
             noise_floor=noise_floor,
+            contrast_prefactor=contrast_prefactor,
             **kwargs,
         )
         patch_construct_circuit(
@@ -184,6 +186,7 @@ def build_solver(
             max_shots_same_k=max_shots_same_k,
             random_seed=seed,
             noise_floor=noise_floor,
+            contrast_prefactor=contrast_prefactor,
             **kwargs,
         )
         patch_construct_circuit(

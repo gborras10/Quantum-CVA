@@ -1,0 +1,24 @@
+{
+  "readout": {
+    "p_obs_good_given_bad": 0.0,
+    "p_obs_good_given_good": 0.9998779296875,
+    "readout_denom": 0.9998779296875,
+    "readout_usable": 1.0
+  },
+  "calibration_status": "ok",
+  "fit_points": 16,
+  "t_eff_zero_intercept": 88.1593891015884,
+  "t_eff_free_intercept": 92.58042876726616,
+  "contrast_prefactor": 1.0025905368017174,
+  "free_intercept_slope": -0.010801418974995846,
+  "k_visible": 23,
+  "k_visible_criterion": "max k with valid contrast, contrast_signal_z >= 3, and |p_ideal - baseline| >= 0.1",
+  "k_signal_from_baseline": 24,
+  "k_contrast_fit_max": 23,
+  "min_fit_contrast_z": 2.0,
+  "min_visible_contrast_z": 3.0,
+  "min_ideal_offset": 0.1,
+  "contrast_baseline": 0.125,
+  "contrast_baseline_mode": "fixed",
+  "fit_reduced_weighted_sse": 60.94292254812943
+}

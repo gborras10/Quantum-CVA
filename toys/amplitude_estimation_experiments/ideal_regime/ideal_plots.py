@@ -29,10 +29,10 @@ from toys.amplitude_estimation_experiments.ideal_regime.ideal_utils import (  # 
 # Toggle plotting mode.
 # False -> legacy budget-row plots.
 # True  -> plots from v2 final_estimations CSV.
-USE_V2_RESULTS = True
+USE_V2_RESULTS = False
 
 # Choose which datasets to regenerate. Options: "ideal", "elf".
-GENERATE_DATASET_KEYS = ("ideal", "elf")
+GENERATE_DATASET_KEYS = ("ideal",)
 
 # Choose which v2 datasets to regenerate. Options: "ideal_v2".
 GENERATE_V2_DATASET_KEYS = ("ideal_v2",)
@@ -41,23 +41,27 @@ GENERATE_V2_DATASET_KEYS = ("ideal_v2",)
 GENERATE_ERROR_VS_QUERIES = True
 GENERATE_RUNTIME_GAUSSIAN_SCATTER = True
 GENERATE_QUERY_GAUSSIAN_SCATTER = True
+INCLUDE_MONTE_CARLO = True #! False to generate runtime plots!!!!
 
 # Whether the error-vs-queries plots should connect the plotted medians.
-CONNECT_ERROR_PLOT_POINTS = False
+CONNECT_ERROR_PLOT_POINTS = True
 
 # Only algorithms in this list will be plotted.
 # Keep the order if you want the legend order to match this tuple.
 ALGORITHMS_TO_PLOT = (
     "cabiqae_latentt",
+    "biqae",
+    "bae",
+    "classical_mc",
 )
 
 # Error-vs-queries binned benchmark plot settings.
-QUERY_MAX_BINS = 12
+QUERY_MAX_BINS = 20
 QUERY_MIN_POINTS_PER_BIN = 30
 QUERY_BOOTSTRAP_SAMPLES = 10000
 QUERY_BOOTSTRAP_CONFIDENCE_LEVEL = 0.90
 QUERY_BOOTSTRAP_SEED = 12345
-QUERY_MAX_PLOT_POINTS_PER_ALGORITHM = 8
+QUERY_MAX_PLOT_POINTS_PER_ALGORITHM = 12
 
 # Scatter with Gaussian contours settings.
 # Use None to plot all final points per algorithm. Use an integer to subsample.
@@ -80,6 +84,7 @@ ALGORITHM_LABELS = {
     "iqae": "IQAE",
     "cabiqae_latentt": "CABIQAE",
     "elf_qae": "ELF-QAE",
+    "classical_mc": "DCS",
 }
 ALGORITHM_STYLES = {
     "bae": {"color": "#E07A5F", "marker": "^"},
@@ -87,6 +92,7 @@ ALGORITHM_STYLES = {
     "iqae": {"color": "#4C78A8", "marker": "D"},
     "cabiqae_latentt": {"color": "#1F6F8B", "marker": "o"},
     "elf_qae": {"color": "#6D597A", "marker": "v"},
+    "classical_mc": {"color": "#2A9D8F", "marker": "X"},
 }
 
 DATASETS: dict[str, dict[str, Any]] = {
@@ -95,8 +101,11 @@ DATASETS: dict[str, dict[str, Any]] = {
         "budget_rows_csv": CURRENT_DIR
         / "experiment_results"
         / "bae_biqae_iqae_cabiqae_latentt_ideal_budget_rows.csv",
+        "monte_carlo_budget_rows_csv": CURRENT_DIR
+        / "experiment_results"
+        / "classical_mc_ideal_budget_rows.csv",
         "output_prefix": "bae_biqae_iqae_cabiqae_latentt_ideal",
-        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt"),
+        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt", "classical_mc"),
         "title": "Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE",
     },
     "elf": {
@@ -104,8 +113,11 @@ DATASETS: dict[str, dict[str, Any]] = {
         "budget_rows_csv": CURRENT_DIR
         / "elf_experiment_results"
         / "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal_budget_rows.csv",
+        "monte_carlo_budget_rows_csv": CURRENT_DIR
+        / "elf_experiment_results"
+        / "classical_mc_ideal_budget_rows.csv",
         "output_prefix": "bae_biqae_iqae_cabiqae_latentt_elf_qae_ideal",
-        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt", "elf_qae"),
+        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt", "elf_qae", "classical_mc"),
         "title": "Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE vs ELF-QAE",
     },
 }
@@ -116,8 +128,11 @@ V2_DATASETS: dict[str, dict[str, Any]] = {
         "final_rows_csv": CURRENT_DIR
         / "experiment_results"
         / "bae_biqae_iqae_cabiqae_latentt_ideal_v2_final_estimations.csv",
+        "monte_carlo_budget_rows_csv": CURRENT_DIR
+        / "experiment_results"
+        / "classical_mc_ideal_v2_budget_rows.csv",
         "output_prefix": "bae_biqae_iqae_cabiqae_latentt_ideal_v2",
-        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt"),
+        "algorithms": ("bae", "biqae", "iqae", "cabiqae_latentt", "classical_mc"),
         "title": "Ideal regime v2 comparison: matched-query final estimates",
     }
 }
@@ -152,6 +167,22 @@ def algorithm_labels_for(algorithms: tuple[str, ...]) -> dict[str, str]:
 
 def algorithm_styles_for(algorithms: tuple[str, ...]) -> dict[str, dict[str, str]]:
     return {algorithm: ALGORITHM_STYLES[algorithm] for algorithm in algorithms}
+
+
+def maybe_append_monte_carlo_rows(
+    rows: list[dict[str, Any]],
+    monte_carlo_path: Path | None,
+) -> list[dict[str, Any]]:
+    if not INCLUDE_MONTE_CARLO:
+        return rows
+    if monte_carlo_path is None:
+        return rows
+    if not monte_carlo_path.exists():
+        raise FileNotFoundError(
+            f"Monte Carlo rows requested but not found: {monte_carlo_path}. "
+            "Run toys/amplitude_estimation_experiments/ideal_regime/montecarlo_path.py first."
+        )
+    return [*rows, *load_budget_rows(monte_carlo_path)]
 
 
 def algorithms_to_plot_for(available_algorithms: tuple[str, ...]) -> tuple[str, ...]:
@@ -238,6 +269,12 @@ def _v2_rows_to_budget_rows(
 def regenerate_dataset(dataset_key: str) -> None:
     config = DATASETS[dataset_key]
     rows = load_budget_rows(config["budget_rows_csv"])
+    rows = maybe_append_monte_carlo_rows(
+        rows,
+        Path(config["monte_carlo_budget_rows_csv"])
+        if config.get("monte_carlo_budget_rows_csv")
+        else None,
+    )
     total_repetitions = count_repetitions(rows)
     algorithms = algorithms_to_plot_for(tuple(config["algorithms"]))
     labels = algorithm_labels_for(algorithms)
@@ -280,7 +317,7 @@ def regenerate_dataset(dataset_key: str) -> None:
             algorithm_labels=labels,
             algorithm_styles=styles,
             output_path=output_path,
-            title=f"Final error versus runtime: {dataset_key} comparison",
+            title="",
             summary_path=summary_path,
             max_points_per_algorithm=GAUSSIAN_MAX_POINTS_PER_ALGORITHM,
             point_sample_seed=GAUSSIAN_POINT_SAMPLE_SEED,
@@ -298,7 +335,7 @@ def regenerate_dataset(dataset_key: str) -> None:
             algorithm_labels=labels,
             algorithm_styles=styles,
             output_path=output_path,
-            title=f"Final error versus query count: {dataset_key} comparison",
+            title="",
             summary_path=summary_path,
             max_points_per_algorithm=GAUSSIAN_MAX_POINTS_PER_ALGORITHM,
             point_sample_seed=GAUSSIAN_POINT_SAMPLE_SEED,
@@ -318,6 +355,12 @@ def regenerate_v2_dataset(dataset_key: str) -> None:
     output_prefix = str(config["output_prefix"])
     title = str(config["title"])
     budget_rows = _v2_rows_to_budget_rows(rows, algorithms=algorithms)
+    budget_rows = maybe_append_monte_carlo_rows(
+        budget_rows,
+        Path(config["monte_carlo_budget_rows_csv"])
+        if config.get("monte_carlo_budget_rows_csv")
+        else None,
+    )
     total_repetitions = count_repetitions(budget_rows)
 
     proxy_rows_path = results_dir / f"{output_prefix}_budget_rows_proxy.csv"

@@ -1,0 +1,6 @@
+{
+  "mode": "replay-only",
+  "created_at_epoch": 1780310703.3343284,
+  "calibration_source_run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware",
+  "new_qpu_submissions": false
+}

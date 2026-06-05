@@ -1,0 +1,10 @@
+\begin{tabular}{lllrrrrrrrlrrlll}
+\toprule
+quantity & training_regime & evaluation_regime & cva_estimate & cva_reference & absolute_error & relative_error & std & shots & repetitions & source & p111_mean & p111_std & backend_name & noise_snapshot_iso_utc & thermal_relaxation \\
+\midrule
+CVA & ideal_statevector & ideal_statevector & 0.67141 & 0.52159 & 0.14982 & 0.287237 & NaN & NaN & NaN & statevector recomputation from training artifacts & NaN & NaN & NaN & NaN & NaN \\
+CVA & shots_backend_noise & ideal_statevector & 0.586495 & 0.52159 & 0.0649046 & 0.124436 & NaN & NaN & NaN & statevector recomputation from training artifacts & NaN & NaN & NaN & NaN & NaN \\
+CVA & ideal_statevector & shots_backend_noise & 0 & 0.52159 & 0.52159 & 1 & 0 & 100000 & 10 & Aer density-matrix simulation of full measured CVA circuit & 0 & 0 & ibm_basquecountry & 2026-04-07T12:10:00+00:00 & False \\
+CVA & shots_backend_noise & shots_backend_noise & 0 & 0.52159 & 0.52159 & 1 & 0 & 100000 & 10 & Aer density-matrix simulation of full measured CVA circuit & 0 & 0 & ibm_basquecountry & 2026-04-07T12:10:00+00:00 & False \\
+\bottomrule
+\end{tabular}

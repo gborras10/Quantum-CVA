@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import time
 import uuid
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,7 @@ from quantum_cva.amplitude_estimation.experiments.hardware import (
     analyze_amplification,
     backend_snapshot,
     build_pass_manager_for_backend,
+    effective_contrast_prefactor_for_algorithms,
     effective_t_for_algorithms,
     run_amplification_scan,
     run_preflight,
@@ -59,7 +62,26 @@ from quantum_cva.amplitude_estimation.experiments.traces import rows_at_budgets
 DEFAULT_ALGORITHMS = "cabiqae_latentt,biqae,bae"
 DEFAULT_BUDGETS = "128,256,512,1024,2048,4096,8192,16384"
 DEFAULT_REFERENCE_KS = "0,1,2,3,4"
+DEFAULT_ROBUSTNESS_DIR = (
+    REPO_ROOT
+    / "cva_pricing_pipeline"
+    / "multi_asset"
+    / "6q_instance"
+    / "cva_robustness_test"
+)
 RUN_KIND = "simulated_noise"
+
+
+@dataclass(frozen=True)
+class RobustnessCase:
+    case_id: str
+    call_strike: float
+    put_strike: float
+    case_dir: Path
+    benchmark_path: Path
+    exposure_path: Path
+    config: Any
+    bundle: Any
 
 
 def _parse_bool(value: Any) -> bool:
@@ -130,10 +152,46 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="CONFIG",
         help="Attribute used with --config-path.",
     )
+    parser.add_argument(
+        "--robustness-suite",
+        action="store_true",
+        help="Run AE for all selected CVA robustness strike cases.",
+    )
+    parser.add_argument(
+        "--robustness-dir",
+        default=str(DEFAULT_ROBUSTNESS_DIR),
+        help="Directory containing cva_robustness_test artifacts.",
+    )
+    parser.add_argument(
+        "--robustness-cases",
+        default=None,
+        help=(
+            "Optional comma/space-separated case_id list. Defaults to all cases "
+            "in robustness_sweep_config.json."
+        ),
+    )
     parser.add_argument("--repo-root", default=str(REPO_ROOT))
     parser.add_argument("--algorithms", default=DEFAULT_ALGORITHMS)
     parser.add_argument("--repetitions", type=int, default=20)
     parser.add_argument("--epsilon-target", type=float, default=0.02)
+    parser.add_argument(
+        "--cabiqae-epsilon-target",
+        type=float,
+        default=None,
+        help=(
+            "Optional epsilon_target override for CABIQAE variants. "
+            "Defaults to --epsilon-target."
+        ),
+    )
+    parser.add_argument(
+        "--biqae-epsilon-target",
+        type=float,
+        default=None,
+        help=(
+            "Optional epsilon_target override for BIQAE. "
+            "Use a smaller value than CABIQAE to push BIQAE to higher queries."
+        ),
+    )
     parser.add_argument("--alpha", type=float, default=0.05)
     parser.add_argument("--n-shots", type=int, default=128)
     parser.add_argument("--max-queries", type=int, default=16_384)
@@ -307,6 +365,170 @@ def _validate_bundle(bundle: Any) -> None:
         )
 
 
+def _resolve_existing_robustness_case_dir(
+    robustness_dir: Path,
+    case_id: str,
+) -> Path:
+    candidates = [
+        robustness_dir / "data" / case_id,
+        robustness_dir / case_id,
+    ]
+    for candidate in candidates:
+        benchmark = candidate / "benchmark" / "benchmark.npz"
+        exposure = (
+            candidate
+            / "quantum"
+            / "training"
+            / "crca"
+            / "positive_exposure"
+            / "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+        )
+        if benchmark.exists() and exposure.exists():
+            return candidate
+    details = "\n".join(str(path) for path in candidates)
+    raise FileNotFoundError(
+        f"Could not find complete robustness artifacts for case {case_id!r}. "
+        f"Checked:\n{details}"
+    )
+
+
+def _with_case_paths(config: Any, *, case_dir: Path) -> Any:
+    paths = replace(
+        config.paths,
+        benchmark_relative_path=str(case_dir / "benchmark" / "benchmark.npz"),
+        crca_exposure_training_relative_path=str(
+            case_dir
+            / "quantum"
+            / "training"
+            / "crca"
+            / "positive_exposure"
+            / "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+        ),
+        results_dir_relative_path=str(case_dir / "pipeline_run"),
+    )
+    return replace(config, paths=paths)
+
+
+def _with_case_strikes(
+    config: Any,
+    *,
+    call_strike: float,
+    put_strike: float,
+) -> Any:
+    if len(config.instruments) < 2:
+        raise ValueError("Expected at least two instruments in the CVA config.")
+    instruments = list(config.instruments)
+    instruments[0] = replace(instruments[0], strike=float(call_strike))
+    instruments[1] = replace(instruments[1], strike=float(put_strike))
+    return replace(config, instruments=tuple(instruments))
+
+
+def _load_robustness_cases(
+    *,
+    base_config: Any,
+    robustness_dir: Path,
+    selected_case_ids: tuple[str, ...] | None,
+    repo_root: str | Path,
+) -> list[RobustnessCase]:
+    config_path = robustness_dir / "robustness_sweep_config.json"
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Robustness sweep config does not exist: {config_path}"
+        )
+    payload = json.loads(config_path.read_text(encoding="utf-8"))
+    raw_cases = list(payload.get("cases", []))
+    if not raw_cases:
+        raise ValueError(f"No cases found in {config_path}.")
+
+    selected = None if selected_case_ids is None else set(selected_case_ids)
+    cases: list[RobustnessCase] = []
+    for raw in raw_cases:
+        case_id = str(raw["case_id"])
+        if selected is not None and case_id not in selected:
+            continue
+        case_dir = _resolve_existing_robustness_case_dir(robustness_dir, case_id)
+        config = _with_case_strikes(
+            base_config,
+            call_strike=float(raw["call_strike"]),
+            put_strike=float(raw["put_strike"]),
+        )
+        config = _with_case_paths(config, case_dir=case_dir)
+        bundle = build_6q_cva_problem_bundle(config, repo_root=repo_root)
+        _validate_bundle(bundle)
+        cases.append(
+            RobustnessCase(
+                case_id=case_id,
+                call_strike=float(raw["call_strike"]),
+                put_strike=float(raw["put_strike"]),
+                case_dir=case_dir,
+                benchmark_path=case_dir / "benchmark" / "benchmark.npz",
+                exposure_path=(
+                    case_dir
+                    / "quantum"
+                    / "training"
+                    / "crca"
+                    / "positive_exposure"
+                    / "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+                ),
+                config=config,
+                bundle=bundle,
+            )
+        )
+
+    if not cases:
+        requested = sorted(selected or [])
+        raise ValueError(f"No robustness cases selected. Requested={requested!r}.")
+    if selected is not None:
+        found = {case.case_id for case in cases}
+        missing = sorted(selected.difference(found))
+        if missing:
+            raise ValueError(f"Unknown robustness case ids: {missing!r}.")
+    return cases
+
+
+def _validate_suite_bundles(cases: list[RobustnessCase]) -> None:
+    reference = cases[0].bundle
+    objective_qubits = list(reference.problem.objective_qubits)
+    width = int(reference.problem.state_preparation.num_qubits)
+    good = str(reference.good_bitstring)
+    for case in cases[1:]:
+        bundle = case.bundle
+        if str(bundle.good_bitstring) != good:
+            raise ValueError(
+                "Robustness cases disagree on good_bitstring: "
+                f"{cases[0].case_id}={good}, {case.case_id}={bundle.good_bitstring}"
+            )
+        if list(bundle.problem.objective_qubits) != objective_qubits:
+            raise ValueError(
+                "Robustness cases disagree on objective_qubits: "
+                f"{cases[0].case_id}={objective_qubits}, "
+                f"{case.case_id}={list(bundle.problem.objective_qubits)}"
+            )
+        case_width = int(bundle.problem.state_preparation.num_qubits)
+        if case_width != width:
+            raise ValueError(
+                "Robustness cases disagree on state-preparation width: "
+                f"{cases[0].case_id}={width}, {case.case_id}={case_width}"
+            )
+
+
+def _case_row(case: RobustnessCase) -> dict[str, Any]:
+    scaling = dict(case.bundle.metadata.get("cva_scaling", {}) or {})
+    return {
+        "case_id": case.case_id,
+        "call_strike": float(case.call_strike),
+        "put_strike": float(case.put_strike),
+        "case_dir": str(case.case_dir),
+        "benchmark_path": str(case.benchmark_path),
+        "exposure_training_path": str(case.exposure_path),
+        "a_true": float(case.bundle.true_amplitude),
+        "cva_true": float(case.bundle.processed_true_value),
+        "C_v": scaling.get("C_v", np.nan),
+        "C_p": scaling.get("C_p", np.nan),
+        "C_q": scaling.get("C_q", np.nan),
+    }
+
+
 def _save_csv(rows: list[dict[str, Any]], path: Path) -> None:
     save_csv(rows, path, fieldnames=preferred_field_order(rows))
 
@@ -441,6 +663,29 @@ def _resolve_noise_floor(raw: str | float, bundle: Any) -> float:
     return value
 
 
+def _epsilon_target_for_algorithm(
+    args: argparse.Namespace,
+    algorithm: str,
+) -> float:
+    key = normalize_algorithm_key(algorithm)
+    if key == "biqae" and args.biqae_epsilon_target is not None:
+        return float(args.biqae_epsilon_target)
+    if key in {"cabiqae", "cabiqae_known_t", "cabiqae_latentt"}:
+        if args.cabiqae_epsilon_target is not None:
+            return float(args.cabiqae_epsilon_target)
+    return float(args.epsilon_target)
+
+
+def _epsilon_target_config(
+    args: argparse.Namespace,
+    algorithms: tuple[str, ...],
+) -> dict[str, float]:
+    return {
+        algorithm: _epsilon_target_for_algorithm(args, algorithm)
+        for algorithm in algorithms
+    }
+
+
 def _build_aer_sampler(
     *,
     noise_model: Any,
@@ -534,6 +779,614 @@ def _load_reusable_calibration(paths: RunPaths) -> dict[str, Any]:
     return dict(calibration)
 
 
+def _write_case_outputs(
+    *,
+    case: RobustnessCase,
+    paths: RunPaths,
+    trace_rows: list[dict[str, Any]],
+    final_rows: list[dict[str, Any]],
+    budget_rows: list[dict[str, Any]],
+    error_rows: list[dict[str, Any]],
+    args: argparse.Namespace,
+) -> None:
+    case_paths = RunPaths(paths.run_dir / "cases" / case.case_id)
+    case_paths.run_dir.mkdir(parents=True, exist_ok=True)
+    case_trace_rows = [
+        row for row in trace_rows if str(row.get("case_id", "")) == case.case_id
+    ]
+    case_final_rows = [
+        row for row in final_rows if str(row.get("case_id", "")) == case.case_id
+    ]
+    case_budget_rows = [
+        row for row in budget_rows if str(row.get("case_id", "")) == case.case_id
+    ]
+    case_error_rows = [
+        row for row in error_rows if str(row.get("case_id", "")) == case.case_id
+    ]
+    fixed_budget_summary_rows = add_cva_aliases(
+        aggregate_budget_summary(
+            case_budget_rows,
+            total_repetitions=int(args.repetitions),
+            group_by_budget=True,
+            bootstrap_samples=int(args.bootstrap_samples),
+        )
+    )
+    actual_query_summary_rows = add_cva_aliases(
+        aggregate_budget_summary(
+            case_trace_rows,
+            total_repetitions=int(args.repetitions),
+            max_bins=int(args.actual_query_max_bins),
+            min_points_per_bin=int(args.actual_query_min_points_per_bin),
+            bootstrap_samples=int(args.bootstrap_samples),
+        )
+    )
+    save_json(
+        {
+            "case": _case_row(case),
+            "pipeline_config": asdict(case.config),
+        },
+        case_paths.config,
+    )
+    _save_csv(case_trace_rows, case_paths.direct_trace)
+    _save_csv(case_final_rows, case_paths.direct_final)
+    _save_csv(case_budget_rows, case_paths.run_dir / "budget_rows.csv")
+    _save_csv(case_budget_rows, case_paths.replay_budget)
+    _save_csv(fixed_budget_summary_rows, case_paths.budget_summary)
+    _save_csv(actual_query_summary_rows, case_paths.run_dir / "actual_query_summary.csv")
+    _save_csv(case_error_rows, case_paths.errors)
+    write_trace_bundle(
+        case_paths.trace_bundle,
+        trace_rows=case_trace_rows,
+        budget_rows=case_budget_rows,
+    )
+
+
+def run_robustness_suite(args: argparse.Namespace) -> RunPaths:
+    execution_max_grover_power = (
+        None
+        if args.execution_max_grover_power is None
+        else int(args.execution_max_grover_power)
+    )
+    print("Loading base 6q CVA pipeline config...", flush=True)
+    base_config = load_config(
+        config=args.config,
+        config_path=args.config_path,
+        config_attr=args.config_attr,
+    )
+    paths = RunPaths(Path(args.run_dir))
+    paths.run_dir.mkdir(parents=True, exist_ok=True)
+    robustness_dir = Path(args.robustness_dir)
+    if not robustness_dir.is_absolute():
+        robustness_dir = Path(args.repo_root) / robustness_dir
+    selected_case_ids = (
+        None
+        if args.robustness_cases is None
+        else tuple(parse_name_list(args.robustness_cases))
+    )
+
+    print(f"Loading robustness cases from {robustness_dir}...", flush=True)
+    cases = _load_robustness_cases(
+        base_config=base_config,
+        robustness_dir=robustness_dir,
+        selected_case_ids=selected_case_ids,
+        repo_root=args.repo_root,
+    )
+    _validate_suite_bundles(cases)
+    representative = next(
+        (case for case in cases if case.case_id == "base"),
+        cases[0],
+    )
+    bundle = representative.bundle
+    print(
+        "Loaded CVA robustness suite: "
+        f"n_cases={len(cases)}, calibration_case_id={representative.case_id}.",
+        flush=True,
+    )
+    for case in cases:
+        print(
+            f"- {case.case_id}: call={case.call_strike:.8g}, "
+            f"put={case.put_strike:.8g}, a={case.bundle.true_amplitude:.12g}, "
+            f"CVA={case.bundle.processed_true_value:.12g}",
+            flush=True,
+        )
+
+    algorithms = tuple(
+        normalize_algorithm_key(name) for name in parse_name_list(args.algorithms)
+    )
+    epsilon_targets = _epsilon_target_config(args, algorithms)
+    budgets = parse_int_list(args.budgets)
+    reference_ks = _parse_nonnegative_int_list(args.reference_ks)
+    max_budget = max(max(budgets), int(args.max_queries))
+    fit_noise_floor = str(args.noise_floor) == "fit"
+    noise_floor = (
+        math.nan
+        if fit_noise_floor
+        else _resolve_noise_floor(args.noise_floor, bundle)
+    )
+
+    print(
+        "Loading transpilation backend "
+        f"{args.transpile_backend_name or 'local_aer'} "
+        f"(fractional_gates={bool(args.use_fractional_gates)})...",
+        flush=True,
+    )
+    backend, backend_name, backend_mode = _load_transpile_backend(
+        args.transpile_backend_name,
+        use_fractional_gates=bool(args.use_fractional_gates),
+    )
+    snapshot = backend_snapshot(backend, mode=backend_mode, channel="local_noise_sim")
+    snapshot["use_fractional_gates_requested"] = bool(args.use_fractional_gates)
+    snapshot["use_fractional_gates_applied"] = bool(
+        backend_mode == "ibm_runtime_backend" and args.use_fractional_gates
+    )
+    save_json(snapshot, paths.backend_snapshot)
+
+    print("Building shared transpilation pass manager...", flush=True)
+    pass_manager, transpilation_metadata = build_pass_manager_for_backend(
+        backend,
+        bundle,
+        mode="dry-run" if backend_mode == "aer_simulator" else "hardware",
+        optimization_level=int(args.transpiler_optimization_level),
+        seed_transpiler=int(args.seed_transpiler),
+        reference_ks=reference_ks,
+        routing_method=str(args.routing_method)
+        if str(args.routing_method).lower() != "none"
+        else None,
+        layout_search_strategy=str(args.layout_search_strategy),
+        verbose=True,
+    )
+    print(
+        "Built pass manager: "
+        f"strategy={transpilation_metadata.get('strategy')}, "
+        f"fallback={transpilation_metadata.get('fallback_used')}.",
+        flush=True,
+    )
+    print(
+        f"Building local Aer noise model: {args.noise_profile}@scale={args.noise_scale}...",
+        flush=True,
+    )
+    noise_model = build_noise_model(
+        float(args.noise_scale),
+        profile=str(args.noise_profile),
+    )
+
+    case_rows = [_case_row(case) for case in cases]
+    metadata = {
+        "run_id": paths.run_dir.name,
+        "run_uuid": str(uuid.uuid4()),
+        "mode": "simulated_noise",
+        "pipeline": "6q_cva_ae_noisy_simulation_robustness_suite",
+        "robustness_suite": True,
+        "robustness_dir": str(robustness_dir),
+        "calibration_case_id": representative.case_id,
+        "instance_name": "6q_instance",
+        "target_name": bundle.target_name,
+        "good_bitstring": bundle.good_bitstring,
+        "objective_qubits": list(bundle.problem.objective_qubits),
+        "cases": case_rows,
+        "n_cases": int(len(cases)),
+        "algorithms": list(algorithms),
+        "algorithm_labels": {
+            key: ALGORITHM_LABELS.get(key, key) for key in algorithms
+        },
+        "repetitions": int(args.repetitions),
+        "total_case_repetitions": int(len(cases) * int(args.repetitions)),
+        "epsilon_target": float(args.epsilon_target),
+        "epsilon_targets": epsilon_targets,
+        "cabiqae_epsilon_target": None
+        if args.cabiqae_epsilon_target is None
+        else float(args.cabiqae_epsilon_target),
+        "biqae_epsilon_target": None
+        if args.biqae_epsilon_target is None
+        else float(args.biqae_epsilon_target),
+        "alpha": float(args.alpha),
+        "n_shots": int(args.n_shots),
+        "max_queries": int(args.max_queries),
+        "budgets": budgets,
+        "budget_policy": "last_trace_point_with_Nq_less_or_equal_budget",
+        "actual_query_summary_policy": "log_query_bins_with_median_query_and_median_error",
+        "noise_profile": str(args.noise_profile),
+        "noise_scale": float(args.noise_scale),
+        "noise_floor": None if fit_noise_floor else float(noise_floor),
+        "noise_floor_arg": str(args.noise_floor),
+        "noise_floor_fit_requested": bool(fit_noise_floor),
+        "aer_method": str(args.aer_method),
+        "seed": int(args.seed),
+        "calibrate": bool(args.calibrate),
+        "t_eff_override": None if args.t_eff is None else float(args.t_eff),
+        "readout_shots": int(args.readout_shots),
+        "scan_repeats": int(args.scan_repeats),
+        "scan_shots": int(args.scan_shots),
+        "min_fit_contrast_z": float(args.min_fit_contrast_z),
+        "min_visible_contrast_z": float(args.min_visible_contrast_z),
+        "min_baseline_fit_points": int(args.min_baseline_fit_points),
+        "max_grover_power": int(args.max_grover_power),
+        "calibration_max_grover_power": int(args.max_grover_power),
+        "execution_max_grover_power": execution_max_grover_power,
+        "execution_k_cap_enforced": bool(execution_max_grover_power is not None),
+        "max_isa_depth": int(args.max_isa_depth),
+        "max_isa_2q": int(args.max_isa_2q),
+        "reference_ks": reference_ks,
+        "transpile_backend_name": backend_name,
+        "transpile_backend_mode": backend_mode,
+        "use_fractional_gates_requested": bool(args.use_fractional_gates),
+        "use_fractional_gates_applied": bool(
+            backend_mode == "ibm_runtime_backend" and args.use_fractional_gates
+        ),
+        "layout_search_strategy": str(args.layout_search_strategy),
+        "transpilation": transpilation_metadata,
+        "cap_kappa": float(args.cap_kappa),
+        "cabiqae_hard_k_cap": bool(args.cabiqae_hard_k_cap),
+        "cabiqae_scheduler": (
+            "noise_aware_fisher_with_hard_cap"
+            if bool(args.cabiqae_hard_k_cap)
+            else "noise_aware_fisher_no_hard_cap"
+        ),
+        "created_at_epoch": time.time(),
+        "repo_root": str(Path(args.repo_root).resolve()),
+        "problem_metadata": bundle.metadata,
+    }
+    reusable_calibration: dict[str, Any] = {}
+    if not bool(args.calibrate):
+        reusable_calibration = _load_reusable_calibration(paths)
+        if reusable_calibration:
+            print(
+                "Loaded existing calibration summary: "
+                f"status={reusable_calibration.get('calibration_status')}, "
+                f"T_eff={_format_float(effective_t_for_algorithms(reusable_calibration))}, "
+                f"noise_floor={_format_float(reusable_calibration.get('contrast_baseline'))}.",
+                flush=True,
+            )
+        else:
+            print(
+                "No existing calibration_summary.json found; running without fitted T_eff.",
+                flush=True,
+            )
+
+    state = ExperimentState(paths=paths, config=metadata)
+    state.calibration_summary.update(reusable_calibration)
+    save_json(metadata, paths.config)
+    _save_csv(case_rows, paths.run_dir / "case_index.csv")
+
+    print(
+        "Running shared ISA preflight/transpilation report "
+        f"for k=0..{int(args.max_grover_power)}...",
+        flush=True,
+    )
+    _, allowed_max = run_preflight(
+        bundle,
+        pass_manager,
+        state,
+        max_grover_power=int(args.max_grover_power),
+        max_isa_depth=int(args.max_isa_depth),
+        max_isa_2q=int(args.max_isa_2q),
+        verbose=True,
+    )
+    metadata["max_grover_power_after_preflight"] = int(allowed_max)
+
+    t_eff = float(args.t_eff) if args.t_eff is not None else None
+    if bool(args.calibrate) and args.t_eff is None:
+        t_eff = _run_calibration(
+            state=state,
+            bundle=bundle,
+            noise_model=noise_model,
+            transpile_backend=backend,
+            pass_manager=pass_manager,
+            args=args,
+            contrast_baseline="fit" if fit_noise_floor else float(noise_floor),
+        )
+    elif not bool(args.calibrate):
+        if t_eff is None:
+            t_eff = effective_t_for_algorithms(state.calibration_summary)
+        if not state.calibration_summary:
+            state.calibration_summary["calibration_status"] = "skipped"
+        else:
+            state.calibration_summary.setdefault(
+                "calibration_status",
+                "reused_existing_calibration",
+            )
+    if args.t_eff is not None:
+        state.calibration_summary["calibration_status"] = "manual_t_eff_override"
+        state.calibration_summary["t_eff_manual"] = float(args.t_eff)
+    if fit_noise_floor:
+        if "contrast_baseline" not in state.calibration_summary:
+            raise ValueError(
+                "--noise-floor fit requires a calibration_summary.json with "
+                "'contrast_baseline' when --calibrate false is used."
+            )
+        noise_floor = float(state.calibration_summary["contrast_baseline"])
+    state.calibration_summary.setdefault("contrast_baseline", float(noise_floor))
+    metadata["noise_floor"] = float(noise_floor)
+    metadata["contrast_baseline_mode"] = str(
+        state.calibration_summary.get("contrast_baseline_mode", "fixed")
+    )
+    metadata["t_eff"] = None if t_eff is None else float(t_eff)
+    metadata["calibration_summary"] = state.calibration_summary
+    save_json(metadata, paths.config)
+    save_json(state.calibration_summary, paths.calibration_summary)
+    _save_csv(state.job_rows, paths.runtime_jobs)
+    _save_csv(state.readout_rows, paths.readout_calibration)
+    _save_csv(state.amplification_count_rows, paths.amplification_counts)
+    _save_csv(state.amplification_point_rows, paths.amplification_points)
+
+    trace_rows: list[dict[str, Any]] = []
+    final_rows: list[dict[str, Any]] = []
+    budget_rows: list[dict[str, Any]] = []
+    error_rows: list[dict[str, Any]] = []
+    construct_circuit_cache: dict[tuple[Any, ...], Any] = {}
+
+    shared_extra = {
+        "simulation_regime": "simulated_noise",
+        "instance_name": "6q_instance",
+        "noise_profile": str(args.noise_profile),
+        "noise_scale": float(args.noise_scale),
+        "noise_floor": float(noise_floor),
+        "aer_method": str(args.aer_method),
+        "t_eff": np.nan if t_eff is None else float(t_eff),
+        "calibration_status": str(
+            state.calibration_summary.get("calibration_status", "")
+        ),
+        "calibration_case_id": representative.case_id,
+        "max_grover_power": int(args.max_grover_power),
+        "calibration_max_grover_power": int(args.max_grover_power),
+        "execution_max_grover_power": (
+            np.nan
+            if execution_max_grover_power is None
+            else int(execution_max_grover_power)
+        ),
+        "execution_k_cap_enforced": bool(execution_max_grover_power is not None),
+        "cabiqae_hard_k_cap": bool(args.cabiqae_hard_k_cap),
+        "cabiqae_scheduler": (
+            "noise_aware_fisher_with_hard_cap"
+            if bool(args.cabiqae_hard_k_cap)
+            else "noise_aware_fisher_no_hard_cap"
+        ),
+        "transpile_backend_name": backend_name,
+        "use_fractional_gates_applied": bool(
+            backend_mode == "ibm_runtime_backend" and args.use_fractional_gates
+        ),
+        "transpilation_strategy": str(transpilation_metadata.get("strategy", "")),
+        "n_shots": int(args.n_shots),
+    }
+
+    for case_index, case in enumerate(cases):
+        print(
+            "============================================================\n"
+            f"Running robustness AE case {case_index + 1}/{len(cases)}: {case.case_id}\n"
+            "============================================================",
+            flush=True,
+        )
+        case_extra = {
+            **shared_extra,
+            "case_id": case.case_id,
+            "call_strike": float(case.call_strike),
+            "put_strike": float(case.put_strike),
+            "benchmark_path": str(case.benchmark_path),
+            "exposure_training_path": str(case.exposure_path),
+            "a_true": float(case.bundle.true_amplitude),
+            "cva_true": float(case.bundle.processed_true_value),
+        }
+        for rep in range(int(args.repetitions)):
+            suite_run_index = case_index * int(args.repetitions) + rep
+            aer = _build_aer_sampler(
+                noise_model=noise_model,
+                seed=int(args.seed) + 104729 * case_index + 7919 * rep,
+                aer_method=str(args.aer_method),
+                transpile_backend=backend,
+                pass_manager=pass_manager,
+            )
+            sampler = LoggedAerSampler(
+                aer,
+                state.job_rows,
+                max_grover_power=execution_max_grover_power,
+            )
+            rep_extra = {
+                **case_extra,
+                "case_repetition": int(rep),
+                "suite_run_index": int(suite_run_index),
+            }
+            for alg_index, algorithm in enumerate(algorithms):
+                run_seed = (
+                    int(args.seed)
+                    + 1000003 * case_index
+                    + 1009 * rep
+                    + 37 * alg_index
+                )
+                print(
+                    f"[case {case.case_id} rep {rep + 1}/{args.repetitions}] "
+                    f"{algorithm} "
+                    f"(epsilon={_epsilon_target_for_algorithm(args, algorithm):.6g}, "
+                    f"seed={run_seed}, T_eff={_format_float(t_eff)})"
+                )
+                algorithm_extra = {
+                    **rep_extra,
+                    "epsilon_target": _epsilon_target_for_algorithm(
+                        args,
+                        algorithm,
+                    ),
+                }
+                try:
+                    rows, final = run_algorithm_once(
+                        algorithm,
+                        sampler,
+                        case.bundle,
+                        run_kind=RUN_KIND,
+                        repetition=suite_run_index,
+                        epsilon_target=_epsilon_target_for_algorithm(
+                            args,
+                            algorithm,
+                        ),
+                        alpha=float(args.alpha),
+                        n_shots=int(args.n_shots),
+                        max_queries=int(max_budget),
+                        t_eff=t_eff,
+                        seed=run_seed,
+                        algorithm_labels=ALGORITHM_LABELS,
+                        cap_kappa=float(args.cap_kappa),
+                        disable_hard_k_cap=not bool(args.cabiqae_hard_k_cap),
+                        construct_circuit_cache=construct_circuit_cache,
+                        construct_circuit_mode="full",
+                        solver_kwargs={
+                            "noise_floor": float(noise_floor),
+                            "contrast_prefactor": (
+                                1.0
+                                if args.t_eff is not None
+                                else effective_contrast_prefactor_for_algorithms(
+                                    state.calibration_summary
+                                )
+                            ),
+                        },
+                        trace_extra=algorithm_extra,
+                        show_details=bool(args.show_details),
+                    )
+                except Exception as exc:
+                    error_rows.append(
+                        {
+                            "run_kind": RUN_KIND,
+                            "simulation_regime": "simulated_noise",
+                            "noise_profile": str(args.noise_profile),
+                            "noise_scale": float(args.noise_scale),
+                            "instance_name": "6q_instance",
+                            "case_id": case.case_id,
+                            "case_repetition": int(rep),
+                            "suite_run_index": int(suite_run_index),
+                            "repetition": int(suite_run_index),
+                            "algorithm": ALGORITHM_LABELS.get(algorithm, algorithm),
+                            "algorithm_key": algorithm,
+                            "error_type": type(exc).__name__,
+                            "error": str(exc),
+                        }
+                    )
+                    print(f"  failed: {type(exc).__name__}: {exc}")
+                    if not bool(args.continue_on_error):
+                        raise
+                    continue
+
+                rows = add_cva_aliases(rows)
+                final = add_cva_alias_columns(final)
+                final = _annotate_terminal_metrics(
+                    rows,
+                    final,
+                    max_queries=int(max_budget),
+                )
+                _annotate_calibration_k_excess(
+                    rows,
+                    final,
+                    calibration_max_k=int(args.max_grover_power),
+                )
+                trace_rows.extend(rows)
+                final_rows.append(final)
+
+                selected_budget_rows = rows_at_budgets(
+                    rows,
+                    budgets,
+                    run_kind=RUN_KIND,
+                )
+                final_coverage = _as_float(final.get("coverage"))
+                for budget_row in selected_budget_rows:
+                    budget_row.update(algorithm_extra)
+                    budget_row["coverage"] = (
+                        float(final_coverage)
+                        if math.isfinite(final_coverage)
+                        else np.nan
+                    )
+                    budget_row["grover_power_exceeds_calibration"] = bool(
+                        int(budget_row.get("grover_power", 0))
+                        > int(args.max_grover_power)
+                    )
+                budget_rows.extend(add_cva_aliases(selected_budget_rows))
+                print(
+                    "  final: "
+                    f"Nq={final['final_queries']:.0f}, "
+                    f"a_hat={final['final_estimate']:.12g}, "
+                    f"CVA_hat={final['cva_estimate']:.12g}, "
+                    f"rel_CVA_err={final['cva_relative_error']:.4g}"
+                )
+                _print_run_metrics(final)
+
+        _write_case_outputs(
+            case=case,
+            paths=paths,
+            trace_rows=trace_rows,
+            final_rows=final_rows,
+            budget_rows=budget_rows,
+            error_rows=error_rows,
+            args=args,
+        )
+
+    total_case_repetitions = int(len(cases) * int(args.repetitions))
+    fixed_budget_summary_rows = add_cva_aliases(
+        aggregate_budget_summary(
+            budget_rows,
+            total_repetitions=total_case_repetitions,
+            group_by_budget=True,
+            bootstrap_samples=int(args.bootstrap_samples),
+        )
+    )
+    actual_query_summary_rows = add_cva_aliases(
+        aggregate_budget_summary(
+            trace_rows,
+            total_repetitions=total_case_repetitions,
+            max_bins=int(args.actual_query_max_bins),
+            min_points_per_bin=int(args.actual_query_min_points_per_bin),
+            bootstrap_samples=int(args.bootstrap_samples),
+        )
+    )
+
+    _save_csv(trace_rows, paths.direct_trace)
+    _save_csv(final_rows, paths.direct_final)
+    _save_csv(budget_rows, paths.run_dir / "budget_rows.csv")
+    _save_csv(budget_rows, paths.replay_budget)
+    _save_csv(fixed_budget_summary_rows, paths.budget_summary)
+    _save_csv(actual_query_summary_rows, paths.run_dir / "actual_query_summary.csv")
+    _save_csv(state.job_rows, paths.runtime_jobs)
+    _save_csv(error_rows, paths.errors)
+    write_trace_bundle(
+        paths.trace_bundle,
+        trace_rows=trace_rows,
+        budget_rows=budget_rows,
+        amplification_rows=state.amplification_point_rows,
+    )
+    paths.write_manifest()
+    save_json(
+        {
+            **paths.manifest_payload(),
+            "case_index_csv": str(paths.run_dir / "case_index.csv"),
+            "cases_dir": str(paths.run_dir / "cases"),
+        },
+        paths.manifest,
+    )
+
+    if bool(args.make_plots):
+        try:
+            from plot_noisy_cva_ae import make_plots
+
+            make_plots(paths.run_dir, algorithms=algorithms)
+        except Exception as exc:
+            error_rows.append(
+                {
+                    "run_kind": RUN_KIND,
+                    "simulation_regime": "simulated_noise",
+                    "instance_name": "6q_instance",
+                    "error_type": type(exc).__name__,
+                    "error": f"Plot generation failed: {exc}",
+                }
+            )
+            _save_csv(error_rows, paths.errors)
+            print(f"Plot generation failed: {type(exc).__name__}: {exc}")
+            if not bool(args.continue_on_error):
+                raise
+
+    print("")
+    print("Experiment policy:")
+    print("  Robustness suite: one shared preflight/calibration, AE per CVA case.")
+    print("  Fixed-budget rows: choose last trace point with N_q <= Budget.")
+    print("  Actual-query summary: log bins over observed N_q, plot medians per bin.")
+    print("  --max-grover-power controls preflight/calibration, not AE execution.")
+
+    return paths
+
+
 def run_pipeline(args: argparse.Namespace) -> RunPaths:
     execution_max_grover_power = (
         None
@@ -563,6 +1416,7 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
     algorithms = tuple(
         normalize_algorithm_key(name) for name in parse_name_list(args.algorithms)
     )
+    epsilon_targets = _epsilon_target_config(args, algorithms)
     budgets = parse_int_list(args.budgets)
     reference_ks = _parse_nonnegative_int_list(args.reference_ks)
     max_budget = max(max(budgets), int(args.max_queries))
@@ -645,6 +1499,13 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
         },
         "repetitions": int(args.repetitions),
         "epsilon_target": float(args.epsilon_target),
+        "epsilon_targets": epsilon_targets,
+        "cabiqae_epsilon_target": None
+        if args.cabiqae_epsilon_target is None
+        else float(args.cabiqae_epsilon_target),
+        "biqae_epsilon_target": None
+        if args.biqae_epsilon_target is None
+        else float(args.biqae_epsilon_target),
         "alpha": float(args.alpha),
         "n_shots": int(args.n_shots),
         "max_queries": int(args.max_queries),
@@ -839,8 +1700,13 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
             run_seed = int(args.seed) + 1009 * rep + 37 * alg_index
             print(
                 f"[rep {rep + 1}/{args.repetitions}] {algorithm} "
-                f"(seed={run_seed}, T_eff={_format_float(t_eff)})"
+                f"(epsilon={_epsilon_target_for_algorithm(args, algorithm):.6g}, "
+                f"seed={run_seed}, T_eff={_format_float(t_eff)})"
             )
+            algorithm_extra = {
+                **trace_extra,
+                "epsilon_target": _epsilon_target_for_algorithm(args, algorithm),
+            }
             try:
                 rows, final = run_algorithm_once(
                     algorithm,
@@ -848,7 +1714,7 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
                     bundle,
                     run_kind=RUN_KIND,
                     repetition=rep,
-                    epsilon_target=float(args.epsilon_target),
+                    epsilon_target=_epsilon_target_for_algorithm(args, algorithm),
                     alpha=float(args.alpha),
                     n_shots=int(args.n_shots),
                     max_queries=int(max_budget),
@@ -859,8 +1725,17 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
                     disable_hard_k_cap=not bool(args.cabiqae_hard_k_cap),
                     construct_circuit_cache=construct_circuit_cache,
                     construct_circuit_mode="full",
-                    solver_kwargs={"noise_floor": float(noise_floor)},
-                    trace_extra=trace_extra,
+                    solver_kwargs={
+                        "noise_floor": float(noise_floor),
+                        "contrast_prefactor": (
+                            1.0
+                            if args.t_eff is not None
+                            else effective_contrast_prefactor_for_algorithms(
+                                state.calibration_summary
+                            )
+                        ),
+                    },
+                    trace_extra=algorithm_extra,
                     show_details=bool(args.show_details),
                 )
             except Exception as exc:
@@ -903,8 +1778,14 @@ def run_pipeline(args: argparse.Namespace) -> RunPaths:
                 budgets,
                 run_kind=RUN_KIND,
             )
+            final_coverage = _as_float(final.get("coverage"))
             for budget_row in selected_budget_rows:
-                budget_row.update(trace_extra)
+                budget_row.update(algorithm_extra)
+                budget_row["coverage"] = (
+                    float(final_coverage)
+                    if math.isfinite(final_coverage)
+                    else np.nan
+                )
                 budget_row["grover_power_exceeds_calibration"] = bool(
                     int(budget_row.get("grover_power", 0)) > int(args.max_grover_power)
                 )
@@ -989,10 +1870,16 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.execution_max_grover_power is not None and int(args.execution_max_grover_power) < 0:
         parser.error("--execution-max-grover-power must be non-negative.")
+    if float(args.epsilon_target) <= 0.0:
+        parser.error("--epsilon-target must be positive.")
+    if args.cabiqae_epsilon_target is not None and float(args.cabiqae_epsilon_target) <= 0.0:
+        parser.error("--cabiqae-epsilon-target must be positive.")
+    if args.biqae_epsilon_target is not None and float(args.biqae_epsilon_target) <= 0.0:
+        parser.error("--biqae-epsilon-target must be positive.")
     if str(args.noise_floor) == "fit":
         if bool(args.calibrate) and args.t_eff is not None:
             parser.error("--noise-floor fit requires calibration, so do not pass --t-eff.")
-    paths = run_pipeline(args)
+    paths = run_robustness_suite(args) if bool(args.robustness_suite) else run_pipeline(args)
     print(f"Wrote noisy CVA AE outputs to {paths.run_dir}")
 
 

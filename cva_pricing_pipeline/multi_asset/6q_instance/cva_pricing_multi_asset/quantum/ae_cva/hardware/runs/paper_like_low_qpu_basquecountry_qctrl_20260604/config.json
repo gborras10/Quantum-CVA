@@ -1,0 +1,189 @@
+{
+  "run_id": "paper_like_low_qpu_basquecountry_qctrl_20260604",
+  "run_uuid": "71955a0f-6626-4be6-a949-f661b5012138",
+  "pipeline": "6q_cva_ae_hardware",
+  "mode": "hardware",
+  "backend": "ibm_basquecountry",
+  "backend_name": "ibm_basquecountry",
+  "instance_name": "basquecountry_updated",
+  "runtime_service_name": "basquecountry_updated",
+  "channel": "ibm_cloud",
+  "hardware_executor": "qctrl",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "use_fractional_gates_requested": false,
+  "target_name": "cva",
+  "good_bitstring": "111",
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "objective_width": 3,
+  "a_true": 0.1328730942948926,
+  "processed_true_value": 0.5856660811321932,
+  "cva_true": 0.5856660811321932,
+  "bundle_metadata": {
+    "target_name": "cva",
+    "good_bitstring": "111",
+    "num_qubits_time": 2,
+    "num_qubits_underlying": 4,
+    "total_state_qubits": 6,
+    "objective_qubits": [
+      6,
+      7,
+      8
+    ],
+    "cva_scaling": {
+      "recovery_rate": 0.415,
+      "C_v": 9581.041274324485,
+      "C_q": 0.00019708755276215406,
+      "C_p": 0.9975283755255839
+    },
+    "builder": "6q_cva",
+    "qcbm_topology": "qcbm_heavyhex6",
+    "qcbm_n_layers": 6,
+    "exposure_ansatz": "heavy_hex_star",
+    "exposure_n_layers": 2,
+    "artifact_paths": {
+      "benchmark": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\benchmark\\three_asset_instance.npz",
+      "qcbm": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+      "crca_default": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_discount": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_exposure": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+    }
+  },
+  "max_grover_power_requested": 4,
+  "scan_repeats": 1,
+  "scan_shots": 512,
+  "readout_shots": 1024,
+  "skip_readout_calibration": false,
+  "readout_mitigation_mode": "measured_linear_correction",
+  "direct_shots": 128,
+  "max_direct_sampler_calls_per_algorithm": 4,
+  "replay_repetitions": 100,
+  "replay_probability_mode": "normal",
+  "replay_probability_se_scale": 1.0,
+  "replay_extrapolate": false,
+  "cabiqae_replay_contrast_model_all_k": false,
+  "budgets": [
+    128,
+    256,
+    512,
+    768,
+    1024,
+    1536,
+    2048,
+    3072,
+    4096
+  ],
+  "session_max_time": "30m",
+  "soft_wallclock_limit_seconds": 1800.0,
+  "max_isa_depth": 12000,
+  "max_isa_2q": 6000,
+  "optimization_level": 3,
+  "seed_transpiler": 1234,
+  "routing_method": "sabre",
+  "layout_search_strategy": "fast",
+  "reference_ks": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "seed": 12345,
+  "algorithms": [
+    "iqae",
+    "cabiqae"
+  ],
+  "algorithm_labels": {
+    "iqae": "IQAE",
+    "cabiqae": "CABIQAE"
+  },
+  "epsilon_target": 0.08,
+  "epsilon_targets": {
+    "iqae": 0.08,
+    "cabiqae": 0.08
+  },
+  "cabiqae_epsilon_target": 0.08,
+  "biqae_epsilon_target": 0.002,
+  "noise_floor": "fit",
+  "contrast_baseline": "fit",
+  "min_ideal_offset": 0.08,
+  "min_fit_contrast_z": 2.0,
+  "min_visible_contrast_z": 3.0,
+  "min_baseline_fit_points": 3,
+  "allow_negative_contrast_fit_points": false,
+  "cap_kappa": 3.0,
+  "cabiqae_hard_k_cap": true,
+  "backend_mode": "ibm_runtime_backend",
+  "transpilation": {
+    "strategy": "qiskit_sabre_fast_multik_fixed_layout",
+    "fallback_used": false,
+    "reference_ks": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "scoring_ks": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "discovery_seeds": [
+      1234
+    ],
+    "evaluation_seeds": [
+      1234
+    ],
+    "initial_layout": [
+      79,
+      93,
+      73,
+      94,
+      92,
+      74,
+      72,
+      75,
+      71
+    ],
+    "seed_transpiler": 1234,
+    "optimization_level": 3,
+    "routing_method": "sabre",
+    "candidate_source": "sabre_discovery(seed=1234, ref=0)",
+    "aggregate_swap_count": 0,
+    "aggregate_two_qubit_gates": 10289,
+    "aggregate_depth": 24970,
+    "aggregate_size": 45618,
+    "evaluated_layouts": 4,
+    "evaluated_plans": 1,
+    "reference_circuit_count": 4
+  },
+  "qctrl_submission": {
+    "primitive": "sampler",
+    "qiskit_function_name": "q-ctrl/performance-management",
+    "qiskit_function_channel": "",
+    "backend_name": "ibm_basquecountry",
+    "submitted_circuit_kind": "abstract_logical",
+    "local_pass_manager_applied_to_submitted_circuits": false,
+    "transpilation_policy": "fire_opal_managed",
+    "local_preflight_role": "diagnostic_and_k_cap_only",
+    "pub_shape": "(circuit, None, shots)",
+    "runtime_session_strategy": "existing_qiskit_runtime_session",
+    "amplification_scan_submission": "batched_pubs_single_job",
+    "result_counts_registers_checked": [
+      "c0",
+      "c",
+      "<first register with get_counts>"
+    ]
+  },
+  "max_grover_power_after_preflight": 4,
+  "preflight_limits": {
+    "max_isa_depth": 12000,
+    "max_isa_2q": 6000
+  }
+}

@@ -1,0 +1,14 @@
+Projection numeric summary
+==========================
+
+objective_qubits: [6, 7, 8]
+good_state: 111
+state_norm: 1.0000000000000000e+00
+projected_state_norm: 3.9001419795794162e-01
+p111_projector: 1.5211107460877646e-01
+p111_reference: 1.5211107460877649e-01
+abs_p111_difference: 2.7755575615628914e-17
+scale: 4.4139455898921209e+00
+cva_projector: 6.7141000694316022e-01
+cva_reference: 6.7141000694316033e-01
+abs_cva_difference: 1.1102230246251565e-16

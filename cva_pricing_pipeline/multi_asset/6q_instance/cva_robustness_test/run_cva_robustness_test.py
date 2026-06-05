@@ -135,18 +135,22 @@ def _with_case_paths(
     config: PipelineConfig,
     *,
     case_dir: pathlib.Path,
+    reuse_shared_exposure: bool,
 ) -> PipelineConfig:
-    paths = replace(
-        config.paths,
-        benchmark_relative_path=str(case_dir / "benchmark" / "benchmark.npz"),
-        crca_exposure_training_relative_path=str(
+    exposure_training_path = config.paths.crca_exposure_training_relative_path
+    if not reuse_shared_exposure:
+        exposure_training_path = str(
             case_dir
             / "quantum"
             / "training"
             / "crca"
             / "positive_exposure"
             / "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
-        ),
+        )
+    paths = replace(
+        config.paths,
+        benchmark_relative_path=str(case_dir / "benchmark" / "benchmark.npz"),
+        crca_exposure_training_relative_path=str(exposure_training_path),
         results_dir_relative_path=str(case_dir / "pipeline_run"),
     )
     return replace(config, paths=paths)
@@ -358,6 +362,42 @@ def _write_summary(
     _write_csv(summary_csv_path, summary_rows, SUMMARY_FIELDNAMES)
 
 
+def _resolve_path(path_like: str | pathlib.Path) -> pathlib.Path:
+    path = pathlib.Path(path_like)
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def _load_reused_exposure_result(config: PipelineConfig) -> dict[str, Any]:
+    path = _resolve_path(config.paths.crca_exposure_training_relative_path)
+    if not path.exists():
+        raise FileNotFoundError(
+            "Shared positive-exposure training artifact not found: "
+            f"{path}"
+        )
+    result: dict[str, Any] = {
+        "path": str(path),
+        "skipped": True,
+        "reused_trained_parameters": True,
+    }
+    with np.load(path, allow_pickle=True) as data:
+        for key in (
+            "best_cost",
+            "best_l2",
+            "best_l2_rechecked",
+            "final_l2",
+            "elapsed_time",
+        ):
+            if key in data:
+                value = np.asarray(data[key])
+                try:
+                    result[key] = float(value.item())
+                except ValueError:
+                    result[key] = value.tolist()
+    return result
+
+
 def _result_row(
     *,
     case_id: str,
@@ -476,14 +516,19 @@ def _build_case_config(
         call_strike=call_strike,
         put_strike=put_strike,
     )
-    config = _with_case_paths(config, case_dir=case_dir)
-    config = _with_repeat_seeds(config, repeat=repeat)
-    config = _with_exposure_training_overrides(
+    config = _with_case_paths(
         config,
-        no_warmstart=bool(args.no_warmstart),
-        maxiter=args.exposure_maxiter,
-        shots=args.exposure_shots,
+        case_dir=case_dir,
+        reuse_shared_exposure=not bool(args.retrain_exposure),
     )
+    if args.retrain_exposure:
+        config = _with_repeat_seeds(config, repeat=repeat)
+        config = _with_exposure_training_overrides(
+            config,
+            no_warmstart=bool(args.no_warmstart),
+            maxiter=args.exposure_maxiter,
+            shots=args.exposure_shots,
+        )
     config = _with_final_cva_flags(
         config,
         run_qae=bool(args.run_qae),
@@ -519,12 +564,15 @@ def _prepare_shared_artifacts(args: argparse.Namespace) -> None:
     print("============================================================")
     print("Preparing shared noise+shots artifacts")
     print("============================================================")
-    for stage in (
+    stages = [
         "classical",
         "train_qcbm",
         "train_crca_default",
         "train_crca_discount",
-    ):
+    ]
+    if not args.retrain_exposure:
+        stages.append("train_crca_exposure")
+    for stage in stages:
         run_pipeline(
             BASE_CONFIG,
             stage=stage,
@@ -577,6 +625,12 @@ def run_sweep(args: argparse.Namespace) -> None:
                 "force": bool(args.force),
                 "run_qae": bool(args.run_qae),
                 "run_iqae": bool(args.run_iqae),
+                "retrain_exposure": bool(args.retrain_exposure),
+                "shared_exposure_training_path": str(
+                    _resolve_path(
+                        BASE_CONFIG.paths.crca_exposure_training_relative_path
+                    )
+                ),
                 "exposure_shots": args.exposure_shots,
                 "exposure_maxiter": args.exposure_maxiter,
                 "no_warmstart": bool(args.no_warmstart),
@@ -585,6 +639,13 @@ def run_sweep(args: argparse.Namespace) -> None:
         ),
         encoding="utf-8",
     )
+
+    collected_rows = (
+        [] if args.overwrite_results else _load_existing_case_rows(case_csv_path)
+    )
+    if args.overwrite_results:
+        _write_csv(case_csv_path, collected_rows, CASE_FIELDNAMES)
+        _write_summary(case_csv_path, summary_csv_path)
 
     for case_id, call_strike, put_strike in cases:
         for repeat in range(repeats):
@@ -611,11 +672,14 @@ def run_sweep(args: argparse.Namespace) -> None:
                     resume=bool(args.resume),
                     force=bool(args.force),
                 )["classical"]
-                exposure_result = runner.run(
-                    stage="train_crca_exposure",
-                    resume=bool(args.resume),
-                    force=bool(args.force),
-                )["train_crca_exposure"]
+                if args.retrain_exposure:
+                    exposure_result = runner.run(
+                        stage="train_crca_exposure",
+                        resume=bool(args.resume),
+                        force=bool(args.force),
+                    )["train_crca_exposure"]
+                else:
+                    exposure_result = _load_reused_exposure_result(config)
                 final_result = runner.run(
                     stage="final_statevector_cva",
                     resume=False,
@@ -643,20 +707,30 @@ def run_sweep(args: argparse.Namespace) -> None:
                     exc=exc,
                 )
                 if not args.keep_going:
-                    _append_case_row(case_csv_path, row)
+                    if args.overwrite_results:
+                        collected_rows.append(row)
+                        _write_csv(case_csv_path, collected_rows, CASE_FIELDNAMES)
+                    else:
+                        _append_case_row(case_csv_path, row)
                     _write_summary(case_csv_path, summary_csv_path)
                     raise
-            _append_case_row(case_csv_path, row)
+            if args.overwrite_results:
+                collected_rows.append(row)
+                _write_csv(case_csv_path, collected_rows, CASE_FIELDNAMES)
+            else:
+                _append_case_row(case_csv_path, row)
             _write_summary(case_csv_path, summary_csv_path)
-            print(f"[CSV] appended: {case_csv_path}")
+            action = "rewritten" if args.overwrite_results else "appended"
+            print(f"[CSV] {action}: {case_csv_path}")
             print(f"[CSV] updated: {summary_csv_path}")
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run noisy-shots positive-exposure CRCA robustness tests over "
-            "different strike compositions and evaluate CVA with statevector."
+            "Run CVA robustness tests over different strike compositions, "
+            "using the shared trained quantum parameters by default and "
+            "evaluating CVA with statevector."
         )
     )
     parser.add_argument(
@@ -696,6 +770,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Record failed cases in the CSV and continue with remaining cases.",
     )
     parser.add_argument(
+        "--overwrite-results",
+        action="store_true",
+        help="Rewrite the case and summary CSV files instead of appending rows.",
+    )
+    parser.add_argument(
         "--prepare-shared",
         action="store_true",
         help=(
@@ -714,21 +793,39 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Also run IQAE in the final statevector stage.",
     )
     parser.add_argument(
+        "--retrain-exposure",
+        action="store_true",
+        help=(
+            "Retrain positive-exposure CRCA separately for each robustness "
+            "case. By default the script reuses the shared pre-trained "
+            "shots+noise theta_star artifact."
+        ),
+    )
+    parser.add_argument(
         "--exposure-shots",
         type=int,
         default=None,
-        help="Override CRCA positive-exposure noisy training shots.",
+        help=(
+            "Override CRCA positive-exposure noisy training shots when "
+            "--retrain-exposure is used."
+        ),
     )
     parser.add_argument(
         "--exposure-maxiter",
         type=int,
         default=None,
-        help="Override single-stage CRCA positive-exposure SPSA iterations.",
+        help=(
+            "Override single-stage CRCA positive-exposure SPSA iterations "
+            "when --retrain-exposure is used."
+        ),
     )
     parser.add_argument(
         "--no-warmstart",
         action="store_true",
-        help="Disable the statevector warmstart for positive-exposure CRCA.",
+        help=(
+            "Disable the statevector warmstart for positive-exposure CRCA "
+            "when --retrain-exposure is used."
+        ),
     )
     parser.add_argument(
         "--dry-run",

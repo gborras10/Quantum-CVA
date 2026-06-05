@@ -18,10 +18,16 @@ OUT_DIR = ROOT / "plots"
 RESULTS_CSV = ROOT / "cva_robustness_case_results.csv"
 SUMMARY_CSV = ROOT / "cva_robustness_summary_statistics.csv"
 CONFIG_JSON = ROOT / "robustness_sweep_config.json"
+REPO_ROOT = next(parent for parent in ROOT.parents if (parent / "pyproject.toml").exists())
 
 TRAINING_REL = Path(
     "quantum/training/crca/positive_exposure/"
     "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+)
+SHARED_TRAINING_PATH = (
+    REPO_ROOT
+    / "data/multi_asset/6q_instance/quantum/training/crca/positive_exposure"
+    / "training_heavy_hex_star_shots_backend_noise_snapshot.npz"
 )
 
 CASE_LABELS = {
@@ -73,6 +79,8 @@ def load_results() -> pd.DataFrame:
         "absolute_relative_error_pct",
         "signed_relative_error_pct",
         "classical_cva_std_err_mc_continuous",
+        "exposure_l2_statevector",
+        "qcbm_kl_statevector",
         "exposure_best_l2",
         "exposure_best_l2_rechecked",
         "exposure_final_l2",
@@ -91,10 +99,31 @@ def load_results() -> pd.DataFrame:
     return df
 
 
-def load_training(case_id: str) -> dict[str, np.ndarray]:
-    path = DATA_DIR / case_id / TRAINING_REL
+def resolve_path(path_like: str | Path) -> Path:
+    path = Path(str(path_like))
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def load_training(path: str | Path | None = None) -> dict[str, np.ndarray]:
+    path = resolve_path(path) if path else SHARED_TRAINING_PATH
     with np.load(path, allow_pickle=True) as raw:
         return {key: raw[key] for key in raw.files}
+
+
+def training_path_for_row(row: pd.Series) -> Path:
+    raw = row.get("exposure_training_path", "")
+    if isinstance(raw, str) and raw.strip():
+        return resolve_path(raw)
+    case_path = DATA_DIR / str(row["case_id"]) / TRAINING_REL
+    return case_path if case_path.exists() else SHARED_TRAINING_PATH
+
+
+def load_case_exposure_target(row: pd.Series) -> np.ndarray:
+    benchmark_path = resolve_path(str(row["benchmark_path"]))
+    with np.load(benchmark_path, allow_pickle=True) as raw:
+        return np.asarray(raw["v_joint_t"], dtype=float).ravel() / float(raw["C_v"])
 
 
 def save(fig: plt.Figure, name: str) -> Path:
@@ -233,14 +262,23 @@ def plot_case_summary(df: pd.DataFrame) -> Path:
     return save(fig, "robustness_cva_summary_by_scenario.png")
 
 
-def plot_training_histories(cases: list[str]) -> list[Path]:
+def plot_training_histories(df: pd.DataFrame) -> list[Path]:
     fig_l2, ax_l2 = plt.subplots(figsize=(11.5, 5.2))
     fig_cost, ax_cost = plt.subplots(figsize=(11.5, 5.2))
 
-    for case_id in cases:
-        data = load_training(case_id)
+    paths = []
+    for _, row in df.drop_duplicates("exposure_training_path").iterrows():
+        path = training_path_for_row(row)
+        if path not in paths:
+            paths.append(path)
+
+    for path in paths:
+        data = load_training(path)
+        line_label = "Shared positive-exposure theta_star"
+        if len(paths) > 1:
+            line_label = path.parent.parent.parent.name
         iterations = np.arange(len(data["l2_history"]))
-        ax_l2.plot(iterations, data["l2_history"], linewidth=1.5, label=label(case_id))
+        ax_l2.plot(iterations, data["l2_history"], linewidth=1.5, label=line_label)
         if "best_so_far" in data:
             ax_l2.plot(
                 iterations,
@@ -253,20 +291,20 @@ def plot_training_histories(cases: list[str]) -> list[Path]:
             np.arange(len(data["cost_history"])),
             data["cost_history"],
             linewidth=1.5,
-            label=label(case_id),
+            label=line_label,
         )
 
-    ax_l2.set_title("Training L2 histories by scenario")
+    ax_l2.set_title("Shared positive-exposure training L2 history")
     ax_l2.set_xlabel("Iteration")
     ax_l2.set_ylabel("L2 error")
     ax_l2.set_yscale("log")
-    ax_l2.legend(ncol=2, fontsize=8)
+    ax_l2.legend(ncol=1, fontsize=8)
 
-    ax_cost.set_title("Training objective histories by scenario")
+    ax_cost.set_title("Shared positive-exposure training objective history")
     ax_cost.set_xlabel("Iteration")
     ax_cost.set_ylabel("Objective")
     ax_cost.set_yscale("log")
-    ax_cost.legend(ncol=2, fontsize=8)
+    ax_cost.legend(ncol=1, fontsize=8)
 
     return [
         save(fig_l2, "training_l2_histories.png"),
@@ -274,39 +312,39 @@ def plot_training_histories(cases: list[str]) -> list[Path]:
     ]
 
 
-def plot_training_quality_by_scenario(cases: list[str]) -> Path:
-    rows = []
-    for case_id in cases:
-        data = load_training(case_id)
-        rows.append(
-            {
-                "case_id": case_id,
-                "case_label": label(case_id),
-                "initial_l2": float(np.linalg.norm(data["f_init"] - data["f_target"])),
-                "best_l2": float(data.get("best_l2", np.nan)),
-                "final_l2": float(data.get("final_l2", np.nan)),
-                "best_l2_rechecked": float(data.get("best_l2_rechecked", np.nan)),
-            }
+def plot_training_quality_by_scenario(df: pd.DataFrame) -> Path:
+    grouped = (
+        df.groupby(["_case_order", "case_id", "case_label"], as_index=False)
+        .agg(
+            exposure_l2_statevector=("exposure_l2_statevector", "mean"),
+            qcbm_kl_statevector=("qcbm_kl_statevector", "mean"),
         )
-    q = pd.DataFrame(rows)
-    x = np.arange(len(q))
+        .sort_values("_case_order")
+    )
+    x = np.arange(len(grouped))
     fig, ax = plt.subplots(figsize=(11.5, 5.0))
-    ax.bar(x - 0.27, q["initial_l2"], width=0.27, label="initial L2", color="#999999")
-    ax.bar(x, q["best_l2_rechecked"], width=0.27, label="best rechecked L2", color="#2ca02c")
-    ax.bar(x + 0.27, q["final_l2"], width=0.27, label="final L2", color="#ff7f0e")
+    ax.bar(
+        x,
+        grouped["exposure_l2_statevector"],
+        width=0.55,
+        label="positive-exposure L2",
+        color="#ff7f0e",
+        alpha=0.82,
+    )
     ax.set_yscale("log")
-    ax.set_title("Training quality by scenario")
+    ax.set_title("Shared positive-exposure approximation error by scenario")
     ax.set_xlabel("Scenario")
-    ax.set_ylabel("L2 error (log scale)")
+    ax.set_ylabel("Statevector L2 error (log scale)")
     ax.set_xticks(x)
-    ax.set_xticklabels(q["case_label"], rotation=35, ha="right")
+    ax.set_xticklabels(grouped["case_label"], rotation=35, ha="right")
     ax.legend()
     return save(fig, "training_quality_by_scenario.png")
 
 
-def histogram_plot(case_id: str, trained: bool) -> Path:
-    data = load_training(case_id)
-    target = np.asarray(data["f_target"], dtype=float)
+def histogram_plot(row: pd.Series, trained: bool) -> Path:
+    case_id = str(row["case_id"])
+    data = load_training(training_path_for_row(row))
+    target = load_case_exposure_target(row)
     other_key = "f_star" if trained else "f_init"
     other = np.asarray(data[other_key], dtype=float)
     x = np.arange(target.size)
@@ -337,9 +375,17 @@ def histogram_plot(case_id: str, trained: bool) -> Path:
 
 def plot_histograms(cases: list[str]) -> list[Path]:
     paths = []
+    df = load_results()
+    ok = df[df["status"].fillna("") == "ok"].copy()
+    if ok.empty:
+        ok = df.copy()
     for case_id in cases:
-        paths.append(histogram_plot(case_id, trained=False))
-        paths.append(histogram_plot(case_id, trained=True))
+        case_rows = ok[ok["case_id"] == case_id]
+        if case_rows.empty:
+            continue
+        row = case_rows.iloc[0]
+        paths.append(histogram_plot(row, trained=False))
+        paths.append(histogram_plot(row, trained=True))
     return paths
 
 
@@ -367,9 +413,9 @@ def main() -> None:
         plot_errors_by_execution(ok),
         plot_error_vs_classical_se(ok),
         plot_case_summary(ok),
-        plot_training_quality_by_scenario(cases),
+        plot_training_quality_by_scenario(ok),
     ]
-    paths.extend(plot_training_histories(cases))
+    paths.extend(plot_training_histories(ok))
     paths.extend(plot_histograms(cases))
     paths.append(write_manifest(paths))
 

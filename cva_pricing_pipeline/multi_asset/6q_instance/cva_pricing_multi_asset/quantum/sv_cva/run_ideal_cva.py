@@ -125,7 +125,7 @@ def main() -> None:
     positive_exposure_target = _as_1d_float(classical_cva_data["v_joint_t"]) / float(c_v)
 
     # ----- Real-backend config and training-like layouts -----
-    service = QiskitRuntimeService(channel="ibm_cloud")
+    service = QiskitRuntimeService(channel="ibm_cloud", name="basquecountry_updated")
     real_backend = service.backend(backend_name, use_fractional_gates=True)
 
     qcbm_requested_topology = _npz_str(qcbm_data, "requested_topology", qcbm_topology_default)

@@ -49,8 +49,10 @@ def map_piecewise_vol_to_sim_grid(
     sim_times: np.ndarray,
 ) -> np.ndarray:
     """
-    Map market piecewise vols defined on intervals (T_{i-1}, T_i]
-    onto simulation intervals (t_{j-1}, t_j].
+    Return equivalent vols on simulation intervals (t_{j-1}, t_j].
+
+    Each returned volatility matches the integrated variance of the
+    market piecewise-constant curve over its simulation interval.
     """
     market_maturities = np.asarray(market_maturities, dtype=float).ravel()
     sigma_pw = np.asarray(sigma_pw, dtype=float).ravel()
@@ -65,8 +67,19 @@ def map_piecewise_vol_to_sim_grid(
     if sim_times[-1] > market_maturities[-1]:
         raise ValueError("Simulation grid extends beyond last market maturity.")
 
-    idx = np.searchsorted(market_maturities, sim_times, side="left")
-    return sigma_pw[idx]
+    sim_starts = np.concatenate(([0.0], sim_times[:-1]))
+    return np.array(
+        [
+            residual_equivalent_vol(
+                t0=float(t0),
+                T=float(t1),
+                market_maturities=market_maturities,
+                sigma_pw=sigma_pw,
+            )
+            for t0, t1 in zip(sim_starts, sim_times, strict=False)
+        ],
+        dtype=float,
+    )
 
 
 def build_piecewise_sigma_grid(
@@ -104,6 +117,80 @@ def build_piecewise_sigma_grid(
         sigma_cols.append(sigma_grid_u)
 
     return np.column_stack(sigma_cols)
+
+
+def build_integrated_covariance_grid(
+    atm_vol_curves: pd.DataFrame,
+    underlyings: list[str],
+    sim_times: np.ndarray,
+    rho: np.ndarray,
+) -> np.ndarray:
+    """
+    Build exact log-return covariance increments on simulation intervals.
+
+    Instantaneous correlations are assumed constant, while each asset's
+    volatility is piecewise constant on its own market maturity grid.
+    """
+    sim_times = np.asarray(sim_times, dtype=float).ravel()
+    rho = np.asarray(rho, dtype=float)
+    num_assets = len(underlyings)
+
+    if sim_times.size == 0:
+        raise ValueError("sim_times cannot be empty.")
+    if np.any(np.diff(sim_times) <= 0.0):
+        raise ValueError("sim_times must be strictly increasing.")
+    if rho.shape != (num_assets, num_assets):
+        raise ValueError("rho must have shape (len(underlyings), len(underlyings)).")
+
+    eigvals = np.linalg.eigvalsh(rho)
+    eps = max(0.0, -float(eigvals.min()) + 1e-6)
+    if eps > 0.0:
+        rho = rho + eps * np.eye(num_assets)
+        d_inv = 1.0 / np.sqrt(np.diag(rho))
+        rho = rho * np.outer(d_inv, d_inv)
+
+    curves = [
+        build_piecewise_vol_curve_for_underlying(
+            atm_vol_curves=atm_vol_curves,
+            underlying=underlying,
+        )
+        for underlying in underlyings
+    ]
+    if any(sim_times[-1] > maturities[-1] for maturities, _ in curves):
+        raise ValueError("Simulation grid extends beyond last market maturity.")
+
+    covariance_grid = np.empty((sim_times.size, num_assets, num_assets))
+    sim_starts = np.concatenate(([0.0], sim_times[:-1]))
+
+    for step, (t0, t1) in enumerate(zip(sim_starts, sim_times, strict=False)):
+        inner_breaks = [
+            float(maturity)
+            for maturities, _ in curves
+            for maturity in maturities
+            if t0 < maturity < t1
+        ]
+        breaks = np.array(sorted({float(t0), float(t1), *inner_breaks}))
+        segment_covariance = np.zeros((num_assets, num_assets), dtype=float)
+
+        for left, right in zip(breaks[:-1], breaks[1:], strict=False):
+            midpoint = 0.5 * (left + right)
+            segment_sigmas = np.array(
+                [
+                    sigma_pw[
+                        np.searchsorted(maturities, midpoint, side="left")
+                    ]
+                    for maturities, sigma_pw in curves
+                ]
+            )
+            segment_covariance += (
+                rho
+                * np.outer(segment_sigmas, segment_sigmas)
+                * (right - left)
+            )
+
+        covariance_grid[step] = segment_covariance
+
+    return covariance_grid
 
 
 def build_piecewise_vol_curve_for_underlying(

@@ -1765,13 +1765,20 @@ def aggregate_budget_summary(
     return summary
 
 
-def run_plotter(run_dir: Path, *, max_queries: float | None = None) -> None:
+def run_plotter(
+    run_dir: Path,
+    *,
+    max_queries: float | None = None,
+    include_monte_carlo: bool = False,
+) -> None:
     import subprocess
 
     plotter = BETA_DIR / "plot_hardware.py"
     command = [sys.executable, str(plotter), "--run-dir", str(run_dir)]
     if max_queries is not None:
         command.extend(["--max-queries", str(float(max_queries))])
+    if include_monte_carlo:
+        command.append("--include-monte-carlo")
     subprocess.run(command, check=False)
 
 
@@ -1853,7 +1860,11 @@ def run_replay_only(args: argparse.Namespace) -> None:
         verbose=bool(args.verbose),
     )
     if not args.skip_plots:
-        run_plotter(run_dir, max_queries=getattr(args, "plot_max_queries", None))
+        run_plotter(
+            run_dir,
+            max_queries=getattr(args, "plot_max_queries", None),
+            include_monte_carlo=bool(getattr(args, "include_monte_carlo_plots", False)),
+        )
 
 
 def load_existing_state(run_dir: Path) -> ExperimentState:
@@ -2000,7 +2011,11 @@ def run_hardware_topup(args: argparse.Namespace) -> None:
         )
 
     if not args.skip_plots:
-        run_plotter(paths.run_dir, max_queries=getattr(args, "plot_max_queries", None))
+        run_plotter(
+            paths.run_dir,
+            max_queries=getattr(args, "plot_max_queries", None),
+            include_monte_carlo=bool(getattr(args, "include_monte_carlo_plots", False)),
+        )
 
 
 def run_experiment(args: argparse.Namespace) -> None:
@@ -2178,7 +2193,11 @@ def run_experiment(args: argparse.Namespace) -> None:
         )
 
     if not args.skip_plots:
-        run_plotter(paths.run_dir, max_queries=getattr(args, "plot_max_queries", None))
+        run_plotter(
+            paths.run_dir,
+            max_queries=getattr(args, "plot_max_queries", None),
+            include_monte_carlo=bool(getattr(args, "include_monte_carlo_plots", False)),
+        )
 
 
 def execute_non_replay_phases(

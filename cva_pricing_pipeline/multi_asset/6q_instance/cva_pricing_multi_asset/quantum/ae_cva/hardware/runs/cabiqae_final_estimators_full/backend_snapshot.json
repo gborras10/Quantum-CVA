@@ -1,0 +1,240 @@
+{
+  "mode": "ibm_runtime_backend",
+  "channel": "ibm_cloud",
+  "backend_name": "ibm_pittsburgh",
+  "num_qubits": 156,
+  "backend_version": "1.0.16",
+  "timestamp_epoch": 1779970031.7688909,
+  "basis_gates": [
+    "measure_2",
+    "if_else",
+    "rz",
+    "x",
+    "id",
+    "reset",
+    "measure",
+    "delay",
+    "sx",
+    "cz"
+  ],
+  "status": {
+    "operational": true,
+    "pending_jobs": 0,
+    "status_msg": "active"
+  },
+  "coupling_edges_sample": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      16
+    ],
+    [
+      4,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      6,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      7,
+      17
+    ],
+    [
+      8,
+      7
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      9,
+      8
+    ],
+    [
+      9,
+      10
+    ],
+    [
+      10,
+      9
+    ],
+    [
+      10,
+      11
+    ],
+    [
+      11,
+      10
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      11,
+      18
+    ],
+    [
+      12,
+      11
+    ],
+    [
+      12,
+      13
+    ],
+    [
+      13,
+      12
+    ],
+    [
+      13,
+      14
+    ],
+    [
+      14,
+      13
+    ],
+    [
+      14,
+      15
+    ],
+    [
+      15,
+      14
+    ],
+    [
+      15,
+      19
+    ],
+    [
+      16,
+      3
+    ],
+    [
+      16,
+      23
+    ],
+    [
+      17,
+      7
+    ],
+    [
+      17,
+      27
+    ],
+    [
+      18,
+      11
+    ],
+    [
+      18,
+      31
+    ],
+    [
+      19,
+      15
+    ],
+    [
+      19,
+      35
+    ],
+    [
+      20,
+      21
+    ],
+    [
+      21,
+      20
+    ],
+    [
+      21,
+      22
+    ],
+    [
+      21,
+      36
+    ],
+    [
+      22,
+      21
+    ],
+    [
+      22,
+      23
+    ],
+    [
+      23,
+      16
+    ],
+    [
+      23,
+      22
+    ]
+  ],
+  "use_fractional_gates_requested": false,
+  "use_fractional_gates_applied": false,
+  "hardware_executor": "qctrl",
+  "instance_name": "premium_new_usa",
+  "runtime_service_name": "premium_new_usa",
+  "backend_name_requested": "ibm_pittsburgh",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "qctrl_submission_strategy": "abstract_logical_circuits",
+  "qctrl_transpilation_policy": "fire_opal_managed",
+  "local_preflight_role": "diagnostic_and_k_cap_only",
+  "calibration_reused_from": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware",
+  "new_qpu_submissions": false
+}

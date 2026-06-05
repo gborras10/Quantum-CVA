@@ -1,0 +1,15 @@
+{
+  "mode": "hardware",
+  "created_at_epoch": 1780591521.1956613,
+  "session_id": "43c5801e-b236-4565-b1f7-2471acc212e2",
+  "hardware_executor": "qctrl",
+  "instance_name": "basquecountry_updated",
+  "backend_name": "ibm_basquecountry",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "submitted_circuit_kind": "abstract_logical",
+  "qctrl_transpilation_policy": "fire_opal_managed",
+  "runtime_session_strategy": "existing_qiskit_runtime_session",
+  "amplification_scan_submission": "batched_pubs_single_job",
+  "session_started_at_epoch": 1780591569.0113733
+}

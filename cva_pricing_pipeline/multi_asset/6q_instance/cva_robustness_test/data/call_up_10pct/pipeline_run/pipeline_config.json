@@ -201,13 +201,13 @@
     "show_plots": false
   },
   "paths": {
-    "benchmark_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\call_up_10pct\\benchmark\\benchmark.npz",
+    "benchmark_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\data\\call_up_10pct\\benchmark\\benchmark.npz",
     "crca_default_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/default_probabilities/training_crca2_shots_backend_noise_snapshot.npz",
     "crca_discount_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/discount_factors/training_crca2_shots_backend_noise_snapshot.npz",
-    "crca_exposure_training_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\call_up_10pct\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz",
+    "crca_exposure_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/positive_exposure/training_heavy_hex_star_shots_backend_noise_snapshot.npz",
     "instance_name": "6q_instance",
     "qcbm_training_relative_path": "data/multi_asset/6q_instance/quantum/training/qcbm/shots/6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
-    "results_dir_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\call_up_10pct\\pipeline_run"
+    "results_dir_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\data\\call_up_10pct\\pipeline_run"
   },
   "qcbm_training": {
     "cost_seed": null,

@@ -1,0 +1,223 @@
+{
+  "run_id": "hardware_cva_ae_20260527_100101",
+  "run_uuid": "140f855a-b0e9-4af8-a051-b2bdfb70e145",
+  "pipeline": "single_asset_cva_ae_hardware",
+  "mode": "hardware",
+  "backend_name": "ibm_pittsburgh",
+  "instance_name": "premium_new_usa",
+  "channel": "ibm_cloud",
+  "hardware_executor": "runtime",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "use_fractional_gates_requested": false,
+  "target_name": "cva",
+  "good_bitstring": "111",
+  "objective_qubits": [
+    4,
+    5,
+    6
+  ],
+  "objective_width": 3,
+  "a_true": 0.05427214179198413,
+  "processed_true_value": 2.4758652684376647e-05,
+  "cva_true": 2.4758652684376647e-05,
+  "bundle_metadata": {
+    "target_name": "cva",
+    "good_bitstring": "111",
+    "num_qubits_time": 2,
+    "num_qubits_underlying": 2,
+    "total_state_qubits": 4,
+    "objective_qubits": [
+      4,
+      5,
+      6
+    ],
+    "cva_scaling": {
+      "recovery_rate": 0.415,
+      "C_v": 0.958637304568156,
+      "C_q": 0.00020388709016772033,
+      "C_p": 0.9974477070966551
+    },
+    "builder": "single_asset_cva",
+    "training_regime": "shots",
+    "state_register_order": "time_then_underlying",
+    "execution_backend_note": "ibm_pittsburgh is the default execution backend; trained single-asset artifacts were loaded unchanged and were not trained on this backend.",
+    "artifact_paths": {
+      "benchmark": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\single_asset\\benchmark\\run_classical_cva_single_asset.npz",
+      "qcbm": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\single_asset\\qcbm\\qcbm_training_results_shots.npz",
+      "crca_exposure": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\single_asset\\crca\\positive_exposures\\training_results_shots.npz",
+      "crca_default": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\single_asset\\crca\\default_probabilities\\training_results_shots.npz",
+      "crca_discount": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\single_asset\\crca\\discount_factors\\training_results_shots.npz"
+    }
+  },
+  "max_grover_power_requested": 4,
+  "scan_grover_powers": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "scan_repeats": 2,
+  "scan_shots": 4096,
+  "readout_shots": 8192,
+  "direct_shots": 128,
+  "skip_direct": true,
+  "replay_repetitions": 100,
+  "replay_probability_mode": "normal",
+  "replay_probability_se_scale": 1.0,
+  "replay_extrapolate": true,
+  "budgets": [
+    128,
+    256,
+    384,
+    512,
+    640,
+    768,
+    896,
+    1024,
+    1280,
+    1536,
+    1792,
+    2048,
+    2560,
+    3072,
+    3584,
+    4096,
+    4608,
+    5120,
+    6144,
+    7168,
+    8192,
+    9216,
+    10000
+  ],
+  "algorithms": [
+    "cabiqae",
+    "biqae"
+  ],
+  "epsilon_target": 0.08,
+  "epsilon_targets": {
+    "cabiqae": 0.05,
+    "biqae": 0.002
+  },
+  "noise_floor": "fit",
+  "contrast_baseline": "fit",
+  "session_max_time": "24h",
+  "soft_wallclock_limit_seconds": 315360000.0,
+  "optimization_level": 3,
+  "seed_transpiler": 1234,
+  "layout_search_strategy": "exhaustive",
+  "reference_ks": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "seed": 12345,
+  "hardware_risks": [
+    "Grover-power contrast loss",
+    "Q-CTRL queue/runtime cost",
+    "backend calibration drift",
+    "trained-model bias relative to the classical CVA reference"
+  ],
+  "backend_mode": "ibm_runtime_backend",
+  "transpilation": {
+    "strategy": "fixed_layout_search",
+    "fallback_used": false,
+    "reference_ks": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "discovery_seeds": [
+      1234
+    ],
+    "evaluation_seeds": [
+      1234
+    ],
+    "initial_layout": [
+      69,
+      78,
+      68,
+      70,
+      89,
+      88,
+      90
+    ],
+    "seed_transpiler": 1234,
+    "optimization_level": 3,
+    "routing_method": "sabre",
+    "candidate_source": "sabre_discovery(seed=1234, ref=1)",
+    "aggregate_swap_count": 0,
+    "aggregate_two_qubit_gates": 4613,
+    "aggregate_depth": 10717,
+    "aggregate_size": 21214,
+    "evaluated_layouts": 5,
+    "evaluated_plans": 2,
+    "reference_circuit_count": 5
+  },
+  "max_grover_power_after_preflight": 4,
+  "preflight_limits": {
+    "max_isa_depth": 12000,
+    "max_isa_2q": 6000
+  },
+  "execution_max_grover_power": 3,
+  "calibration_status": "ok",
+  "replay_max_calls": 4096,
+  "replay_epsilon_targets": {
+    "cabiqae": 0.03,
+    "biqae": 0.002
+  },
+  "replay_extrapolation_model": {
+    "model": "free_intercept",
+    "contrast_prefactor": 1.3852435943344428,
+    "t_eff": 1.8177233955173384,
+    "contrast_baseline": 0.09401,
+    "a_true": 0.05427214179198413
+  },
+  "replay_extrapolated_probabilities": {
+    "5": 0.09460961555673389,
+    "6": 0.09391579189170324,
+    "7": 0.0940270549671192,
+    "8": 0.09406719364743325,
+    "9": 0.09404388137787317,
+    "10": 0.09402139444845968,
+    "12": 0.09401009034775865,
+    "13": 0.0940099559695895,
+    "15": 0.0940100336333779,
+    "16": 0.0940100162141003,
+    "22": 0.09401000001825043,
+    "35": 0.09401000000000001,
+    "37": 0.09401,
+    "38": 0.09401,
+    "39": 0.09401,
+    "40": 0.09401,
+    "41": 0.09401,
+    "42": 0.09401,
+    "43": 0.09401,
+    "44": 0.09401,
+    "45": 0.09401,
+    "46": 0.09401,
+    "47": 0.09401,
+    "48": 0.09401,
+    "49": 0.09401,
+    "50": 0.09401,
+    "51": 0.09401,
+    "52": 0.09401,
+    "53": 0.09401,
+    "54": 0.09401,
+    "58": 0.09401,
+    "62": 0.09401,
+    "70": 0.09401,
+    "73": 0.09401,
+    "84": 0.09401,
+    "88": 0.09401,
+    "91": 0.09401,
+    "111": 0.09401,
+    "112": 0.09401
+  }
+}

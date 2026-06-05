@@ -1,17 +1,17 @@
 {
   "final_statevector_cva": {
     "cva_classical_reference": 0.2320303223062269,
-    "cva_statevector": 0.3218690704686962,
+    "cva_statevector": 0.4754355383719716,
     "default_l2_statevector": 0.0004554739067278678,
     "default_n_params": 6,
     "discount_l2_statevector": 0.009859537587022932,
     "discount_n_params": 6,
-    "exposure_l2_statevector": 0.6668101859858433,
+    "exposure_l2_statevector": 1.0164277285486176,
     "exposure_n_params": 40,
-    "p111_statevector": 0.08995486432807605,
+    "p111_statevector": 0.1328730942948926,
     "qcbm_kl_statevector": 0.1130642781112419,
     "qcbm_n_params": 51,
-    "relative_error_statevector_pct": 38.718537848644935,
-    "stage_elapsed_s": 0.5108762998133898
+    "relative_error_statevector_pct": 104.90233071542502,
+    "stage_elapsed_s": 0.47048309999809135
   }
 }

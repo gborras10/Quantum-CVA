@@ -1,0 +1,12 @@
+{
+  "run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815",
+  "config_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\config.json",
+  "backend_snapshot_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\backend_snapshot.json",
+  "session_details_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\session_details.json",
+  "runtime_jobs_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\runtime_jobs.csv",
+  "objective_assignment_raw_counts_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\objective_assignment_raw_counts.csv",
+  "objective_assignment_matrix_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\objective_assignment_matrix.csv",
+  "objective_assignment_summary_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\objective_assignment_summary.csv",
+  "k0_probe_counts_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\k0_probe_counts.csv",
+  "calibration_summary_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\qctrl_objective_readout_calibration_20260528_134815\\calibration_summary.json"
+}

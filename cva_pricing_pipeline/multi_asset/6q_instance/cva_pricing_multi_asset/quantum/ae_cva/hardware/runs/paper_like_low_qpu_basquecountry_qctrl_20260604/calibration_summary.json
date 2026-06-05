@@ -1,0 +1,10 @@
+{
+  "readout": {
+    "p_obs_good_given_bad": 0.0,
+    "p_obs_good_given_good": 0.998046875,
+    "readout_denom": 0.998046875,
+    "readout_usable": 1.0,
+    "readout_skipped": false,
+    "readout_mitigation_mode": "measured_linear_correction"
+  }
+}

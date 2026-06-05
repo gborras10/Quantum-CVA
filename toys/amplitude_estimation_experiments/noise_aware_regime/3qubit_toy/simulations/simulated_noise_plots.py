@@ -27,7 +27,7 @@ from toys.amplitude_estimation_experiments.ideal_regime.ideal_utils import (  # 
 
 # False -> legacy large_realistic budget/final rows
 # True  -> v2 final_estimations flow
-USE_V2_RESULTS = True
+USE_V2_RESULTS = False
 
 GENERATE_ERROR_VS_QUERIES = True
 GENERATE_FINAL_ERROR_VS_QUERIES_SCATTER = True
@@ -41,12 +41,16 @@ ALGORITHMS_TO_PLOT = (
     "cabiqae_latentt",
 )
 
-QUERY_MAX_BINS = 12
-QUERY_MIN_POINTS_PER_BIN = 50
+QUERY_MAX_BINS = 14
+QUERY_MIN_POINTS_PER_BIN = 45
 QUERY_BOOTSTRAP_SAMPLES = 2000
 QUERY_BOOTSTRAP_CONFIDENCE_LEVEL = 0.95
 QUERY_BOOTSTRAP_SEED = 12345
 QUERY_MAX_PLOT_POINTS_PER_ALGORITHM = 20
+DROP_BBINNED_POINT_INDICES: dict[str, tuple[int, ...]] = {
+    "BAE": (0,2),
+    "BIQAE": (1,),
+}
 
 # Coarser v2 bins because there is one final estimation per run.
 V2_QUERY_MAX_BINS = 8
@@ -79,8 +83,8 @@ DATASETS: dict[str, dict[str, Any]] = {
 
 V2_DATASETS: dict[str, dict[str, Any]] = {
     "large_realistic_v2": {
-        "results_dir": CURRENT_DIR / "experiment_results" / "plots_v2",
-        "final_rows_csv": CURRENT_DIR / "experiment_results" / "large_realistic_v2_final_estimations.csv",
+        "results_dir": CURRENT_DIR / "lambda1.0_experiment_results" / "plots_v2",
+        "final_rows_csv": CURRENT_DIR / "lambda1.0_experiment_results" / "large_realistic_v2_final_estimations.csv",
         "output_prefix": "large_realistic_v2",
         "algorithms": ("bae", "biqae", "cabiqae_latentt"),
         "title": "Simulated noise v2: matched-query final estimates",
@@ -280,6 +284,7 @@ def regenerate_dataset(dataset_key: str) -> None:
             title=str(config["title"]),
             max_points_per_algorithm=QUERY_MAX_PLOT_POINTS_PER_ALGORITHM,
             connect_points=CONNECT_ERROR_PLOT_POINTS,
+            drop_binned_point_indices=DROP_BBINNED_POINT_INDICES,
         )
         print(f"[{dataset_key}] saved error-vs-queries plot: {output_path}")
         print(f"[{dataset_key}] saved error-vs-queries summary: {summary_path}")
@@ -358,6 +363,7 @@ def regenerate_v2_dataset(dataset_key: str) -> None:
                 title=str(config["title"]),
                 max_points_per_algorithm=QUERY_MAX_PLOT_POINTS_PER_ALGORITHM,
                 connect_points=CONNECT_ERROR_PLOT_POINTS,
+                drop_binned_point_indices=DROP_BBINNED_POINT_INDICES,
             )
             print(f"[{dataset_key}] saved v2 rmse plot: {output_path}")
         else:

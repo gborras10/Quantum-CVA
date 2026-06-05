@@ -1,0 +1,338 @@
+Symbolic gate-level CVA operator
+================================
+
+Qiskit does not expand parameterized circuits into symbolic dense matrices.
+This file writes the exact factored symbolic operator instead.
+
+A(theta) = G_108 G_107 G_106 G_105 G_104 G_103 G_102 G_101 G_100 G_99 G_98 G_97 G_96 G_95 G_94 G_93 G_92 G_91 G_90 G_89 G_88 G_87 G_86 G_85 G_84 G_83 G_82 G_81 G_80 G_79 G_78 G_77 G_76 G_75 G_74 G_73 G_72 G_71 G_70 G_69 G_68 G_67 G_66 G_65 G_64 G_63 G_62 G_61 G_60 G_59 G_58 G_57 G_56 G_55 G_54 G_53 G_52 G_51 G_50 G_49 G_48 G_47 G_46 G_45 G_44 G_43 G_42 G_41 G_40 G_39 G_38 G_37 G_36 G_35 G_34 G_33 G_32 G_31 G_30 G_29 G_28 G_27 G_26 G_25 G_24 G_23 G_22 G_21 G_20 G_19 G_18 G_17 G_16 G_15 G_14 G_13 G_12 G_11 G_10 G_9 G_8 G_7 G_6 G_5 G_4 G_3 G_2 G_1 G_0
+
+Each embedded operator G_k acts as the listed local matrix on its qubits,
+tensored with identity on the remaining logical qubits, with Qiskit's
+little-endian qubit indexing convention.
+
+G_0: gate=rx, qubits=['q0'], params=theta_qcbm_0
+  Rx(theta_qcbm_0) = [[cos(theta_qcbm_0/2), -i sin(theta_qcbm_0/2)], [-i sin(theta_qcbm_0/2), cos(theta_qcbm_0/2)]]
+
+G_1: gate=rz, qubits=['q0'], params=theta_qcbm_1
+  Rz(theta_qcbm_1) = diag(exp(-i theta_qcbm_1/2), exp(i theta_qcbm_1/2))
+
+G_2: gate=rx, qubits=['q1'], params=theta_qcbm_2
+  Rx(theta_qcbm_2) = [[cos(theta_qcbm_2/2), -i sin(theta_qcbm_2/2)], [-i sin(theta_qcbm_2/2), cos(theta_qcbm_2/2)]]
+
+G_3: gate=rz, qubits=['q1'], params=theta_qcbm_3
+  Rz(theta_qcbm_3) = diag(exp(-i theta_qcbm_3/2), exp(i theta_qcbm_3/2))
+
+G_4: gate=rx, qubits=['q2'], params=theta_qcbm_4
+  Rx(theta_qcbm_4) = [[cos(theta_qcbm_4/2), -i sin(theta_qcbm_4/2)], [-i sin(theta_qcbm_4/2), cos(theta_qcbm_4/2)]]
+
+G_5: gate=rz, qubits=['q2'], params=theta_qcbm_5
+  Rz(theta_qcbm_5) = diag(exp(-i theta_qcbm_5/2), exp(i theta_qcbm_5/2))
+
+G_6: gate=rx, qubits=['q3'], params=theta_qcbm_6
+  Rx(theta_qcbm_6) = [[cos(theta_qcbm_6/2), -i sin(theta_qcbm_6/2)], [-i sin(theta_qcbm_6/2), cos(theta_qcbm_6/2)]]
+
+G_7: gate=rz, qubits=['q3'], params=theta_qcbm_7
+  Rz(theta_qcbm_7) = diag(exp(-i theta_qcbm_7/2), exp(i theta_qcbm_7/2))
+
+G_8: gate=rx, qubits=['q4'], params=theta_qcbm_8
+  Rx(theta_qcbm_8) = [[cos(theta_qcbm_8/2), -i sin(theta_qcbm_8/2)], [-i sin(theta_qcbm_8/2), cos(theta_qcbm_8/2)]]
+
+G_9: gate=rz, qubits=['q4'], params=theta_qcbm_9
+  Rz(theta_qcbm_9) = diag(exp(-i theta_qcbm_9/2), exp(i theta_qcbm_9/2))
+
+G_10: gate=rx, qubits=['q5'], params=theta_qcbm_10
+  Rx(theta_qcbm_10) = [[cos(theta_qcbm_10/2), -i sin(theta_qcbm_10/2)], [-i sin(theta_qcbm_10/2), cos(theta_qcbm_10/2)]]
+
+G_11: gate=rz, qubits=['q5'], params=theta_qcbm_11
+  Rz(theta_qcbm_11) = diag(exp(-i theta_qcbm_11/2), exp(i theta_qcbm_11/2))
+
+G_12: gate=rzz, qubits=['q0', 'q1'], params=theta_qcbm_12
+  Rzz(theta_qcbm_12) = diag(exp(-i theta_qcbm_12/2), exp(i theta_qcbm_12/2), exp(i theta_qcbm_12/2), exp(-i theta_qcbm_12/2))
+
+G_13: gate=rzz, qubits=['q0', 'q2'], params=theta_qcbm_13
+  Rzz(theta_qcbm_13) = diag(exp(-i theta_qcbm_13/2), exp(i theta_qcbm_13/2), exp(i theta_qcbm_13/2), exp(-i theta_qcbm_13/2))
+
+G_14: gate=rzz, qubits=['q0', 'q3'], params=theta_qcbm_14
+  Rzz(theta_qcbm_14) = diag(exp(-i theta_qcbm_14/2), exp(i theta_qcbm_14/2), exp(i theta_qcbm_14/2), exp(-i theta_qcbm_14/2))
+
+G_15: gate=rzz, qubits=['q1', 'q4'], params=theta_qcbm_15
+  Rzz(theta_qcbm_15) = diag(exp(-i theta_qcbm_15/2), exp(i theta_qcbm_15/2), exp(i theta_qcbm_15/2), exp(-i theta_qcbm_15/2))
+
+G_16: gate=rzz, qubits=['q2', 'q5'], params=theta_qcbm_16
+  Rzz(theta_qcbm_16) = diag(exp(-i theta_qcbm_16/2), exp(i theta_qcbm_16/2), exp(i theta_qcbm_16/2), exp(-i theta_qcbm_16/2))
+
+G_17: gate=rx, qubits=['q0'], params=theta_qcbm_17
+  Rx(theta_qcbm_17) = [[cos(theta_qcbm_17/2), -i sin(theta_qcbm_17/2)], [-i sin(theta_qcbm_17/2), cos(theta_qcbm_17/2)]]
+
+G_18: gate=rz, qubits=['q0'], params=theta_qcbm_18
+  Rz(theta_qcbm_18) = diag(exp(-i theta_qcbm_18/2), exp(i theta_qcbm_18/2))
+
+G_19: gate=rx, qubits=['q1'], params=theta_qcbm_19
+  Rx(theta_qcbm_19) = [[cos(theta_qcbm_19/2), -i sin(theta_qcbm_19/2)], [-i sin(theta_qcbm_19/2), cos(theta_qcbm_19/2)]]
+
+G_20: gate=rz, qubits=['q1'], params=theta_qcbm_20
+  Rz(theta_qcbm_20) = diag(exp(-i theta_qcbm_20/2), exp(i theta_qcbm_20/2))
+
+G_21: gate=rx, qubits=['q2'], params=theta_qcbm_21
+  Rx(theta_qcbm_21) = [[cos(theta_qcbm_21/2), -i sin(theta_qcbm_21/2)], [-i sin(theta_qcbm_21/2), cos(theta_qcbm_21/2)]]
+
+G_22: gate=rz, qubits=['q2'], params=theta_qcbm_22
+  Rz(theta_qcbm_22) = diag(exp(-i theta_qcbm_22/2), exp(i theta_qcbm_22/2))
+
+G_23: gate=rx, qubits=['q3'], params=theta_qcbm_23
+  Rx(theta_qcbm_23) = [[cos(theta_qcbm_23/2), -i sin(theta_qcbm_23/2)], [-i sin(theta_qcbm_23/2), cos(theta_qcbm_23/2)]]
+
+G_24: gate=rz, qubits=['q3'], params=theta_qcbm_24
+  Rz(theta_qcbm_24) = diag(exp(-i theta_qcbm_24/2), exp(i theta_qcbm_24/2))
+
+G_25: gate=rx, qubits=['q4'], params=theta_qcbm_25
+  Rx(theta_qcbm_25) = [[cos(theta_qcbm_25/2), -i sin(theta_qcbm_25/2)], [-i sin(theta_qcbm_25/2), cos(theta_qcbm_25/2)]]
+
+G_26: gate=rz, qubits=['q4'], params=theta_qcbm_26
+  Rz(theta_qcbm_26) = diag(exp(-i theta_qcbm_26/2), exp(i theta_qcbm_26/2))
+
+G_27: gate=rx, qubits=['q5'], params=theta_qcbm_27
+  Rx(theta_qcbm_27) = [[cos(theta_qcbm_27/2), -i sin(theta_qcbm_27/2)], [-i sin(theta_qcbm_27/2), cos(theta_qcbm_27/2)]]
+
+G_28: gate=rz, qubits=['q5'], params=theta_qcbm_28
+  Rz(theta_qcbm_28) = diag(exp(-i theta_qcbm_28/2), exp(i theta_qcbm_28/2))
+
+G_29: gate=rzz, qubits=['q0', 'q1'], params=theta_qcbm_29
+  Rzz(theta_qcbm_29) = diag(exp(-i theta_qcbm_29/2), exp(i theta_qcbm_29/2), exp(i theta_qcbm_29/2), exp(-i theta_qcbm_29/2))
+
+G_30: gate=rzz, qubits=['q0', 'q2'], params=theta_qcbm_30
+  Rzz(theta_qcbm_30) = diag(exp(-i theta_qcbm_30/2), exp(i theta_qcbm_30/2), exp(i theta_qcbm_30/2), exp(-i theta_qcbm_30/2))
+
+G_31: gate=rzz, qubits=['q0', 'q3'], params=theta_qcbm_31
+  Rzz(theta_qcbm_31) = diag(exp(-i theta_qcbm_31/2), exp(i theta_qcbm_31/2), exp(i theta_qcbm_31/2), exp(-i theta_qcbm_31/2))
+
+G_32: gate=rzz, qubits=['q1', 'q4'], params=theta_qcbm_32
+  Rzz(theta_qcbm_32) = diag(exp(-i theta_qcbm_32/2), exp(i theta_qcbm_32/2), exp(i theta_qcbm_32/2), exp(-i theta_qcbm_32/2))
+
+G_33: gate=rzz, qubits=['q2', 'q5'], params=theta_qcbm_33
+  Rzz(theta_qcbm_33) = diag(exp(-i theta_qcbm_33/2), exp(i theta_qcbm_33/2), exp(i theta_qcbm_33/2), exp(-i theta_qcbm_33/2))
+
+G_34: gate=rx, qubits=['q0'], params=theta_qcbm_34
+  Rx(theta_qcbm_34) = [[cos(theta_qcbm_34/2), -i sin(theta_qcbm_34/2)], [-i sin(theta_qcbm_34/2), cos(theta_qcbm_34/2)]]
+
+G_35: gate=rz, qubits=['q0'], params=theta_qcbm_35
+  Rz(theta_qcbm_35) = diag(exp(-i theta_qcbm_35/2), exp(i theta_qcbm_35/2))
+
+G_36: gate=rx, qubits=['q1'], params=theta_qcbm_36
+  Rx(theta_qcbm_36) = [[cos(theta_qcbm_36/2), -i sin(theta_qcbm_36/2)], [-i sin(theta_qcbm_36/2), cos(theta_qcbm_36/2)]]
+
+G_37: gate=rz, qubits=['q1'], params=theta_qcbm_37
+  Rz(theta_qcbm_37) = diag(exp(-i theta_qcbm_37/2), exp(i theta_qcbm_37/2))
+
+G_38: gate=rx, qubits=['q2'], params=theta_qcbm_38
+  Rx(theta_qcbm_38) = [[cos(theta_qcbm_38/2), -i sin(theta_qcbm_38/2)], [-i sin(theta_qcbm_38/2), cos(theta_qcbm_38/2)]]
+
+G_39: gate=rz, qubits=['q2'], params=theta_qcbm_39
+  Rz(theta_qcbm_39) = diag(exp(-i theta_qcbm_39/2), exp(i theta_qcbm_39/2))
+
+G_40: gate=rx, qubits=['q3'], params=theta_qcbm_40
+  Rx(theta_qcbm_40) = [[cos(theta_qcbm_40/2), -i sin(theta_qcbm_40/2)], [-i sin(theta_qcbm_40/2), cos(theta_qcbm_40/2)]]
+
+G_41: gate=rz, qubits=['q3'], params=theta_qcbm_41
+  Rz(theta_qcbm_41) = diag(exp(-i theta_qcbm_41/2), exp(i theta_qcbm_41/2))
+
+G_42: gate=rx, qubits=['q4'], params=theta_qcbm_42
+  Rx(theta_qcbm_42) = [[cos(theta_qcbm_42/2), -i sin(theta_qcbm_42/2)], [-i sin(theta_qcbm_42/2), cos(theta_qcbm_42/2)]]
+
+G_43: gate=rz, qubits=['q4'], params=theta_qcbm_43
+  Rz(theta_qcbm_43) = diag(exp(-i theta_qcbm_43/2), exp(i theta_qcbm_43/2))
+
+G_44: gate=rx, qubits=['q5'], params=theta_qcbm_44
+  Rx(theta_qcbm_44) = [[cos(theta_qcbm_44/2), -i sin(theta_qcbm_44/2)], [-i sin(theta_qcbm_44/2), cos(theta_qcbm_44/2)]]
+
+G_45: gate=rz, qubits=['q5'], params=theta_qcbm_45
+  Rz(theta_qcbm_45) = diag(exp(-i theta_qcbm_45/2), exp(i theta_qcbm_45/2))
+
+G_46: gate=rzz, qubits=['q0', 'q1'], params=theta_qcbm_46
+  Rzz(theta_qcbm_46) = diag(exp(-i theta_qcbm_46/2), exp(i theta_qcbm_46/2), exp(i theta_qcbm_46/2), exp(-i theta_qcbm_46/2))
+
+G_47: gate=rzz, qubits=['q0', 'q2'], params=theta_qcbm_47
+  Rzz(theta_qcbm_47) = diag(exp(-i theta_qcbm_47/2), exp(i theta_qcbm_47/2), exp(i theta_qcbm_47/2), exp(-i theta_qcbm_47/2))
+
+G_48: gate=rzz, qubits=['q0', 'q3'], params=theta_qcbm_48
+  Rzz(theta_qcbm_48) = diag(exp(-i theta_qcbm_48/2), exp(i theta_qcbm_48/2), exp(i theta_qcbm_48/2), exp(-i theta_qcbm_48/2))
+
+G_49: gate=rzz, qubits=['q1', 'q4'], params=theta_qcbm_49
+  Rzz(theta_qcbm_49) = diag(exp(-i theta_qcbm_49/2), exp(i theta_qcbm_49/2), exp(i theta_qcbm_49/2), exp(-i theta_qcbm_49/2))
+
+G_50: gate=rzz, qubits=['q2', 'q5'], params=theta_qcbm_50
+  Rzz(theta_qcbm_50) = diag(exp(-i theta_qcbm_50/2), exp(i theta_qcbm_50/2), exp(i theta_qcbm_50/2), exp(-i theta_qcbm_50/2))
+
+G_51: gate=ry, qubits=['q6'], params=theta_v_0
+  Ry(theta_v_0) = [[cos(theta_v_0/2), -sin(theta_v_0/2)], [sin(theta_v_0/2), cos(theta_v_0/2)]]
+
+G_52: gate=rz, qubits=['q6'], params=theta_v_1
+  Rz(theta_v_1) = diag(exp(-i theta_v_1/2), exp(i theta_v_1/2))
+
+G_53: gate=ry, qubits=['q6'], params=theta_v_2
+  Ry(theta_v_2) = [[cos(theta_v_2/2), -sin(theta_v_2/2)], [sin(theta_v_2/2), cos(theta_v_2/2)]]
+
+G_54: gate=crx, qubits=['q0', 'q6'], params=theta_v_3
+  CRx(theta_v_3) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_3/2),-i sin(theta_v_3/2)], [0,0,-i sin(theta_v_3/2),cos(theta_v_3/2)]]
+
+G_55: gate=cry, qubits=['q0', 'q6'], params=theta_v_4
+  CRy(theta_v_4) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_4/2),-sin(theta_v_4/2)], [0,0,sin(theta_v_4/2),cos(theta_v_4/2)]]
+
+G_56: gate=crz, qubits=['q0', 'q6'], params=theta_v_5
+  CRz(theta_v_5) = diag(1, 1, exp(-i theta_v_5/2), exp(i theta_v_5/2))
+
+G_57: gate=crx, qubits=['q2', 'q6'], params=theta_v_6
+  CRx(theta_v_6) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_6/2),-i sin(theta_v_6/2)], [0,0,-i sin(theta_v_6/2),cos(theta_v_6/2)]]
+
+G_58: gate=cry, qubits=['q2', 'q6'], params=theta_v_7
+  CRy(theta_v_7) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_7/2),-sin(theta_v_7/2)], [0,0,sin(theta_v_7/2),cos(theta_v_7/2)]]
+
+G_59: gate=crz, qubits=['q2', 'q6'], params=theta_v_8
+  CRz(theta_v_8) = diag(1, 1, exp(-i theta_v_8/2), exp(i theta_v_8/2))
+
+G_60: gate=crx, qubits=['q3', 'q6'], params=theta_v_9
+  CRx(theta_v_9) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_9/2),-i sin(theta_v_9/2)], [0,0,-i sin(theta_v_9/2),cos(theta_v_9/2)]]
+
+G_61: gate=cry, qubits=['q3', 'q6'], params=theta_v_10
+  CRy(theta_v_10) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_10/2),-sin(theta_v_10/2)], [0,0,sin(theta_v_10/2),cos(theta_v_10/2)]]
+
+G_62: gate=crz, qubits=['q3', 'q6'], params=theta_v_11
+  CRz(theta_v_11) = diag(1, 1, exp(-i theta_v_11/2), exp(i theta_v_11/2))
+
+G_63: gate=swap, qubits=['q3', 'q6'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_64: gate=crx, qubits=['q1', 'q3'], params=theta_v_12
+  CRx(theta_v_12) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_12/2),-i sin(theta_v_12/2)], [0,0,-i sin(theta_v_12/2),cos(theta_v_12/2)]]
+
+G_65: gate=cry, qubits=['q1', 'q3'], params=theta_v_13
+  CRy(theta_v_13) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_13/2),-sin(theta_v_13/2)], [0,0,sin(theta_v_13/2),cos(theta_v_13/2)]]
+
+G_66: gate=crz, qubits=['q1', 'q3'], params=theta_v_14
+  CRz(theta_v_14) = diag(1, 1, exp(-i theta_v_14/2), exp(i theta_v_14/2))
+
+G_67: gate=swap, qubits=['q1', 'q3'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_68: gate=crx, qubits=['q4', 'q1'], params=theta_v_15
+  CRx(theta_v_15) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_15/2),-i sin(theta_v_15/2)], [0,0,-i sin(theta_v_15/2),cos(theta_v_15/2)]]
+
+G_69: gate=cry, qubits=['q4', 'q1'], params=theta_v_16
+  CRy(theta_v_16) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_16/2),-sin(theta_v_16/2)], [0,0,sin(theta_v_16/2),cos(theta_v_16/2)]]
+
+G_70: gate=crz, qubits=['q4', 'q1'], params=theta_v_17
+  CRz(theta_v_17) = diag(1, 1, exp(-i theta_v_17/2), exp(i theta_v_17/2))
+
+G_71: gate=swap, qubits=['q4', 'q1'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_72: gate=crx, qubits=['q5', 'q4'], params=theta_v_18
+  CRx(theta_v_18) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_18/2),-i sin(theta_v_18/2)], [0,0,-i sin(theta_v_18/2),cos(theta_v_18/2)]]
+
+G_73: gate=cry, qubits=['q5', 'q4'], params=theta_v_19
+  CRy(theta_v_19) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_19/2),-sin(theta_v_19/2)], [0,0,sin(theta_v_19/2),cos(theta_v_19/2)]]
+
+G_74: gate=ry, qubits=['q4'], params=theta_v_20
+  Ry(theta_v_20) = [[cos(theta_v_20/2), -sin(theta_v_20/2)], [sin(theta_v_20/2), cos(theta_v_20/2)]]
+
+G_75: gate=rz, qubits=['q4'], params=theta_v_21
+  Rz(theta_v_21) = diag(exp(-i theta_v_21/2), exp(i theta_v_21/2))
+
+G_76: gate=ry, qubits=['q4'], params=theta_v_22
+  Ry(theta_v_22) = [[cos(theta_v_22/2), -sin(theta_v_22/2)], [sin(theta_v_22/2), cos(theta_v_22/2)]]
+
+G_77: gate=crx, qubits=['q5', 'q4'], params=theta_v_23
+  CRx(theta_v_23) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_23/2),-i sin(theta_v_23/2)], [0,0,-i sin(theta_v_23/2),cos(theta_v_23/2)]]
+
+G_78: gate=cry, qubits=['q5', 'q4'], params=theta_v_24
+  CRy(theta_v_24) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_24/2),-sin(theta_v_24/2)], [0,0,sin(theta_v_24/2),cos(theta_v_24/2)]]
+
+G_79: gate=crz, qubits=['q5', 'q4'], params=theta_v_25
+  CRz(theta_v_25) = diag(1, 1, exp(-i theta_v_25/2), exp(i theta_v_25/2))
+
+G_80: gate=crx, qubits=['q1', 'q4'], params=theta_v_26
+  CRx(theta_v_26) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_26/2),-i sin(theta_v_26/2)], [0,0,-i sin(theta_v_26/2),cos(theta_v_26/2)]]
+
+G_81: gate=cry, qubits=['q1', 'q4'], params=theta_v_27
+  CRy(theta_v_27) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_27/2),-sin(theta_v_27/2)], [0,0,sin(theta_v_27/2),cos(theta_v_27/2)]]
+
+G_82: gate=crz, qubits=['q1', 'q4'], params=theta_v_28
+  CRz(theta_v_28) = diag(1, 1, exp(-i theta_v_28/2), exp(i theta_v_28/2))
+
+G_83: gate=swap, qubits=['q4', 'q1'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_84: gate=crx, qubits=['q3', 'q1'], params=theta_v_29
+  CRx(theta_v_29) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_29/2),-i sin(theta_v_29/2)], [0,0,-i sin(theta_v_29/2),cos(theta_v_29/2)]]
+
+G_85: gate=cry, qubits=['q3', 'q1'], params=theta_v_30
+  CRy(theta_v_30) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_30/2),-sin(theta_v_30/2)], [0,0,sin(theta_v_30/2),cos(theta_v_30/2)]]
+
+G_86: gate=crz, qubits=['q3', 'q1'], params=theta_v_31
+  CRz(theta_v_31) = diag(1, 1, exp(-i theta_v_31/2), exp(i theta_v_31/2))
+
+G_87: gate=swap, qubits=['q1', 'q3'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_88: gate=crx, qubits=['q6', 'q3'], params=theta_v_32
+  CRx(theta_v_32) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_32/2),-i sin(theta_v_32/2)], [0,0,-i sin(theta_v_32/2),cos(theta_v_32/2)]]
+
+G_89: gate=cry, qubits=['q6', 'q3'], params=theta_v_33
+  CRy(theta_v_33) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_33/2),-sin(theta_v_33/2)], [0,0,sin(theta_v_33/2),cos(theta_v_33/2)]]
+
+G_90: gate=crz, qubits=['q6', 'q3'], params=theta_v_34
+  CRz(theta_v_34) = diag(1, 1, exp(-i theta_v_34/2), exp(i theta_v_34/2))
+
+G_91: gate=swap, qubits=['q3', 'q6'], params=-
+  SWAP = [[1,0,0,0], [0,0,1,0], [0,1,0,0], [0,0,0,1]]
+
+G_92: gate=crx, qubits=['q2', 'q6'], params=theta_v_35
+  CRx(theta_v_35) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_35/2),-i sin(theta_v_35/2)], [0,0,-i sin(theta_v_35/2),cos(theta_v_35/2)]]
+
+G_93: gate=cry, qubits=['q2', 'q6'], params=theta_v_36
+  CRy(theta_v_36) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_36/2),-sin(theta_v_36/2)], [0,0,sin(theta_v_36/2),cos(theta_v_36/2)]]
+
+G_94: gate=crz, qubits=['q2', 'q6'], params=theta_v_37
+  CRz(theta_v_37) = diag(1, 1, exp(-i theta_v_37/2), exp(i theta_v_37/2))
+
+G_95: gate=crx, qubits=['q0', 'q6'], params=theta_v_38
+  CRx(theta_v_38) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_38/2),-i sin(theta_v_38/2)], [0,0,-i sin(theta_v_38/2),cos(theta_v_38/2)]]
+
+G_96: gate=cry, qubits=['q0', 'q6'], params=theta_v_39
+  CRy(theta_v_39) = [[1,0,0,0], [0,1,0,0], [0,0,cos(theta_v_39/2),-sin(theta_v_39/2)], [0,0,sin(theta_v_39/2),cos(theta_v_39/2)]]
+
+G_97: gate=rx, qubits=['q7'], params=theta_q_0
+  Rx(theta_q_0) = [[cos(theta_q_0/2), -i sin(theta_q_0/2)], [-i sin(theta_q_0/2), cos(theta_q_0/2)]]
+
+G_98: gate=rz, qubits=['q7'], params=theta_q_1
+  Rz(theta_q_1) = diag(exp(-i theta_q_1/2), exp(i theta_q_1/2))
+
+G_99: gate=rzz, qubits=['q0', 'q7'], params=theta_q_2
+  Rzz(theta_q_2) = diag(exp(-i theta_q_2/2), exp(i theta_q_2/2), exp(i theta_q_2/2), exp(-i theta_q_2/2))
+
+G_100: gate=rzz, qubits=['q1', 'q7'], params=theta_q_3
+  Rzz(theta_q_3) = diag(exp(-i theta_q_3/2), exp(i theta_q_3/2), exp(i theta_q_3/2), exp(-i theta_q_3/2))
+
+G_101: gate=rx, qubits=['q7'], params=theta_q_4
+  Rx(theta_q_4) = [[cos(theta_q_4/2), -i sin(theta_q_4/2)], [-i sin(theta_q_4/2), cos(theta_q_4/2)]]
+
+G_102: gate=rz, qubits=['q7'], params=theta_q_5
+  Rz(theta_q_5) = diag(exp(-i theta_q_5/2), exp(i theta_q_5/2))
+
+G_103: gate=rx, qubits=['q8'], params=theta_p_0
+  Rx(theta_p_0) = [[cos(theta_p_0/2), -i sin(theta_p_0/2)], [-i sin(theta_p_0/2), cos(theta_p_0/2)]]
+
+G_104: gate=rz, qubits=['q8'], params=theta_p_1
+  Rz(theta_p_1) = diag(exp(-i theta_p_1/2), exp(i theta_p_1/2))
+ 
+G_105: gate=rzz, qubits=['q0', 'q8'], params=theta_p_2
+  Rzz(theta_p_2) = diag(exp(-i theta_p_2/2), exp(i theta_p_2/2), exp(i theta_p_2/2), exp(-i theta_p_2/2))
+
+G_106: gate=rzz, qubits=['q1', 'q8'], params=theta_p_3
+  Rzz(theta_p_3) = diag(exp(-i theta_p_3/2), exp(i theta_p_3/2), exp(i theta_p_3/2), exp(-i theta_p_3/2))
+
+G_107: gate=rx, qubits=['q8'], params=theta_p_4
+  Rx(theta_p_4) = [[cos(theta_p_4/2), -i sin(theta_p_4/2)], [-i sin(theta_p_4/2), cos(theta_p_4/2)]]
+
+G_108: gate=rz, qubits=['q8'], params=theta_p_5
+  Rz(theta_p_5) = diag(exp(-i theta_p_5/2), exp(i theta_p_5/2))

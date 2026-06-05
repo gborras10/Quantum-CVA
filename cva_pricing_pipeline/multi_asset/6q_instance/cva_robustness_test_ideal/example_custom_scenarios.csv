@@ -1,0 +1,5 @@
+case_id,label,call_strike_scale,put_strike_scale,volatility_scale,rate_shift_bps,default_spread_scale
+base,Baseline,1.0,1.0,1.0,0.0,1.0
+vol_p10,Volatility +10%,1.0,1.0,1.1,0.0,1.0
+rate_p50,Curve shift +50 bp,1.0,1.0,1.0,50.0,1.0
+default_p10,CDS spreads +10%,1.0,1.0,1.0,0.0,1.1

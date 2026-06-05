@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import matplotlib
 import numpy as np
@@ -19,8 +21,18 @@ from quantum_cva.amplitude_estimation.experiments.circuits import (
 from quantum_cva.amplitude_estimation.experiments.cva import (
     build_6q_cva_problem_bundle,
 )
-from quantum_cva.amplitude_estimation.experiments.hardware import analyze_amplification
+from quantum_cva.amplitude_estimation.experiments.cva_hwd_experiments.cva_hardware_runner import (
+    _find_qctrl_job,
+    _merge_topup_amplification_rows,
+)
+from quantum_cva.amplitude_estimation.experiments.hardware import (
+    ExperimentState,
+    analyze_amplification,
+    effective_contrast_model_for_algorithms,
+    run_amplification_scan,
+)
 from quantum_cva.amplitude_estimation.experiments.io import (
+    RunPaths,
     load_csv,
     load_json,
     save_csv,
@@ -40,6 +52,7 @@ from quantum_cva.amplitude_estimation.experiments.problems import (
 from quantum_cva.amplitude_estimation.experiments.samplers import (
     ContrastDecaySampler,
     FastIdealAmplificationSampler,
+    QctrlPerformanceManagementSampler,
     apply_contrast_decay,
     ReplayCountSampler,
     count_good_from_counts,
@@ -211,6 +224,186 @@ def test_fast_ideal_sampler_supports_exact_three_bit_good_state() -> None:
     adapter = SamplerCountsAdapter(sampler)
     direct_counts = adapter.counts_for_grover_power(3, 25)
     assert count_good_from_counts(direct_counts, bundle) == 25
+
+
+class _RecordingSampler:
+    def __init__(self, delegate) -> None:
+        self.delegate = delegate
+        self.calls: list[list[int]] = []
+        self.contexts: list[str] = []
+
+    def set_context(self, context: str) -> None:
+        self.contexts.append(str(context))
+
+    def run(self, circuits: list[QuantumCircuit], shots: int = 1024):
+        self.calls.append([int(circuit.metadata["grover_power"]) for circuit in circuits])
+        return self.delegate.run(circuits, shots=shots)
+
+
+def test_amplification_scan_batched_pubs_preserve_rows() -> None:
+    bundle = _synthetic_bundle()
+    individual_sampler = _RecordingSampler(
+        FastIdealAmplificationSampler(bundle, T=None, seed=54321)
+    )
+    batched_sampler = _RecordingSampler(
+        FastIdealAmplificationSampler(bundle, T=None, seed=54321)
+    )
+    kwargs = {
+        "grover_powers": [0, 1, 2],
+        "repeats": 2,
+        "shots": 127,
+        "seed": 12345,
+    }
+
+    individual_rows = run_amplification_scan(
+        individual_sampler,
+        bundle,
+        **kwargs,
+    )
+    batched_rows = run_amplification_scan(
+        batched_sampler,
+        bundle,
+        **kwargs,
+        batch_circuits=True,
+    )
+
+    assert batched_rows == individual_rows
+    assert individual_sampler.contexts == ["amplification_scan"]
+    assert batched_sampler.contexts == ["amplification_scan"]
+    assert len(individual_sampler.calls) == 6
+    assert len(batched_sampler.calls) == 1
+    assert batched_sampler.calls[0] == [
+        row["grover_power"] for row in individual_rows
+    ]
+
+
+def test_topup_can_replace_only_requested_grover_power(monkeypatch) -> None:
+    backups: list[tuple[list[dict[str, object]], Path]] = []
+
+    def _record_backup(rows, path) -> None:
+        backups.append(([dict(row) for row in rows], Path(path)))
+
+    monkeypatch.setattr(
+        "quantum_cva.amplitude_estimation.experiments.cva_hwd_experiments."
+        "cva_hardware_runner.save_csv",
+        _record_backup,
+    )
+    state = ExperimentState(paths=RunPaths(Path("test-run")), config={})
+    state.amplification_count_rows = [
+        {"grover_power": "0", "shots": "10", "good_counts": "2"},
+        {"grover_power": "1", "shots": "10", "good_counts": "7"},
+    ]
+    args = SimpleNamespace(
+        scan_grover_powers="0",
+        topup_replace_existing_powers=True,
+    )
+
+    _merge_topup_amplification_rows(
+        state,
+        [{"grover_power": 0, "shots": 100, "good_counts": 13}],
+        args,
+    )
+
+    assert [int(row["grover_power"]) for row in state.amplification_count_rows] == [1, 0]
+    assert int(state.amplification_count_rows[-1]["shots"]) == 100
+    replacement = state.config["topup_replacements"][0]
+    assert replacement["grover_powers"] == [0]
+    assert replacement["replaced_rows"] == 1
+    assert replacement["replacement_rows"] == 1
+    assert backups == [
+        (
+            [{"grover_power": "0", "shots": "10", "good_counts": "2"}],
+            Path("test-run") / replacement["backup_csv"],
+        )
+    ]
+
+
+def test_qctrl_recovery_can_find_function_job_by_runtime_session() -> None:
+    class _Job:
+        def __init__(self, job_id: str, sessions: list[str]) -> None:
+            self.job_id = job_id
+            self._sessions = sessions
+
+        def runtime_sessions(self) -> list[str]:
+            return list(self._sessions)
+
+    expected = _Job("function-job", ["runtime-session"])
+
+    class _Catalog:
+        def jobs(self):
+            return [_Job("other-job", ["other-session"]), expected]
+
+    assert (
+        _find_qctrl_job(
+            _Catalog(),
+            qctrl_job_id=None,
+            session_id="runtime-session",
+        )
+        is expected
+    )
+
+
+def test_qctrl_sampler_passes_existing_runtime_session_id(monkeypatch) -> None:
+    class _FunctionJob:
+        def job_id(self) -> str:
+            return "qctrl-function-job"
+
+    class _PerformanceManagement:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def run(self, **kwargs):
+            self.calls.append(dict(kwargs))
+            return _FunctionJob()
+
+    performance_management = _PerformanceManagement()
+
+    class _Catalog:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def load(self, _function_name: str):
+            return performance_management
+
+    monkeypatch.setitem(
+        sys.modules,
+        "qiskit_ibm_catalog",
+        SimpleNamespace(QiskitFunctionsCatalog=_Catalog),
+    )
+
+    job_rows: list[dict[str, object]] = []
+    sampler = QctrlPerformanceManagementSampler(
+        instance_name="premium_new_usa",
+        backend_name="ibm_pittsburgh",
+        job_rows=job_rows,
+        soft_wallclock_limit_seconds=60.0,
+        session_id="runtime-session-id",
+    )
+    sampler.set_context("amplification_scan")
+    circuit = construct_measured_circuit(_synthetic_bundle().problem, 0)
+
+    sampler.run([circuit], shots=256)
+
+    call = performance_management.calls[0]
+    assert call["primitive"] == "sampler"
+    assert call["backend_name"] == "ibm_pittsburgh"
+    assert call["options"] == {"session_id": "runtime-session-id"}
+    assert call["pubs"] == [(circuit, None, 256)]
+    assert job_rows[0]["session_id"] == "runtime-session-id"
+    assert job_rows[0]["runtime_execution_mode"] == "session"
+
+    independent_rows: list[dict[str, object]] = []
+    independent_sampler = QctrlPerformanceManagementSampler(
+        instance_name="premium_new_usa",
+        backend_name="ibm_pittsburgh",
+        job_rows=independent_rows,
+        soft_wallclock_limit_seconds=60.0,
+    )
+    independent_sampler.run([circuit], shots=256)
+
+    assert "options" not in performance_management.calls[1]
+    assert independent_rows[0]["session_id"] == ""
+    assert independent_rows[0]["runtime_execution_mode"] == "independent_job"
 
 
 class _FakeIterativeResult:
@@ -390,6 +583,48 @@ def test_noise_floor_defaults_to_legacy_half_and_can_be_overridden() -> None:
     assert np.isclose(known_t._obs_to_ideal_prob(known_t._ideal_to_obs_prob(0.9, 0), 0), 0.9)
 
 
+def test_cabiqae_uses_free_intercept_contrast_prefactor() -> None:
+    prefactor = 0.6
+    latent = CABIQAELatentTheta(
+        epsilon_target=0.1,
+        alpha=0.05,
+        noise_model="exponential_contrast",
+        T_known=10.0,
+        noise_floor=0.125,
+        contrast_prefactor=prefactor,
+    )
+    known_t = CABIQAE(
+        epsilon_target=0.1,
+        alpha=0.05,
+        noise_model="exponential_contrast",
+        T_known=10.0,
+        noise_floor=0.125,
+        contrast_prefactor=prefactor,
+    )
+    expected = 0.125 + prefactor * np.exp(-0.1) * (0.9 - 0.125)
+
+    assert np.isclose(latent._ideal_to_obs_prob(0.9, 0), expected)
+    assert np.isclose(known_t._ideal_to_obs_prob(0.9, 0), expected)
+    assert np.isclose(latent._obs_to_ideal_prob(expected, 0), 0.9)
+    assert np.isclose(known_t._obs_to_ideal_prob(expected, 0), 0.9)
+
+
+def test_algorithm_contrast_model_prefers_valid_free_intercept_fit() -> None:
+    model = effective_contrast_model_for_algorithms(
+        {
+            "contrast_prefactor": 0.6,
+            "t_eff_free_intercept": 2.0,
+            "t_eff_zero_intercept": 1.0,
+        }
+    )
+
+    assert model == {
+        "model": "free_intercept",
+        "contrast_prefactor": 0.6,
+        "t_eff": 2.0,
+    }
+
+
 def test_amplification_calibration_can_fit_noise_floor_and_robust_k_visible() -> None:
     bundle = _synthetic_bundle()
     baseline = 0.18
@@ -426,6 +661,57 @@ def test_amplification_calibration_can_fit_noise_floor_and_robust_k_visible() ->
     assert summary["k_visible"] <= summary["k_contrast_fit_max"]
     assert summary["k_signal_from_baseline"] >= summary["k_visible"]
     assert any(point["visible_by_contrast"] for point in points)
+
+
+def test_probability_space_calibration_can_fit_wrong_side_observation() -> None:
+    bundle = _synthetic_bundle()
+    baseline = 0.18
+    prefactor = 0.92
+    t_eff = 11.0
+    shots = 200_000
+    count_rows = []
+    for k in range(6):
+        circuit = construct_measured_circuit(bundle.problem, k)
+        p_ideal = ideal_good_probability_for_circuit(circuit, bundle)
+        amplification_factor = 2 * k + 1
+        p_observed = baseline + prefactor * np.exp(-amplification_factor / t_eff) * (
+            p_ideal - baseline
+        )
+        if k == 0:
+            p_observed = baseline - np.sign(p_ideal - baseline) * 0.01
+        count_rows.append(
+            {
+                "grover_power": k,
+                "shots": shots,
+                "good_counts": int(round(float(np.clip(p_observed, 0.0, 1.0)) * shots)),
+            }
+        )
+
+    standard_points, _, _ = analyze_amplification(
+        count_rows,
+        bundle,
+        {"readout_denom": 1.0},
+        contrast_baseline=baseline,
+        min_ideal_offset=0.0,
+    )
+    relaxed_points, relaxed_summary, _ = analyze_amplification(
+        count_rows,
+        bundle,
+        {"readout_denom": 1.0},
+        contrast_baseline=baseline,
+        min_ideal_offset=0.0,
+        allow_negative_contrast_fit_points=True,
+    )
+
+    assert standard_points[0]["contrast_mitigated"] < 0.0
+    assert not standard_points[0]["used_in_fit"]
+    assert relaxed_points[0]["contrast_mitigated"] < 0.0
+    assert relaxed_points[0]["used_in_fit"]
+    assert not relaxed_points[0]["visible_by_contrast"]
+    assert relaxed_summary["contrast_fit_method"] == "weighted_probability_space"
+    assert relaxed_summary["allow_negative_contrast_fit_points"]
+    assert relaxed_summary["contrast_prefactor"] > 0.0
+    assert relaxed_summary["t_eff_free_intercept"] > 0.0
 
 
 def test_cabiqae_can_disable_hard_k_cap_without_disabling_fisher_scheduler() -> None:

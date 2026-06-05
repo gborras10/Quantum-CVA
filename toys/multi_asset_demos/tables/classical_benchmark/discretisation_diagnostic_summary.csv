@@ -1,0 +1,2 @@
+selected t*,t* index,underlying 1,underlying 2,number of MC paths,number of paths inside truncated domain,retained mass before renormalisation,number of bins S1,number of bins S2,total grid cells,probability sum after renormalisation,max cell probability,entropy of discrete distribution,number of cells explaining 50% probability mass,number of cells explaining 90% probability mass,max absolute difference vs stored tensor slice
+0.25,1,.STOXX50E,.SSMI,200000,199960,0.9998,4,4,16,1.0,0.36387277455491096,1.5335422723220864,2,4,0.0020346635394256074

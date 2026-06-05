@@ -75,6 +75,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Only include replay plot points with query cost at or below this value.",
     )
+    parser.add_argument(
+        "--include-monte-carlo-plots",
+        action="store_true",
+        help=(
+            "When plotting, append montecarlo_budget_rows.csv and montecarlo_final_rows.csv "
+            "from the run directory. Generate them with montecarlo_path.py first."
+        ),
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
     args.algorithms = ALGORITHMS

@@ -1,0 +1,14 @@
+{
+  "cva_classical_reference": 0.3115299579858748,
+  "cva_statevector": 0.476775333044657,
+  "default_l2_statevector": 0.0004554739067278678,
+  "default_n_params": 6,
+  "discount_l2_statevector": 0.009859537587022932,
+  "discount_n_params": 6,
+  "exposure_l2_statevector": 0.658788388308438,
+  "exposure_n_params": 40,
+  "p111_statevector": 0.1328730942948926,
+  "qcbm_kl_statevector": 0.1130642781112419,
+  "qcbm_n_params": 51,
+  "relative_error_statevector_pct": 53.04317315969808
+}

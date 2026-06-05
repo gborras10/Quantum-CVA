@@ -12,6 +12,7 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, qasm3
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
+from scipy.optimize import least_squares
 
 from quantum_cva.amplitude_estimation.experiments.circuits import (
     active_qubits,
@@ -40,6 +41,7 @@ from quantum_cva.amplitude_estimation.experiments.samplers import (
 )
 from quantum_cva.amplitude_estimation.experiments.solvers import (
     ALGORITHM_LABELS,
+    normalize_algorithm_key,
     run_algorithm_once,
 )
 from quantum_cva.amplitude_estimation.experiments.statistics import (
@@ -107,6 +109,27 @@ def create_run_dir(base_dir: str | Path, prefix: str = "ae_experiment") -> Path:
     run_dir = Path(base_dir) / f"{prefix}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
     return run_dir
+
+
+def load_fake_backend(fake_backend: str) -> Any:
+    """Load an IBM fake backend by snake-case, kebab-case, or class name."""
+    from qiskit_ibm_runtime import fake_provider
+
+    normalized = "".join(
+        part.capitalize() for part in str(fake_backend).replace("-", "_").split("_")
+    )
+    candidates = [normalized]
+    if not normalized.startswith("Fake"):
+        candidates.append(f"Fake{normalized}")
+    for name in candidates:
+        cls = getattr(fake_provider, name, None)
+        if cls is not None:
+            return cls()
+    available = sorted(x for x in dir(fake_provider) if x.startswith("Fake"))
+    raise ValueError(
+        f"Unknown fake backend {fake_backend!r}. "
+        f"Available examples: {available[:10]}"
+    )
 
 
 def load_existing_state(run_dir: str | Path) -> ExperimentState:
@@ -480,6 +503,7 @@ def run_amplification_scan(
     repeats: int,
     shots: int,
     seed: int,
+    batch_circuits: bool = False,
     verbose: bool = False,
 ) -> list[dict[str, Any]]:
     rng = np.random.default_rng(int(seed))
@@ -488,16 +512,32 @@ def run_amplification_scan(
     if hasattr(sampler, "set_context"):
         sampler.set_context("amplification_scan")
     rows: list[dict[str, Any]] = []
-    for batch_index, (k, repeat_index) in enumerate(schedule):
+    circuits = [
+        construct_measured_circuit(bundle.problem, k, source="amplification_scan")
+        for k, _ in schedule
+    ]
+    if batch_circuits:
         if verbose:
             print(
-                f"[amplification_scan] batch {batch_index + 1}/{len(schedule)} "
-                f"k={k} repeat={repeat_index} shots={int(shots)}",
+                f"[amplification_scan] submitting one job with "
+                f"{len(circuits)} PUBs shots_per_pub={int(shots)}",
                 flush=True,
             )
-        circuit = construct_measured_circuit(bundle.problem, k, source="amplification_scan")
-        result = sampler.run([circuit], shots=int(shots)).result()
-        counts = extract_result_counts(result, 0)
+        results = sampler.run(circuits, shots=int(shots)).result()
+    else:
+        results = None
+    for batch_index, ((k, repeat_index), circuit) in enumerate(zip(schedule, circuits)):
+        if results is None:
+            if verbose:
+                print(
+                    f"[amplification_scan] batch {batch_index + 1}/{len(schedule)} "
+                    f"k={k} repeat={repeat_index} shots={int(shots)}",
+                    flush=True,
+                )
+            result = sampler.run([circuit], shots=int(shots)).result()
+            counts = extract_result_counts(result, 0)
+        else:
+            counts = extract_result_counts(results, batch_index)
         good = count_good_from_counts(counts, bundle)
         total = int(sum(counts.values()))
         rows.append(
@@ -522,6 +562,7 @@ def _contrast_diagnostics_for_baseline(
     *,
     min_ideal_offset: float,
     min_fit_contrast_z: float,
+    allow_negative_contrast_fit_points: bool = False,
 ) -> dict[str, Any]:
     p_ideal = float(point["p_ideal"])
     p_mitigated = float(point["p_hw_mitigated"])
@@ -534,15 +575,22 @@ def _contrast_diagnostics_for_baseline(
     if abs(denom) > 1e-12:
         contrast = (p_mitigated - float(baseline)) / denom
         contrast_se = mitigated_se / abs(denom)
-        if np.isfinite(contrast) and contrast > 0.0:
+        if np.isfinite(contrast):
             contrast_z = contrast / max(contrast_se, 1e-12)
-            contrast_relative_se = contrast_se / max(contrast, 1e-12)
-    used = (
+            contrast_relative_se = contrast_se / max(abs(contrast), 1e-12)
+    used_in_log_fit = (
         abs(denom) >= float(min_ideal_offset)
         and np.isfinite(contrast)
         and 0.0 < contrast < 1.0
         and np.isfinite(contrast_z)
         and contrast_z >= float(min_fit_contrast_z)
+    )
+    used_in_probability_fit = (
+        bool(allow_negative_contrast_fit_points)
+        and np.isfinite(p_ideal)
+        and np.isfinite(p_mitigated)
+        and np.isfinite(mitigated_se)
+        and mitigated_se > 0.0
     )
     return {
         "contrast_mitigated": float(contrast) if np.isfinite(contrast) else np.nan,
@@ -551,7 +599,7 @@ def _contrast_diagnostics_for_baseline(
         "contrast_relative_se": float(contrast_relative_se)
         if np.isfinite(contrast_relative_se)
         else np.nan,
-        "used_in_fit": bool(used),
+        "used_in_fit": bool(used_in_probability_fit or used_in_log_fit),
     }
 
 
@@ -597,6 +645,7 @@ def _weighted_log_contrast_fit(
     slope_zero = float(np.sum(x * y) / np.sum(x * x))
     t_zero = float(-1.0 / slope_zero) if slope_zero < 0.0 else None
     return {
+        "fit_method": "weighted_log_contrast",
         "fit_points": int(len(x)),
         "fit_ks": fit_ks,
         "t_eff_zero_intercept": t_zero,
@@ -607,21 +656,103 @@ def _weighted_log_contrast_fit(
     }
 
 
+def _weighted_probability_contrast_fit(
+    points: Sequence[Mapping[str, Any]],
+    *,
+    baseline: float,
+) -> dict[str, Any] | None:
+    fit_points = [
+        point
+        for point in points
+        if np.isfinite(float(point["p_ideal"]))
+        and np.isfinite(float(point["p_hw_mitigated"]))
+        and np.isfinite(float(point["p_hw_mitigated_se"]))
+        and float(point["p_hw_mitigated_se"]) > 0.0
+    ]
+    if len(fit_points) < 2:
+        return None
+
+    x = np.asarray([float(point["amplification_factor"]) for point in fit_points])
+    ideal = np.asarray([float(point["p_ideal"]) for point in fit_points])
+    observed = np.asarray([float(point["p_hw_mitigated"]) for point in fit_points])
+    se = np.asarray([float(point["p_hw_mitigated_se"]) for point in fit_points])
+    fit_ks = [int(point["grover_power"]) for point in fit_points]
+
+    def residual(
+        params: np.ndarray,
+        *,
+        prefactor_fixed: float | None = None,
+    ) -> np.ndarray:
+        if prefactor_fixed is None:
+            log_prefactor, log_t_eff = params
+            prefactor = float(np.exp(log_prefactor))
+        else:
+            (log_t_eff,) = params
+            prefactor = float(prefactor_fixed)
+        t_eff = float(np.exp(log_t_eff))
+        predicted = float(baseline) + prefactor * np.exp(-x / t_eff) * (
+            ideal - float(baseline)
+        )
+        return (observed - predicted) / se
+
+    free = least_squares(
+        residual,
+        x0=np.asarray([np.log(0.8), np.log(2.0)]),
+        bounds=(
+            np.asarray([np.log(1e-6), np.log(1e-3)]),
+            np.asarray([np.log(10.0), np.log(1e3)]),
+        ),
+    )
+    if not free.success or not np.all(np.isfinite(free.x)):
+        return None
+    prefactor = float(np.exp(free.x[0]))
+    t_free = float(np.exp(free.x[1]))
+    weighted_sse = float(np.sum(residual(free.x) ** 2))
+
+    zero = least_squares(
+        lambda params: residual(params, prefactor_fixed=1.0),
+        x0=np.asarray([np.log(2.0)]),
+        bounds=(np.asarray([np.log(1e-3)]), np.asarray([np.log(1e3)])),
+    )
+    t_zero = (
+        float(np.exp(zero.x[0]))
+        if zero.success and np.all(np.isfinite(zero.x))
+        else None
+    )
+    return {
+        "fit_method": "weighted_probability_space",
+        "fit_points": int(len(x)),
+        "fit_ks": fit_ks,
+        "t_eff_zero_intercept": t_zero,
+        "t_eff_free_intercept": t_free,
+        "contrast_prefactor": prefactor,
+        "free_intercept_slope": float(-1.0 / t_free),
+        "fit_reduced_weighted_sse": float(weighted_sse / max(1, len(x) - 2)),
+    }
+
+
 def _fit_contrast_baseline(
     points: Sequence[Mapping[str, Any]],
     *,
     min_ideal_offset: float,
     min_fit_contrast_z: float,
     min_baseline_fit_points: int,
+    allow_negative_contrast_fit_points: bool = False,
 ) -> tuple[float, dict[str, Any]]:
+    fit_contrast = (
+        _weighted_probability_contrast_fit
+        if allow_negative_contrast_fit_points
+        else _weighted_log_contrast_fit
+    )
     candidates: list[dict[str, Any]] = []
     for baseline in np.linspace(0.0, 1.0, 1001):
-        fit = _weighted_log_contrast_fit(
-            points,
-            baseline=float(baseline),
-            min_ideal_offset=float(min_ideal_offset),
-            min_fit_contrast_z=float(min_fit_contrast_z),
-        )
+        fit_kwargs = {"points": points, "baseline": float(baseline)}
+        if not allow_negative_contrast_fit_points:
+            fit_kwargs.update(
+                min_ideal_offset=float(min_ideal_offset),
+                min_fit_contrast_z=float(min_fit_contrast_z),
+            )
+        fit = fit_contrast(**fit_kwargs)
         if fit is None or int(fit["fit_points"]) < int(min_baseline_fit_points):
             continue
         candidate = dict(fit)
@@ -654,12 +785,13 @@ def _fit_contrast_baseline(
     refined_high = min(1.0, best_baseline + 0.002)
     refined_candidates: list[dict[str, Any]] = []
     for baseline in np.linspace(refined_low, refined_high, 401):
-        fit = _weighted_log_contrast_fit(
-            points,
-            baseline=float(baseline),
-            min_ideal_offset=float(min_ideal_offset),
-            min_fit_contrast_z=float(min_fit_contrast_z),
-        )
+        fit_kwargs = {"points": points, "baseline": float(baseline)}
+        if not allow_negative_contrast_fit_points:
+            fit_kwargs.update(
+                min_ideal_offset=float(min_ideal_offset),
+                min_fit_contrast_z=float(min_fit_contrast_z),
+            )
+        fit = fit_contrast(**fit_kwargs)
         if (
             fit is None
             or int(fit["fit_points"]) < min_points_to_keep
@@ -675,6 +807,7 @@ def _fit_contrast_baseline(
         )
 
     return float(best["contrast_baseline"]), {
+        "contrast_fit_method": str(best["fit_method"]),
         "contrast_baseline_fit_points": int(best["fit_points"]),
         "contrast_baseline_fit_ks": [int(k) for k in best["fit_ks"]],
         "contrast_baseline_fit_reduced_weighted_sse": float(
@@ -695,6 +828,7 @@ def analyze_amplification(
     min_fit_contrast_z: float = 2.0,
     min_visible_contrast_z: float = 3.0,
     min_baseline_fit_points: int = 4,
+    allow_negative_contrast_fit_points: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[int, float]]:
     baseline_mode = str(contrast_baseline).strip().lower()
     fit_baseline = baseline_mode in {"fit", "fitted", "estimate", "estimated"}
@@ -736,6 +870,9 @@ def analyze_amplification(
             min_ideal_offset=float(min_ideal_offset),
             min_fit_contrast_z=float(min_fit_contrast_z),
             min_baseline_fit_points=int(min_baseline_fit_points),
+            allow_negative_contrast_fit_points=bool(
+                allow_negative_contrast_fit_points
+            ),
         )
         baseline_mode_out = "fitted"
     else:
@@ -754,6 +891,9 @@ def analyze_amplification(
             float(baseline),
             min_ideal_offset=float(min_ideal_offset),
             min_fit_contrast_z=float(min_fit_contrast_z),
+            allow_negative_contrast_fit_points=bool(
+                allow_negative_contrast_fit_points
+            ),
         )
         signal_z_from_baseline = abs(
             float(raw["p_hw_mitigated"]) - float(baseline)
@@ -763,7 +903,8 @@ def analyze_amplification(
             1e-12,
         )
         visible_by_contrast = bool(
-            diagnostics["used_in_fit"]
+            abs(float(raw["p_ideal"]) - float(baseline)) >= float(min_ideal_offset)
+            and 0.0 < float(diagnostics["contrast_mitigated"]) < 1.0
             and np.isfinite(float(diagnostics["contrast_signal_z"]))
             and float(diagnostics["contrast_signal_z"]) >= float(min_visible_contrast_z)
         )
@@ -778,12 +919,18 @@ def analyze_amplification(
             }
         )
 
-    fit = _weighted_log_contrast_fit(
-        raw_points,
-        baseline=float(baseline),
-        min_ideal_offset=float(min_ideal_offset),
-        min_fit_contrast_z=float(min_fit_contrast_z),
-    )
+    if allow_negative_contrast_fit_points:
+        fit = _weighted_probability_contrast_fit(
+            raw_points,
+            baseline=float(baseline),
+        )
+    else:
+        fit = _weighted_log_contrast_fit(
+            raw_points,
+            baseline=float(baseline),
+            min_ideal_offset=float(min_ideal_offset),
+            min_fit_contrast_z=float(min_fit_contrast_z),
+        )
     fit_ks = [] if fit is None else [int(k) for k in fit["fit_ks"]]
     robust_visible = [
         int(p["grover_power"])
@@ -813,6 +960,9 @@ def analyze_amplification(
         "min_fit_contrast_z": float(min_fit_contrast_z),
         "min_visible_contrast_z": float(min_visible_contrast_z),
         "min_ideal_offset": float(min_ideal_offset),
+        "allow_negative_contrast_fit_points": bool(
+            allow_negative_contrast_fit_points
+        ),
         "contrast_baseline": float(baseline),
         "contrast_baseline_mode": baseline_mode_out,
         **baseline_fit_metadata,
@@ -820,6 +970,7 @@ def analyze_amplification(
     if robust_visible:
         summary["k_visible"] = int(max(robust_visible))
     if fit is not None:
+        summary["contrast_fit_method"] = str(fit["fit_method"])
         summary["t_eff_zero_intercept"] = fit["t_eff_zero_intercept"]
         summary["t_eff_free_intercept"] = fit["t_eff_free_intercept"]
         summary["contrast_prefactor"] = fit["contrast_prefactor"]
@@ -830,14 +981,46 @@ def analyze_amplification(
     return points, summary, p_replay_by_k
 
 
+def effective_contrast_model_for_algorithms(
+    summary: Mapping[str, Any],
+) -> dict[str, float | str] | None:
+    prefactor = summary.get("contrast_prefactor")
+    t_free = summary.get("t_eff_free_intercept")
+    if prefactor is not None and t_free is not None:
+        prefactor_f = float(prefactor)
+        t_free_f = float(t_free)
+        if (
+            np.isfinite(prefactor_f)
+            and prefactor_f > 0.0
+            and np.isfinite(t_free_f)
+            and t_free_f > 0.0
+        ):
+            return {
+                "model": "free_intercept",
+                "contrast_prefactor": prefactor_f,
+                "t_eff": t_free_f,
+            }
+    t_zero = summary.get("t_eff_zero_intercept")
+    if t_zero is None:
+        return None
+    t_zero_f = float(t_zero)
+    if not np.isfinite(t_zero_f) or t_zero_f <= 0.0:
+        return None
+    return {
+        "model": "zero_intercept",
+        "contrast_prefactor": 1.0,
+        "t_eff": t_zero_f,
+    }
+
+
 def effective_t_for_algorithms(summary: Mapping[str, Any]) -> float | None:
-    value = summary.get("t_eff_zero_intercept")
-    if value is None:
-        return None
-    value_f = float(value)
-    if not np.isfinite(value_f) or value_f <= 0.0:
-        return None
-    return value_f
+    model = effective_contrast_model_for_algorithms(summary)
+    return None if model is None else float(model["t_eff"])
+
+
+def effective_contrast_prefactor_for_algorithms(summary: Mapping[str, Any]) -> float:
+    model = effective_contrast_model_for_algorithms(summary)
+    return 1.0 if model is None else float(model["contrast_prefactor"])
 
 
 def make_replay_probability_extrapolator(
@@ -845,19 +1028,12 @@ def make_replay_probability_extrapolator(
     calibration_summary: Mapping[str, Any],
 ) -> tuple[Callable[[int], float], dict[str, Any]]:
     baseline = float(calibration_summary.get("contrast_baseline", 0.5))
-    prefactor = calibration_summary.get("contrast_prefactor")
-    t_free = calibration_summary.get("t_eff_free_intercept")
-    if prefactor is not None and t_free is not None:
-        prefactor_f = float(prefactor)
-        t_eff = float(t_free)
-        model = "free_intercept"
-    else:
-        t_zero = calibration_summary.get("t_eff_zero_intercept")
-        if t_zero is None:
-            raise ValueError("Cannot extrapolate replay probabilities without valid T_eff.")
-        prefactor_f = 1.0
-        t_eff = float(t_zero)
-        model = "zero_intercept"
+    contrast_model = effective_contrast_model_for_algorithms(calibration_summary)
+    if contrast_model is None:
+        raise ValueError("Cannot extrapolate replay probabilities without valid T_eff.")
+    prefactor_f = float(contrast_model["contrast_prefactor"])
+    t_eff = float(contrast_model["t_eff"])
+    model = str(contrast_model["model"])
     theta = float(np.arcsin(np.sqrt(np.clip(bundle.true_amplitude, 0.0, 1.0))))
 
     def _extrapolate(k: int) -> float:
@@ -896,6 +1072,41 @@ def sample_replay_probabilities(
     return sampled
 
 
+def _verbose_trace_summary(
+    trace_rows: Sequence[Mapping[str, Any]],
+    final_row: Mapping[str, Any],
+) -> dict[str, Any]:
+    stages = int(len(trace_rows))
+    if trace_rows:
+        max_k = max(int(as_float(row.get("grover_power"), 0.0)) for row in trace_rows)
+        max_factor = max(
+            int(as_float(row.get("amplification_factor"), 1.0)) for row in trace_rows
+        )
+        max_queries = max(float(as_float(row.get("query_budget"), 0.0)) for row in trace_rows)
+        runtime = float(
+            as_float(
+                trace_rows[-1].get(
+                    "runtime_wall_seconds",
+                    final_row.get("runtime_wall_seconds", np.nan),
+                )
+            )
+        )
+    else:
+        max_k = int(as_float(final_row.get("k_max", 0.0)))
+        max_factor = int(as_float(final_row.get("amplification_factor_max", 1.0)))
+        max_queries = float(as_float(final_row.get("final_queries", 0.0)))
+        runtime = float(as_float(final_row.get("runtime_wall_seconds", np.nan)))
+    return {
+        "stages": stages,
+        "max_k": max_k,
+        "max_factor": max_factor,
+        "max_queries": max_queries,
+        "runtime_wall_seconds": runtime,
+        "final_estimate": float(as_float(final_row.get("final_estimate", np.nan))),
+        "final_abs_error": float(as_float(final_row.get("final_abs_error", np.nan))),
+    }
+
+
 def run_replay(
     state: ExperimentState,
     bundle: AEProblemBundle,
@@ -904,22 +1115,49 @@ def run_replay(
     algorithm_labels: Mapping[str, str] = ALGORITHM_LABELS,
     p_by_k: Mapping[int, float],
     p_se_by_k: Mapping[int, float] | None,
+    algorithm_p_by_k: Mapping[str, Mapping[int, float]] | None = None,
+    algorithm_p_se_by_k: Mapping[str, Mapping[int, float] | None] | None = None,
+    algorithm_probability_sources: Mapping[str, str] | None = None,
     replay_probability_mode: str,
     replay_probability_se_scale: float,
     budgets: Sequence[int],
     repetitions: int,
     n_shots: int,
     epsilon_target: float,
+    epsilon_targets: Mapping[str, float] | None = None,
     alpha: float,
     t_eff: float | None,
     seed: int,
+    contrast_prefactor: float = 1.0,
+    replay_max_calls: int = 128,
     extrapolate: bool = False,
+    cap_kappa: float = 2.0,
+    disable_hard_k_cap: bool = False,
+    trace_extra: Mapping[str, Any] | None = None,
     verbose: bool = False,
 ) -> None:
     state.replay_trace_rows.clear()
     state.replay_final_rows.clear()
     state.replay_budget_rows.clear()
     state.budget_summary_rows.clear()
+    state.config["replay_max_calls"] = int(replay_max_calls)
+    configured_epsilon_targets = {
+        normalize_algorithm_key(algorithm): float(
+            (epsilon_targets or {}).get(
+                normalize_algorithm_key(algorithm),
+                (epsilon_targets or {}).get(str(algorithm), epsilon_target),
+            )
+        )
+        for algorithm in algorithms
+    }
+    state.config["replay_epsilon_targets"] = configured_epsilon_targets
+    state.config["replay_solver_contrast_model"] = {
+        "contrast_prefactor": float(contrast_prefactor),
+        "t_eff": None if t_eff is None else float(t_eff),
+    }
+    state.config["replay_algorithm_probability_sources"] = dict(
+        algorithm_probability_sources or {}
+    )
     max_queries = max(int(x) for x in budgets)
     extrapolate_probability: Callable[[int], float] | None = None
     extrapolated_cache: dict[int, float] = {}
@@ -935,6 +1173,17 @@ def run_replay(
             state.config.get("contrast_baseline", 0.5),
         )
     )
+    if verbose:
+        print(
+            "[hardware_replay] "
+            f"algorithms={list(algorithms)} "
+            f"repetitions={int(repetitions)} "
+            f"n_shots={int(n_shots)} "
+            f"max_queries={max_queries} "
+            f"epsilon_targets={configured_epsilon_targets} "
+            f"t_eff={t_eff}",
+            flush=True,
+        )
     for rep in range(int(repetitions)):
         replay_rng = np.random.default_rng(int(seed) + 7919 * rep)
         rep_p_by_k = sample_replay_probabilities(
@@ -945,10 +1194,39 @@ def run_replay(
             se_scale=float(replay_probability_se_scale),
         )
         for alg_index, algorithm in enumerate(algorithms):
+            algorithm_key = normalize_algorithm_key(algorithm)
+            algorithm_epsilon_target = configured_epsilon_targets[algorithm_key]
+            probability_source = str(
+                (algorithm_probability_sources or {}).get(
+                    algorithm_key,
+                    "hardware_empirical",
+                )
+            )
+            algorithm_probability_map = (algorithm_p_by_k or {}).get(algorithm_key)
+            if algorithm_probability_map is None:
+                rep_algorithm_p_by_k = rep_p_by_k
+            else:
+                rep_algorithm_p_by_k = sample_replay_probabilities(
+                    algorithm_probability_map,
+                    (algorithm_p_se_by_k or {}).get(algorithm_key),
+                    mode=str(replay_probability_mode),
+                    rng=np.random.default_rng(int(seed) + 7919 * rep + 101 * alg_index),
+                    se_scale=float(replay_probability_se_scale),
+                )
+            if verbose:
+                print(
+                    "[hardware_replay] "
+                    f"rep={rep + 1}/{int(repetitions)} "
+                    f"alg={algorithm_labels.get(str(algorithm), str(algorithm))} "
+                    f"epsilon={algorithm_epsilon_target:.6g} "
+                    "start",
+                    flush=True,
+                )
             sampler = ReplayCountSampler(
-                rep_p_by_k,
+                rep_algorithm_p_by_k,
                 bundle,
                 seed=int(seed) + 1009 * rep + 17 * alg_index,
+                max_calls=int(replay_max_calls),
                 extrapolate_probability=extrapolate_probability,
                 extrapolated_cache=extrapolated_cache,
             )
@@ -959,30 +1237,69 @@ def run_replay(
                     bundle,
                     run_kind="hardware_replay",
                     repetition=rep,
-                    epsilon_target=float(epsilon_target),
+                    epsilon_target=algorithm_epsilon_target,
                     alpha=float(alpha),
                     n_shots=int(n_shots),
                     max_queries=int(max_queries),
                     t_eff=t_eff,
                     seed=int(seed) + rep + alg_index,
                     algorithm_labels=algorithm_labels,
-                    solver_kwargs={"noise_floor": contrast_baseline},
+                    cap_kappa=float(cap_kappa),
+                    disable_hard_k_cap=bool(disable_hard_k_cap),
+                    solver_kwargs={
+                        "noise_floor": contrast_baseline,
+                        "contrast_prefactor": float(contrast_prefactor),
+                    },
+                    trace_extra={
+                        **dict(trace_extra or {}),
+                        "epsilon_target": algorithm_epsilon_target,
+                        "replay_probability_source_mode": probability_source,
+                    },
                 )
                 if extrapolate and sampler.extrapolated_ks_used:
                     used = {int(k) for k in sampler.extrapolated_ks_used}
                     for row in trace_rows:
                         row["replay_probability_source"] = (
-                            "extrapolated" if int(row["grover_power"]) in used else "measured"
+                            "contrast_model"
+                            if probability_source == "contrast_model_all_k"
+                            else (
+                                "extrapolated"
+                                if int(row["grover_power"]) in used
+                                else "measured"
+                            )
                         )
                         row["replay_probability_extrapolated"] = int(row["grover_power"]) in used
                     final_row["extrapolated_replay_ks_json"] = json.dumps(sorted(used))
                     final_row["n_extrapolated_replay_ks"] = len(used)
+                elif probability_source == "contrast_model_all_k":
+                    for row in trace_rows:
+                        row["replay_probability_source"] = "contrast_model"
+                        row["replay_probability_extrapolated"] = False
                 state.replay_trace_rows.extend(trace_rows)
                 state.replay_final_rows.append(final_row)
                 state.replay_budget_rows.extend(
                     rows_at_budgets(trace_rows, budgets, run_kind="hardware_replay")
                 )
+                if verbose:
+                    summary = _verbose_trace_summary(trace_rows, final_row)
+                    print(
+                        "[hardware_replay] "
+                        f"rep={rep + 1}/{int(repetitions)} "
+                        f"alg={algorithm_labels.get(str(algorithm), str(algorithm))} "
+                        f"stages={summary['stages']} "
+                        f"k_max={summary['max_k']} "
+                        f"K_max={summary['max_factor']} "
+                        f"queries={summary['max_queries']:.0f}/{max_queries} "
+                        f"runtime={summary['runtime_wall_seconds']:.4g}s "
+                        f"estimate={summary['final_estimate']:.6g} "
+                        f"abs_err={summary['final_abs_error']:.3g}",
+                        flush=True,
+                    )
             except Exception as exc:
+                cause = getattr(exc, "__cause__", None)
+                cause_message = (
+                    f"{type(cause).__name__}: {cause}" if cause is not None else ""
+                )
                 state.error_rows.append(
                     {
                         "phase": "hardware_replay",
@@ -990,9 +1307,19 @@ def run_replay(
                         "repetition": rep,
                         "error_type": type(exc).__name__,
                         "error": str(exc),
+                        "error_cause": cause_message,
                         "timestamp_epoch": time.time(),
                     }
                 )
+                if verbose:
+                    detail = f" caused by {cause_message}" if cause_message else ""
+                    print(
+                        "[hardware_replay] "
+                        f"rep={rep + 1}/{int(repetitions)} "
+                        f"alg={algorithm_labels.get(str(algorithm), str(algorithm))} "
+                        f"failed: {type(exc).__name__}: {exc}{detail}",
+                        flush=True,
+                    )
         if verbose and rep % 10 == 0:
             print(f"[hardware_replay] completed repetition {rep + 1}/{int(repetitions)}")
     state.budget_summary_rows = aggregate_budget_summary(
@@ -1092,6 +1419,9 @@ def run_dry_run_experiment(
     state.amplification_point_rows = points
     state.calibration_summary.update(calibration)
     t_eff = effective_t_for_algorithms(state.calibration_summary)
+    contrast_prefactor = effective_contrast_prefactor_for_algorithms(
+        state.calibration_summary
+    )
     p_by_k = {int(r["grover_power"]): float(r["p_hw_mitigated"]) for r in points}
     p_se_by_k = {int(r["grover_power"]): float(r["p_hw_mitigated_se"]) for r in points}
     run_replay(
@@ -1109,5 +1439,6 @@ def run_dry_run_experiment(
         alpha=float(alpha),
         t_eff=t_eff,
         seed=int(seed),
+        contrast_prefactor=contrast_prefactor,
     )
     return state

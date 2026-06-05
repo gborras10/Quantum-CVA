@@ -1,0 +1,18 @@
+\begin{tabular}{lllllrrrrl}
+\toprule
+component & metric & metric_family & training_regime & evaluation_regime & value & std & shots & repetitions & source \\
+\midrule
+QCBM & KL(target || p_theta) & KL & ideal_statevector & ideal_statevector & 0.0105893 & NaN & NaN & NaN & data\multi_asset\6q_instance\quantum\training\qcbm\statevector\training_qcbm_heavyhex6_6lay.npz \\
+QCBM & KL(target || p_theta) & KL & ideal_statevector & shots_backend_noise & 0.0473797 & 0.000414918 & 100000 & 10 & data\multi_asset\6q_instance\quantum\training\qcbm\shots\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz \\
+QCBM & KL(target || p_theta) & KL & shots_backend_noise & shots_backend_noise & 0.0734249 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\qcbm\shots\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz \\
+CRCA default probabilities & MSE(f_target, f_theta) & MSE & ideal_statevector & ideal_statevector & 2.91843e-08 & NaN & NaN & NaN & data\multi_asset\6q_instance\quantum\training\crca\default_probabilities\training_crca2.npz \\
+CRCA default probabilities & MSE(f_target, f_theta) & MSE & ideal_statevector & shots_backend_noise & 7.368e-05 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\crca\default_probabilities\training_crca2_shots_backend_noise_snapshot.npz \\
+CRCA default probabilities & MSE(f_target, f_theta) & MSE & shots_backend_noise & shots_backend_noise & 7.07963e-05 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\crca\default_probabilities\training_crca2_shots_backend_noise_snapshot.npz \\
+CRCA discount factors & MSE(f_target, f_theta) & MSE & ideal_statevector & ideal_statevector & 3.71903e-06 & NaN & NaN & NaN & data\multi_asset\6q_instance\quantum\training\crca\discount_factors\training_crca2.npz \\
+CRCA discount factors & MSE(f_target, f_theta) & MSE & ideal_statevector & shots_backend_noise & 8.20739e-05 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\crca\discount_factors\training_crca2_shots_backend_noise_snapshot.npz \\
+CRCA discount factors & MSE(f_target, f_theta) & MSE & shots_backend_noise & shots_backend_noise & 3.19479e-05 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\crca\discount_factors\training_crca2_shots_backend_noise_snapshot.npz \\
+CRCA positive exposure & MSE(f_target, f_theta) & MSE & ideal_statevector & ideal_statevector & 0.00319749 & NaN & NaN & NaN & data\multi_asset\6q_instance\quantum\training\crca\positive_exposure\training_heavy_hex_star.npz \\
+CRCA positive exposure & MSE(f_target, f_theta) & MSE & ideal_statevector & shots_backend_noise & 0.016888 & 0.000142279 & 100000 & 10 & cva_pricing_pipeline\multi_asset\6q_instance\training_multi_asset\functional_encoding\statevector\positive_exposure\layers_comparison\results\statevector\tables\positive_exposure_statevector_vs_backend_noise_eval.csv \\
+CRCA positive exposure & MSE(f_target, f_theta) & MSE & shots_backend_noise & shots_backend_noise & 0.0101888 & NaN & 60000 & NaN & data\multi_asset\6q_instance\quantum\training\crca\positive_exposure\training_heavy_hex_star_shots_backend_noise_snapshot.npz \\
+\bottomrule
+\end{tabular}

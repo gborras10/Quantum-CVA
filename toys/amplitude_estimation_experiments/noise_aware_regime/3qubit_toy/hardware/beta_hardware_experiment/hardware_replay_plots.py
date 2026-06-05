@@ -16,6 +16,7 @@ if str(TOY_DIR) not in sys.path:
 from ae_final_error_plots import plot_final_error_scatter  # noqa: E402
 from hardware_replay_query_plot import (  # noqa: E402
     DEFAULT_BUDGETS,
+    append_monte_carlo_rows,
     budget_rows_from_trace_rows,
     plot_hardware_replay_actual_queries,
 )
@@ -34,6 +35,9 @@ INPUT_DIR = CURRENT_DIR / "experiment_results" / "csv_results"
 TRACE_ROWS_CSV = INPUT_DIR / "replay_trace_rows.csv"
 REPLAY_BUDGET_ROWS_CSV = INPUT_DIR / "replay_budget_rows.csv"
 FINAL_ROWS_CSV = INPUT_DIR / "replay_final_rows.csv"
+INCLUDE_MONTE_CARLO = False
+MONTE_CARLO_BUDGET_ROWS_CSV = INPUT_DIR / "montecarlo_budget_rows.csv"
+MONTE_CARLO_FINAL_ROWS_CSV = INPUT_DIR / "montecarlo_final_rows.csv"
 
 # Output directory.
 OUTPUT_DIR = CURRENT_DIR / "experiment_results" / "plots"
@@ -110,6 +114,24 @@ def load_final_rows() -> pd.DataFrame:
     return final_rows_from_trace(TRACE_ROWS_CSV)
 
 
+def append_monte_carlo_final_rows(
+    final_rows: pd.DataFrame,
+    *,
+    include_monte_carlo: bool,
+    monte_carlo_path: Path,
+) -> pd.DataFrame:
+    if not include_monte_carlo:
+        return final_rows
+    if not monte_carlo_path.exists() or monte_carlo_path.stat().st_size == 0:
+        raise FileNotFoundError(
+            f"{monte_carlo_path} does not exist. Run montecarlo_path.py first."
+        )
+    monte_carlo = pd.read_csv(monte_carlo_path)
+    if monte_carlo.empty:
+        return final_rows
+    return pd.concat([final_rows, monte_carlo], ignore_index=True, sort=False)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build hardware replay plots.")
     parser.add_argument(
@@ -118,6 +140,14 @@ def main(argv: list[str] | None = None) -> None:
         default=QUERY_MAX_QUERIES,
         help="Only plot error-vs-queries rows with query cost at or below this value.",
     )
+    parser.add_argument(
+        "--include-monte-carlo",
+        action="store_true",
+        default=INCLUDE_MONTE_CARLO,
+        help="Append montecarlo_budget_rows.csv and montecarlo_final_rows.csv.",
+    )
+    parser.add_argument("--monte-carlo-budget-rows", type=Path, default=MONTE_CARLO_BUDGET_ROWS_CSV)
+    parser.add_argument("--monte-carlo-final-rows", type=Path, default=MONTE_CARLO_FINAL_ROWS_CSV)
     args = parser.parse_args(argv)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -126,6 +156,11 @@ def main(argv: list[str] | None = None) -> None:
             plot_rows = pd.read_csv(REPLAY_BUDGET_ROWS_CSV)
         else:
             plot_rows = budget_rows_from_trace_rows(pd.read_csv(TRACE_ROWS_CSV), DEFAULT_BUDGETS)
+        plot_rows = append_monte_carlo_rows(
+            plot_rows,
+            args.monte_carlo_budget_rows,
+            include_monte_carlo=args.include_monte_carlo,
+        )
         plot_hardware_replay_actual_queries(
             plot_rows,
             ERROR_VS_QUERIES_PNG,
@@ -141,7 +176,11 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Saved error-vs-queries summary: {ERROR_VS_QUERIES_SUMMARY_CSV}")
 
     if GENERATE_FINAL_ERROR_VS_QUERIES_SCATTER or GENERATE_FINAL_ERROR_VS_RUNTIME_SCATTER:
-        final_rows = load_final_rows()
+        final_rows = append_monte_carlo_final_rows(
+            load_final_rows(),
+            include_monte_carlo=args.include_monte_carlo,
+            monte_carlo_path=args.monte_carlo_final_rows,
+        )
         if GENERATE_FINAL_ERROR_VS_QUERIES_SCATTER:
             query_plot = OUTPUT_DIR / f"{FINAL_SCATTER_PREFIX}_queries.png"
             query_summary = OUTPUT_DIR / f"{FINAL_SCATTER_PREFIX}_queries_summary.csv"

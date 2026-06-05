@@ -1,0 +1,12 @@
+backend_mode,context,job_id,n_circuits,sampler_call_index,shots,submitted_at_epoch
+runtime,readout_calibration,d8ba9ntmdd1s73b99fbg,2,0,8192,1779868896.407943
+runtime,amplification_scan,d8badcce6kns73aaptp0,1,0,4096,1779869362.3863504
+runtime,amplification_scan,d8bademhonmc73cjnqo0,1,1,4096,1779869370.9495413
+runtime,amplification_scan,d8badgdmdd1s73b99jig,1,2,4096,1779869378.264666
+runtime,amplification_scan,d8badice6kns73aapu2g,1,3,4096,1779869386.2246385
+runtime,amplification_scan,d8badkdmdd1s73b99jo0,1,4,4096,1779869394.383811
+runtime,amplification_scan,d8badmse6kns73aapu7g,1,5,4096,1779869403.9479825
+runtime,amplification_scan,d8badose6kns73aapua0,1,6,4096,1779869411.985392
+runtime,amplification_scan,d8badqmhonmc73cjnr4g,1,7,4096,1779869419.2140343
+runtime,amplification_scan,d8badsehonmc73cjnr70,1,8,4096,1779869426.4259458
+runtime,amplification_scan,d8badu159p8c73bm82sg,1,9,4096,1779869433.525849

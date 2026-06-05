@@ -423,6 +423,7 @@ class CVAPipelineRunner:
             simulate_multi_asset_gbm,
         )
         from quantum_cva.multi_asset.classical.probability_and_underlying.piecewise_volatility_utils import (
+            build_integrated_covariance_grid,
             build_piecewise_sigma_grid,
             build_residual_volatility_function_for_underlying,
         )
@@ -483,6 +484,12 @@ class CVAPipelineRunner:
             underlyings=underlyings,
             sim_times=t,
         )
+        integrated_covariance_grid = build_integrated_covariance_grid(
+            atm_vol_curves=atm_vol_curves,
+            underlyings=underlyings,
+            sim_times=t,
+            rho=rho,
+        )
         s_by_time = simulate_multi_asset_gbm(
             S0=s0_list,
             mu=mu_list,
@@ -495,6 +502,7 @@ class CVAPipelineRunner:
             replications=int(classical.replications),
             replication_seed=int(classical.replication_seed),
             pathwise=True,
+            integrated_covariances=integrated_covariance_grid,
         )
 
         sigma_funcs = {
@@ -588,11 +596,21 @@ class CVAPipelineRunner:
 
         t_fine = np.linspace(0.0, maturity_max, int(classical.fine_time_grid_size), dtype=float)[1:]
         z_fine = rng.standard_normal(size=(int(classical.n_paths), t_fine.size, d))
+        sigma_grid_fine = build_piecewise_sigma_grid(
+            atm_vol_curves=atm_vol_curves,
+            underlyings=underlyings,
+            sim_times=t_fine,
+        )
+        integrated_covariance_grid_fine = build_integrated_covariance_grid(
+            atm_vol_curves=atm_vol_curves,
+            underlyings=underlyings,
+            sim_times=t_fine,
+            rho=rho,
+        )
         s_by_time_fine = simulate_multi_asset_gbm(
             S0=s0_list,
             mu=mu_list,
-            sigma=sigma_grid,
-            sigma_times=t,
+            sigma=sigma_grid_fine,
             rho=rho,
             t=t_fine,
             Z=z_fine,
@@ -601,6 +619,7 @@ class CVAPipelineRunner:
             replications=int(classical.replications),
             replication_seed=int(classical.replication_seed),
             pathwise=True,
+            integrated_covariances=integrated_covariance_grid_fine,
         )
 
         small_engine = make_engine(cfg.quantum.n_bits_per_asset)

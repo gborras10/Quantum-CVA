@@ -1,0 +1,67 @@
+{
+  "backend_name": "ibm_basquecountry",
+  "seed_transpiler": 1234,
+  "transpilation_opt_level": 3,
+  "approximation_degree": 1.0,
+  "output_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\cva_pricing\\algebraic_cva",
+  "logical_unbound": {
+    "num_qubits": 9,
+    "num_parameters": 103,
+    "symbolic_gate_product_files": [
+      "logical_unbound_symbolic_gates.txt",
+      "logical_unbound_symbolic_gates.tex"
+    ],
+    "symbolic_objective_amplitude_files": [
+      "cva_objective_symbolic_amplitudes.txt",
+      "cva_objective_symbolic_amplitudes.tex"
+    ],
+    "parameter_vectors": {
+      "theta_qcbm": 51,
+      "theta_v": 40,
+      "theta_q": 6,
+      "theta_p": 6
+    },
+    "depth": 63,
+    "size": 109
+  },
+  "logical_bound": {
+    "num_qubits": 9,
+    "num_parameters": 0,
+    "matrix_shape": [
+      512,
+      512
+    ]
+  },
+  "transpiled_bound": {
+    "num_qubits": 156,
+    "active_physical_qubits": [
+      79,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      98,
+      111
+    ],
+    "num_active_physical_qubits": 9,
+    "depth": 103,
+    "size": 246,
+    "two_qubit_gates": 69,
+    "active_matrix_status": "written"
+  },
+  "projection": {
+    "objective_qubits": [
+      6,
+      7,
+      8
+    ],
+    "good_state": "111",
+    "p111_projector": 0.15211107460877646,
+    "p111_reference": 0.1521110746087765,
+    "cva_projector": 0.6714100069431602,
+    "cva_reference": 0.6714100069431603,
+    "scale": 4.413945589892121
+  }
+}

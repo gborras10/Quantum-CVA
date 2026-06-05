@@ -1,0 +1,27 @@
+Algebraic CVA operator form
+===========================
+
+Register order:
+  [t0, t1, s0, s1, s2, s3, a_exposure, a_default, a_discount]
+
+State-preparation operator:
+  A(theta) = U_p(theta_p) U_q(theta_q) U_v(theta_v) U_qcbm(theta_qcbm)
+
+Composition order in Qiskit:
+  1. U_qcbm on [t, s]
+  2. U_v on [t, s, a_exposure]
+  3. U_q on [t, a_default]
+  4. U_p on [t, a_discount]
+
+CVA projector:
+  Pi_111 = I_(2^6) tensor |111><111|
+  objective_qubits = [6, 7, 8]
+
+Projected state and amplitude:
+  |xi> = A(theta*) |0^9>
+  |xi_111> = Pi_111 |xi>
+  p_111 = <xi| Pi_111 |xi> = || |xi_111> ||^2
+
+CVA post-processing:
+  CVA = 2^m (1 - R) C_v C_q C_p p_111
+  scale = 4.4139455898921209e+00

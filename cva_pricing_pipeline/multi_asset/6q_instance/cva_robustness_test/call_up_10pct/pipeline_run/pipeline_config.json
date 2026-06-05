@@ -1,0 +1,240 @@
+{
+  "assets": [
+    {
+      "dividend_yield": 0.0224722,
+      "symbol": ".STOXX50E"
+    },
+    {
+      "dividend_yield": 0.0316306,
+      "symbol": ".SSMI"
+    }
+  ],
+  "backend_noise": {
+    "approximation_degree": 1.0,
+    "backend_name": "ibm_basquecountry",
+    "local_2q_quantile": 0.95,
+    "noise_snapshot_iso_utc": "2026-04-07T12:10:00+00:00",
+    "readout_quantile": 0.95,
+    "relax_if_needed": true,
+    "runtime_channel": "ibm_cloud",
+    "seed_transpiler": 1234,
+    "simulator_method": "density_matrix",
+    "simulator_seed": 20260407,
+    "transpilation_opt_level": 3,
+    "use_fractional_gates": true
+  },
+  "classical": {
+    "antithetic": true,
+    "cds_pay_freq": 4,
+    "fine_time_grid_size": 50,
+    "flattening_order": "time_major",
+    "grid_convergence_max_bits": 6,
+    "grid_convergence_min_bits": 1,
+    "grid_limit_bits": 8,
+    "m_time": 2,
+    "moment_match": true,
+    "n_paths": 100000,
+    "n_sigma": 3.0,
+    "payoff_repr": "left",
+    "recovery_rate_cva": 0.415,
+    "replication_seed": 12345,
+    "replications": 1,
+    "seed": 105
+  },
+  "crca_default_training": {
+    "ansatz_type": "native_tree",
+    "blocking": true,
+    "init_scale": 0.1,
+    "last_avg": 25,
+    "m_time": 2,
+    "n_iters": 70,
+    "n_layers": 1,
+    "n_price": 0,
+    "native_1q_order": [
+      "rx",
+      "rz"
+    ],
+    "optimizer": "SPSA",
+    "resamplings": 3,
+    "second_order": true,
+    "shot_seed": 355,
+    "shots": 60000,
+    "target_magnitude": null,
+    "theta_seed": 42,
+    "topology": "crca2",
+    "trust_region": true
+  },
+  "crca_discount_training": {
+    "ansatz_type": "native_tree",
+    "blocking": true,
+    "init_scale": 0.1,
+    "last_avg": 25,
+    "m_time": 2,
+    "n_iters": 70,
+    "n_layers": 1,
+    "n_price": 0,
+    "native_1q_order": [
+      "rx",
+      "rz"
+    ],
+    "optimizer": "SPSA",
+    "resamplings": 3,
+    "second_order": true,
+    "shot_seed": 355,
+    "shots": 60000,
+    "target_magnitude": null,
+    "theta_seed": 42,
+    "topology": "crca2",
+    "trust_region": true
+  },
+  "crca_exposure_training": {
+    "init_scale": 0.01,
+    "init_selection_eval_repeats": 5,
+    "lambda_l2_mix": 25.0,
+    "lambda_pos": 10.0,
+    "lambda_zero": 15.0,
+    "last_avg": 40,
+    "m_time": 2,
+    "n_layers": 2,
+    "n_price": 4,
+    "optimizer": "SPSA",
+    "postselect_eval_repeats": 5,
+    "postselect_top_k": 12,
+    "relative_eps": 0.0001,
+    "repeat_seed_stride": 10007,
+    "robust_rel_clip": 2.5,
+    "robust_rel_huber_delta": 0.6,
+    "robust_zero_huber_delta": 0.02,
+    "shot_seed": 355,
+    "shots": 60000,
+    "single_stage_blocking": true,
+    "single_stage_eval_repeats": 2,
+    "single_stage_hessian_delay": 60,
+    "single_stage_maxiter": 270,
+    "single_stage_mode": "l2",
+    "single_stage_regularization": 0.02,
+    "single_stage_resamplings": {
+      "0": 3,
+      "120": 4,
+      "260": 5,
+      "420": 6
+    },
+    "single_stage_second_order": true,
+    "single_stage_target_magnitude": 0.08,
+    "single_stage_trust_region": true,
+    "stage1_blocking": true,
+    "stage1_eval_repeats": 2,
+    "stage1_hessian_delay": 40,
+    "stage1_maxiter": 120,
+    "stage1_mode": "l2",
+    "stage1_regularization": 0.02,
+    "stage1_resamplings": {
+      "0": 3,
+      "40": 4,
+      "90": 5
+    },
+    "stage1_second_order": true,
+    "stage1_target_magnitude": 0.08,
+    "stage1_trust_region": true,
+    "stage2_blocking": true,
+    "stage2_eval_repeats": 3,
+    "stage2_hessian_delay": 0,
+    "stage2_maxiter": 150,
+    "stage2_mode": "support_aware",
+    "stage2_regularization": 0.0,
+    "stage2_resamplings": {
+      "0": 4,
+      "120": 6,
+      "280": 8
+    },
+    "stage2_second_order": false,
+    "stage2_target_magnitude": 0.05,
+    "stage2_trust_region": true,
+    "target_threshold": 1e-10,
+    "thermal_relaxation_requested": true,
+    "theta_seed": 12,
+    "topology": "heavy_hex_star",
+    "use_statevector_warmstart": true,
+    "use_two_stage": false,
+    "warmstart_path": "data/multi_asset/6q_instance/quantum/training/crca/positive_exposure/training_heavy_hex_star.npz"
+  },
+  "final_cva": {
+    "classical_reference_grid_bits": 2,
+    "iqae_alpha": 0.05,
+    "iqae_epsilon_target": 0.001,
+    "qae_num_eval_qubits": 6,
+    "run_iqae": false,
+    "run_qae": false,
+    "statevector_backend_name": "statevector"
+  },
+  "instruments": [
+    {
+      "asset_symbol": ".STOXX50E",
+      "kind": "call",
+      "maturity_years": 0.25,
+      "multiplier": 4.0,
+      "quantity": 1.0,
+      "strike": 4950.0
+    },
+    {
+      "asset_symbol": ".SSMI",
+      "kind": "put",
+      "maturity_years": 0.5,
+      "multiplier": 2.0,
+      "quantity": -1.0,
+      "strike": 12500.0
+    }
+  ],
+  "market_data": {
+    "atm_vol_surfaces_path": "data/loaded_market_data/vol_surfaces.xlsx",
+    "credit_data_path": "data/loaded_market_data/iberdrola_data.xlsx",
+    "discount_curve_path": "data/loaded_market_data/discount_curve.xlsx",
+    "flat_interest_rate_override": null,
+    "historical_series_path": "data/loaded_market_data/time_series.xlsx",
+    "valuation_date": "2026-03-15"
+  },
+  "output": {
+    "checkpoint_tol": 1e-15,
+    "save_npz": true,
+    "save_plots": false,
+    "save_qpy": true,
+    "show_plots": false
+  },
+  "paths": {
+    "benchmark_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\call_up_10pct\\benchmark\\benchmark.npz",
+    "crca_default_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/default_probabilities/training_crca2_shots_backend_noise_snapshot.npz",
+    "crca_discount_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/discount_factors/training_crca2_shots_backend_noise_snapshot.npz",
+    "crca_exposure_training_relative_path": "data/multi_asset/6q_instance/quantum/training/crca/positive_exposure/training_heavy_hex_star_shots_backend_noise_snapshot.npz",
+    "instance_name": "6q_instance",
+    "qcbm_training_relative_path": "data/multi_asset/6q_instance/quantum/training/qcbm/shots/6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+    "results_dir_relative_path": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_robustness_test\\call_up_10pct\\pipeline_run"
+  },
+  "qcbm_training": {
+    "cost_seed": null,
+    "dirichlet_alpha": 1.0,
+    "entangler": "rzz",
+    "eps_cost": 1e-09,
+    "init_scale": 0.01,
+    "kl_eval_runs": 10,
+    "kl_eval_seed_base": 42,
+    "kl_eval_shots": 100000,
+    "n_iters": 500,
+    "n_layers": 6,
+    "optimizer": "SPSA",
+    "resamplings": 3,
+    "shots": 60000,
+    "spsa_blocking": false,
+    "spsa_regularization": 0.01,
+    "spsa_trust_region": true,
+    "statevector_reference_path": "data/multi_asset/6q_instance/quantum/training/qcbm/statevector/training_qcbm_heavyhex6_6lay.npz",
+    "target_magnitude": null,
+    "theta_seed": 42,
+    "topology": "qcbm_heavyhex6"
+  },
+  "quantum": {
+    "n_bits_per_asset": [
+      2,
+      2
+    ]
+  }
+}

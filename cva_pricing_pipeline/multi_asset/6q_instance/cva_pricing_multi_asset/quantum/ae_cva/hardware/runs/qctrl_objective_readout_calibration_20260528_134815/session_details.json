@@ -1,0 +1,25 @@
+{
+  "mode": "hardware",
+  "created_at_epoch": 1779968903.349856,
+  "hardware_executor": "qctrl",
+  "instance_name": "premium_new_usa",
+  "backend_name": "ibm_pittsburgh",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "submitted_circuit_kind": "abstract_logical",
+  "qctrl_transpilation_policy": "fire_opal_managed",
+  "runtime_session_strategy": "existing_qiskit_runtime_session",
+  "calibration_submission": "batched_pubs_single_job",
+  "shots_per_pub": 4096,
+  "assignment_repeats": 2,
+  "include_k0_probe": true,
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "bitstring_convention": "rightmost character corresponds to objective_qubits[0]",
+  "session_id": "6c70ad76-a4d5-4c27-9b68-bb7e71ca6c94",
+  "session_started_at_epoch": 1779968904.6667745,
+  "session_finished_at_epoch": 1779969122.411764
+}

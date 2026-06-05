@@ -1,0 +1,35 @@
+{
+  "readout": {
+    "p_obs_good_given_bad": 0.0,
+    "p_obs_good_given_good": 1.0,
+    "readout_denom": 1.0,
+    "readout_usable": 1.0,
+    "readout_skipped": false,
+    "readout_mitigation_mode": "measured_linear_correction"
+  },
+  "calibration_status": "ok",
+  "fit_points": 3,
+  "t_eff_zero_intercept": 1.8019821620777248,
+  "t_eff_free_intercept": 1.8918875595698206,
+  "contrast_prefactor": 0.5867542010323192,
+  "free_intercept_slope": -0.5285726389719382,
+  "k_visible": 2,
+  "k_visible_criterion": "max k with valid contrast, contrast_signal_z >= 3, and |p_ideal - baseline| >= 0.08",
+  "k_signal_from_baseline": 2,
+  "k_contrast_fit_max": 3,
+  "min_fit_contrast_z": 2.0,
+  "min_visible_contrast_z": 3.0,
+  "min_ideal_offset": 0.08,
+  "contrast_baseline": 0.14032,
+  "contrast_baseline_mode": "fitted",
+  "contrast_baseline_fit_points": 3,
+  "contrast_baseline_fit_ks": [
+    1,
+    2,
+    3
+  ],
+  "contrast_baseline_fit_reduced_weighted_sse": 3.1466454183408046,
+  "contrast_baseline_fit_candidate_count": 53,
+  "contrast_baseline_fit_min_points_kept": 3,
+  "fit_reduced_weighted_sse": 3.1466454183408046
+}

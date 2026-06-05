@@ -440,6 +440,211 @@ class RuntimeCountSampler:
         return self._cache[key]
 
 
+class _VerboseQctrlJob:
+    """Report Q-CTRL and downstream Runtime progress while awaiting a result."""
+
+    _TERMINAL_STATES = {"CANCELLED", "DONE", "ERROR", "FAILED", "STOPPED", "SUCCEEDED"}
+
+    def __init__(self, job: Any, *, context: str, poll_seconds: float = 30.0) -> None:
+        self._job = job
+        self._context = str(context)
+        self._poll_seconds = float(poll_seconds)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._job, name)
+
+    def result(self) -> Any:
+        wait_started = time.perf_counter()
+        while True:
+            status = str(self._job.status()).upper()
+            runtime_jobs = self._associated_ids("runtime_jobs")
+            runtime_sessions = self._associated_ids("runtime_sessions")
+            elapsed = time.perf_counter() - wait_started
+            print(
+                "[qctrl] "
+                f"context={self._context} job={_job_id(self._job)} "
+                f"status={status} wait_seconds={elapsed:.1f} "
+                f"runtime_jobs={list(runtime_jobs)} "
+                f"runtime_sessions={list(runtime_sessions)}",
+                flush=True,
+            )
+            if status in self._TERMINAL_STATES:
+                break
+            time.sleep(self._poll_seconds)
+        return self._job.result()
+
+    def _associated_ids(self, method_name: str) -> tuple[str, ...]:
+        method = getattr(self._job, method_name, None)
+        if not callable(method):
+            return ()
+        try:
+            return tuple(str(item) for item in method())
+        except Exception as exc:
+            print(
+                "[qctrl] "
+                f"job={_job_id(self._job)} unable_to_query_{method_name}="
+                f"{type(exc).__name__}: {exc}",
+                flush=True,
+            )
+            return ()
+
+
+class QctrlPerformanceManagementSampler:
+    """Qiskit Functions/Q-CTRL sampler wrapper.
+
+    Fire Opal Performance Management expects abstract circuits and performs its
+    own logical transpilation, hardware mapping, and error-suppression pipeline.
+    Unlike RuntimeCountSampler, this wrapper intentionally does not submit ISA
+    circuits produced by a local Qiskit pass manager.
+    """
+
+    def __init__(
+        self,
+        *,
+        instance_name: str,
+        backend_name: str | None,
+        pass_manager: Any | None = None,
+        job_rows: list[dict[str, Any]],
+        soft_wallclock_limit_seconds: float,
+        max_grover_power: int | None = None,
+        max_calls_by_context: Mapping[str, int] | None = None,
+        start_time: float | None = None,
+        function_name: str = "q-ctrl/performance-management",
+        catalog_channel: str | None = None,
+        session_id: str | None = None,
+        verbose: bool = False,
+        poll_seconds: float = 30.0,
+    ) -> None:
+        from qiskit_ibm_catalog import QiskitFunctionsCatalog
+
+        self.instance_name = str(instance_name)
+        self.backend_name = None if backend_name is None else str(backend_name)
+        self.function_name = str(function_name)
+        self.catalog_channel = None if catalog_channel is None else str(catalog_channel)
+        self.session_id = None if session_id is None else str(session_id)
+        self.verbose = bool(verbose)
+        self.poll_seconds = float(poll_seconds)
+        self.pass_manager = pass_manager
+        self.job_rows = job_rows
+        self.soft_wallclock_limit_seconds = float(soft_wallclock_limit_seconds)
+        self.max_grover_power = max_grover_power
+        self.max_calls_by_context = dict(max_calls_by_context or {})
+        self.start_time = time.perf_counter() if start_time is None else float(start_time)
+        self.context = "unknown"
+        self._call_index: dict[str, int] = {}
+
+        if self.catalog_channel:
+            catalog = QiskitFunctionsCatalog(channel=self.catalog_channel)
+        else:
+            # Backward-compatible with the saved-account pattern used by the
+            # project notebooks, for example QiskitFunctionsCatalog(name="premium_new").
+            catalog = QiskitFunctionsCatalog(name=self.instance_name)
+        self.performance_management = catalog.load(self.function_name)
+
+    def set_context(self, context: str) -> None:
+        self.context = str(context)
+
+    def run(self, circuits: list[QuantumCircuit], shots: int = 1024) -> Any:
+        self._check_budget()
+        self._check_ks(circuits)
+        logical_circuits = list(circuits)
+        run_kwargs: dict[str, Any] = {
+            "primitive": "sampler",
+            "pubs": [(circuit, None, int(shots)) for circuit in logical_circuits],
+        }
+        if self.backend_name is not None:
+            run_kwargs["backend_name"] = self.backend_name
+        if self.session_id is not None:
+            run_kwargs["options"] = {"session_id": self.session_id}
+
+        job = self.performance_management.run(**run_kwargs)
+        if self.verbose:
+            print(
+                "[qctrl] "
+                f"submitted context={self.context} job={_job_id(job)} "
+                f"backend={self.backend_name or '<auto>'} shots={int(shots)} "
+                f"n_circuits={len(logical_circuits)}",
+                flush=True,
+            )
+        idx = self._call_index.get(self.context, 0)
+        self._call_index[self.context] = idx + 1
+        self.job_rows.append(
+            {
+                "backend_mode": "qctrl_performance_management",
+                "context": self.context,
+                "sampler_call_index": idx,
+                "n_circuits": len(logical_circuits),
+                "shots": int(shots),
+                "job_id": _job_id(job),
+                "submitted_at_epoch": time.time(),
+                "instance_name": self.instance_name,
+                "catalog_channel": self.catalog_channel or "",
+                "backend_name": self.backend_name or "",
+                "session_id": self.session_id or "",
+                "runtime_execution_mode": (
+                    "session" if self.session_id is not None else "independent_job"
+                ),
+                "qiskit_function": self.function_name,
+                "primitive": "sampler",
+                "submitted_circuit_kind": "abstract_logical",
+                "qctrl_transpilation_policy": "fire_opal_managed",
+                "local_pass_manager_applied": False,
+                "local_preflight_role": "diagnostic_and_k_cap_only",
+                "logical_depths": ",".join(
+                    str(int(circuit.depth() or 0)) for circuit in logical_circuits
+                ),
+                "logical_2q_counts": ",".join(
+                    str(
+                        sum(
+                            1
+                            for instruction in circuit.data
+                            if int(instruction.operation.num_qubits) == 2
+                        )
+                    )
+                    for circuit in logical_circuits
+                ),
+            }
+        )
+        if self.verbose:
+            return _VerboseQctrlJob(
+                job,
+                context=self.context,
+                poll_seconds=self.poll_seconds,
+            )
+        return job
+
+    def _check_budget(self) -> None:
+        elapsed = time.perf_counter() - self.start_time
+        if elapsed > self.soft_wallclock_limit_seconds:
+            raise TimeoutError(
+                f"Soft wall-clock limit exceeded: {elapsed:.1f}s > "
+                f"{self.soft_wallclock_limit_seconds:.1f}s."
+            )
+        limit = self.max_calls_by_context.get(self.context)
+        used = self._call_index.get(self.context, 0)
+        if limit is not None and used >= int(limit):
+            raise TimeoutError(f"Sampler call cap reached for {self.context}: {used} >= {limit}.")
+
+    def _check_ks(self, circuits: list[QuantumCircuit]) -> None:
+        if self.max_grover_power is None:
+            return
+        for circuit in circuits:
+            k = circuit_k(circuit)
+            if k is not None and int(k) > int(self.max_grover_power):
+                raise RuntimeError(
+                    f"Refusing circuit with grover_power={k}; cap is {self.max_grover_power}."
+                )
+
+
+def _job_id(job: Any) -> str:
+    value = getattr(job, "job_id", None)
+    if callable(value):
+        return str(value())
+    if value is not None:
+        return str(value)
+    return str(job)
+
+
 class ReplayCountSampler:
     """Sampler fed by premeasured or extrapolated good-state probabilities."""
 

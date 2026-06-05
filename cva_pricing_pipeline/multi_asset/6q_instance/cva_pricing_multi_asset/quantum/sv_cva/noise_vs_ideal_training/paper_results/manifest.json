@@ -1,0 +1,43 @@
+{
+  "description": "Paper-ready comparison between parameters trained in ideal statevector and parameters trained with shots plus backend noise.",
+  "important_semantics": {
+    "QCBM_metric": "KL(target || predicted)",
+    "CRCA_metric": "mean squared error over encoded function values",
+    "CVA_exact": "statevector recomputation of the aggregate CVA circuit",
+    "CVA_noisy": "Aer density-matrix simulation of measured aggregate CVA circuit"
+  },
+  "generated_tables": [
+    "tables/subblock_training_regime_metrics.csv",
+    "tables/cva_training_regime_metrics.csv",
+    "tables/noise_eval_comparison_summary.csv"
+  ],
+  "generated_figures": [
+    "figures/fig_subblock_noise_eval_comparison.{png,pdf,svg}",
+    "figures/fig_noise_training_ratio.{png,pdf,svg}",
+    "figures/fig_cva_training_regime_comparison.{png,pdf,svg}"
+  ],
+  "source_artifacts": [
+    "Aer density-matrix simulation of full measured CVA circuit",
+    "cva_pricing_pipeline\\multi_asset\\6q_instance\\training_multi_asset\\functional_encoding\\statevector\\positive_exposure\\layers_comparison\\results\\statevector\\tables\\positive_exposure_statevector_vs_backend_noise_eval.csv",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+    "data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\statevector\\training_qcbm_heavyhex6_6lay.npz",
+    "statevector recomputation from training artifacts"
+  ],
+  "cli_args": {
+    "output_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\sv_cva\\noise_vs_ideal_training\\paper_results",
+    "run_noisy_cva": true,
+    "cva_shots": 100000,
+    "cva_repetitions": 10,
+    "seed_base": 42,
+    "backend_name": "ibm_basquecountry",
+    "runtime_channel": "ibm_cloud",
+    "use_fractional_gates": true,
+    "thermal_relaxation": false
+  }
+}

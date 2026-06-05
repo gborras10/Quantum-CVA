@@ -25,6 +25,7 @@ from quantum_cva.multi_asset.classical.classical_cva.classical_discrete_cva impo
 from quantum_cva.multi_asset.instruments.derivatives import Call, Forward, Put
 from quantum_cva.multi_asset.instruments.market_data import MarketData
 from quantum_cva.multi_asset.classical.probability_and_underlying.piecewise_volatility_utils import (
+    build_integrated_covariance_grid,
     build_piecewise_sigma_grid,
     build_residual_volatility_function_for_underlying,
 )
@@ -112,6 +113,12 @@ sigma_grid = build_piecewise_sigma_grid(
     underlyings=underlyings,
     sim_times=t,
 )
+integrated_covariance_grid = build_integrated_covariance_grid(
+    atm_vol_curves=atm_vol_curves,
+    underlyings=underlyings,
+    sim_times=t,
+    rho=rho_3d,
+)
 
 S_by_time_multi_asset = simulate_multi_asset_gbm(
     S0=S0_list,
@@ -125,6 +132,7 @@ S_by_time_multi_asset = simulate_multi_asset_gbm(
     replications=1,
     replication_seed=12345,
     pathwise=True,
+    integrated_covariances=integrated_covariance_grid,
 )
 
 # ======================================================================

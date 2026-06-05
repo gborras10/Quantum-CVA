@@ -56,10 +56,12 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         use_noise_cap: bool = True,
         max_shots_same_k: int | None = None,
         noise_floor: float = 0.5,
+        contrast_prefactor: float = 1.0,
         latent_grid_size: int = 2049,
         latent_resampling_size: int = 2000,
         scheduler_grid_size: int = 129,
         scheduler_mode: str = "expected_fisher",
+        scheduler_posterior_weight: float = 0.0,
         random_seed: int | None = None,
     ) -> None:
         r"""Initialize the latent-theta CABIQAE estimator.
@@ -85,6 +87,9 @@ class CABIQAELatentTheta(AmplitudeEstimator):
             noise_floor: Asymptotic observed success probability when contrast
                 has fully decayed. The default ``0.5`` preserves the legacy
                 two-outcome noise model.
+            contrast_prefactor: Multiplicative prefactor of the exponential
+                contrast model. The default ``1.0`` preserves the zero-intercept
+                model.
             latent_grid_size: Number of grid points used to reconstruct latent
                 theta densities.
             latent_resampling_size: Number of latent-theta samples used when
@@ -92,6 +97,11 @@ class CABIQAELatentTheta(AmplitudeEstimator):
             scheduler_grid_size: Number of theta grid points used by the
                 scheduler score.
             scheduler_mode: Scoring rule used to rank admissible Grover depths.
+            scheduler_posterior_weight: Optional posterior weighting applied
+                only to ``"expected_fisher"`` scheduling. ``0.0`` reproduces
+                the current uniform theta-average score, ``1.0`` uses the
+                reconstructed Beta posterior average, and intermediate values
+                form a robust convex mixture of both.
             random_seed: Seed for the internal random number generator used in
                 latent resampling.
 
@@ -126,6 +136,8 @@ class CABIQAELatentTheta(AmplitudeEstimator):
             raise ValueError(
                 f"noise_floor must be a finite probability in [0, 1], got {noise_floor}."
             )
+        if not np.isfinite(float(contrast_prefactor)) or float(contrast_prefactor) <= 0.0:
+            raise ValueError("contrast_prefactor must be finite and positive.")
         
         if confint_method not in {"chernoff", "beta"}:
             raise ValueError(
@@ -146,6 +158,14 @@ class CABIQAELatentTheta(AmplitudeEstimator):
                 f"scheduler_mode must be one of {valid_scheduler_modes}, but is {scheduler_mode}."
             )
 
+        if (
+            not np.isfinite(float(scheduler_posterior_weight))
+            or not 0.0 <= float(scheduler_posterior_weight) <= 1.0
+        ):
+            raise ValueError(
+                "scheduler_posterior_weight must be a finite scalar in [0, 1]."
+            )
+
         super().__init__()
 
         self._epsilon = epsilon_target
@@ -159,10 +179,12 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         self._use_noise_cap = use_noise_cap
         self._max_shots_same_k = max_shots_same_k
         self._noise_floor = float(noise_floor)
+        self._contrast_prefactor = float(contrast_prefactor)
         self._latent_grid_size = latent_grid_size
         self._latent_resampling_size = latent_resampling_size
         self._scheduler_grid_size = scheduler_grid_size
         self._scheduler_mode = scheduler_mode
+        self._scheduler_posterior_weight = float(scheduler_posterior_weight)
         self._rng = np.random.default_rng(random_seed)
 
     @property
@@ -219,7 +241,7 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         if self._noise_model == "ideal":
             return 1.0
         if self._noise_model == "exponential_contrast":
-            c = float(np.exp(-(2 * k + 1) / self._T_known))
+            c = float(self._contrast_prefactor * np.exp(-(2 * k + 1) / self._T_known))
             return min(max(c, 1e-15), 1.0)
         raise RuntimeError(f"Unsupported noise model: {self._noise_model}")
 
@@ -577,12 +599,24 @@ class CABIQAELatentTheta(AmplitudeEstimator):
                 return True, False
         return False, True
 
-    def _expected_fisher_score(self, k: int, theta_interval: tuple[float, float]) -> float:
+    def _expected_fisher_score(
+        self,
+        k: int,
+        theta_interval: tuple[float, float],
+        posterior: tuple[float, float] | None = None,
+        posterior_k: int | None = None,
+    ) -> float:
         r"""Score a candidate Grover depth for the noise-aware scheduler.
 
         Args:
             k: Candidate Grover depth.
             theta_interval: Current identifiable theta interval.
+            posterior: Optional Beta posterior in observed-probability space
+                used to reweight the ``"expected_fisher"`` score. A posterior
+                weight of ``0.0`` reproduces the legacy uniform average,
+                ``1.0`` uses the posterior average, and intermediate values
+                blend both for numerical robustness.
+            posterior_k: Grover depth at which ``posterior`` was formed.
 
         Returns:
             A scalar utility score balancing expected information gain and
@@ -602,10 +636,49 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         p = np.asarray(self._theta_to_obs_prob(grid, k), dtype=float)
         dp = np.asarray(self._theta_to_obs_prob_derivative(grid, k), dtype=float)
         fisher_theta = dp**2 / np.clip(p * (1.0 - p), 1e-12, None)
+        uniform_fisher = float(np.mean(fisher_theta))
+        expected_fisher = uniform_fisher
+
+        if (
+            self._scheduler_posterior_weight > 0.0
+            and posterior is not None
+            and posterior_k is not None
+            and self._confint_method == "beta"
+        ):
+            lambda_post = self._scheduler_posterior_weight
+            try:
+                post_alpha, post_beta = float(posterior[0]), float(posterior[1])
+                pdf_grid, pdf_theta, _ = self._theta_density_from_beta_posterior(
+                    post_alpha,
+                    post_beta,
+                    posterior_k,
+                    theta_interval,
+                    num_points=self._scheduler_grid_size,
+                )
+                pdf_theta = np.nan_to_num(
+                    np.asarray(pdf_theta, dtype=float),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+                pdf_theta = np.clip(pdf_theta, 0.0, None)
+                if pdf_grid.shape != grid.shape or not np.allclose(pdf_grid, grid):
+                    pdf_theta = np.interp(grid, pdf_grid, pdf_theta, left=0.0, right=0.0)
+                pdf_area = float(np.trapezoid(pdf_theta, grid))
+                if not np.isfinite(pdf_area) or pdf_area <= 0.0:
+                    raise FloatingPointError("Posterior theta density normalization failed.")
+                pdf_theta = pdf_theta / pdf_area
+                posterior_fisher = float(np.trapezoid(fisher_theta * pdf_theta, grid))
+                if np.isfinite(posterior_fisher):
+                    expected_fisher = (
+                        (1.0 - lambda_post) * uniform_fisher + lambda_post * posterior_fisher
+                    )
+            except Exception:
+                expected_fisher = uniform_fisher
 
         angular_alignment = np.mean(np.abs(np.sin(4.0 * np.pi * K * grid)))
 
-        return float((np.mean(fisher_theta) / max(K, 1)) * angular_alignment)
+        return float((expected_fisher / max(K, 1)) * angular_alignment)
 
     def _find_next_k(
         self,
@@ -656,12 +729,17 @@ class CABIQAELatentTheta(AmplitudeEstimator):
         upper_half_circle: bool,
         theta_interval: tuple[float, float],
         min_ratio: float = 2.0,
+        posterior: tuple[float, float] | None = None,
+        posterior_k: int | None = None,
     ) -> tuple[int, bool]:
         r"""Choose the next Grover depth under identifiability and noise constraints.
 
         The method starts from the ideal IQAE proposal, optionally truncates the
         admissible range with the hard noise cap, and then ranks feasible
-        candidates with the configured information score.
+        candidates with the configured information score. When
+        ``scheduler_mode="expected_fisher"``, the score can optionally mix the
+        legacy uniform theta-average with a reconstructed Beta posterior
+        average.
 
         Args:
             k: Current Grover depth.
@@ -669,6 +747,9 @@ class CABIQAELatentTheta(AmplitudeEstimator):
             theta_interval: Current identifiable theta interval.
             min_ratio: Minimum admissible growth ratio between consecutive
                 stages.
+            posterior: Optional Beta posterior used to reweight the
+                ``"expected_fisher"`` scheduler score.
+            posterior_k: Grover depth at which ``posterior`` was formed.
 
         Returns:
             The selected Grover depth together with the associated branch flag.
@@ -695,9 +776,31 @@ class CABIQAELatentTheta(AmplitudeEstimator):
 
         fits_current, uhc_current = self._interval_fits_half_circle(k, theta_interval)
         if fits_current:
-            candidates.append((self._expected_fisher_score(k, theta_interval), k, uhc_current))
+            candidates.append(
+                (
+                    self._expected_fisher_score(
+                        k,
+                        theta_interval,
+                        posterior=posterior,
+                        posterior_k=posterior_k,
+                    ),
+                    k,
+                    uhc_current,
+                )
+            )
         else:
-            candidates.append((self._expected_fisher_score(k, theta_interval), k, upper_half_circle))
+            candidates.append(
+                (
+                    self._expected_fisher_score(
+                        k,
+                        theta_interval,
+                        posterior=posterior,
+                        posterior_k=posterior_k,
+                    ),
+                    k,
+                    upper_half_circle,
+                )
+            )
 
         for k_try in range(k + 1, k_max + 1):
             scaling_try = 4 * k_try + 2
@@ -706,7 +809,12 @@ class CABIQAELatentTheta(AmplitudeEstimator):
             fits, uhc_try = self._interval_fits_half_circle(k_try, theta_interval)
             if not fits:
                 continue
-            score = self._expected_fisher_score(k_try, theta_interval)
+            score = self._expected_fisher_score(
+                k_try,
+                theta_interval,
+                posterior=posterior,
+                posterior_k=posterior_k,
+            )
             candidates.append((score, k_try, uhc_try))
 
         best_score, best_k, best_uhc = max(candidates, key=lambda x: (x[0], x[1]))
@@ -955,6 +1063,11 @@ class CABIQAELatentTheta(AmplitudeEstimator):
 
             num_iterations += 1
             upper_half_circle_pre = upper_half_circle
+            posterior_for_scheduler = None
+            posterior_k_for_scheduler = None
+            if bayes and post is not None and self._scheduler_posterior_weight > 0.0:
+                posterior_for_scheduler = post
+                posterior_k_for_scheduler = powers[-1]
 
             if show_details:
                 start_time = time.time()
@@ -963,6 +1076,8 @@ class CABIQAELatentTheta(AmplitudeEstimator):
                 upper_half_circle,
                 tuple(theta_intervals[-1]),
                 min_ratio=self._min_ratio,
+                posterior=posterior_for_scheduler,
+                posterior_k=posterior_k_for_scheduler,
             )
             if show_details:
                 end_time = time.time()

@@ -1,0 +1,11 @@
+\begin{tabular}{llrrrr}
+\toprule
+quantity & metric & ideal_train_noise_eval & noise_train_noise_eval & absolute_delta_noise_minus_ideal & ratio_noise_train_over_ideal_train \\
+\midrule
+QCBM & KL(target || p_theta) & 0.0473797 & 0.0734249 & 0.0260451 & 1.54971 \\
+CRCA default probabilities & MSE(f_target, f_theta) & 7.368e-05 & 7.07963e-05 & -2.88372e-06 & 0.960862 \\
+CRCA discount factors & MSE(f_target, f_theta) & 8.20739e-05 & 3.19479e-05 & -5.0126e-05 & 0.389258 \\
+CRCA positive exposure & MSE(f_target, f_theta) & 0.016888 & 0.0101888 & -0.0066992 & 0.603315 \\
+CVA & relative error vs classical CVA & 1 & 1 & 0 & 1 \\
+\bottomrule
+\end{tabular}

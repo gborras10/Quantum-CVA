@@ -17,6 +17,7 @@ def simulate_multi_asset_gbm(
     replication_seed: int = 12345,
     pathwise: bool = True,
     sigma_times: np.ndarray | None = None,
+    integrated_covariances: np.ndarray | None = None,
 ) -> np.ndarray:
     """
     Returns S_by_time with shape (N_paths_eff, M, d).
@@ -32,6 +33,11 @@ def simulate_multi_asset_gbm(
                 provide the time grid associated with sigma rows.
             - if omitted, and M_sigma != M, a uniform grid on (0, t[-1]]
                 with M_sigma points is assumed.
+        integrated_covariances:
+            - optional shape (M, d, d) array of log-return covariance
+              increments over each interval (t_{j-1}, t_j].
+            - when supplied in pathwise mode, it determines both the
+              variance drift correction and the correlated diffusion.
     """
     t = np.asarray(t, dtype=float).ravel()
     Z = np.asarray(Z, dtype=float)
@@ -40,6 +46,8 @@ def simulate_multi_asset_gbm(
     mu = np.asarray(mu, dtype=float).ravel()
     sigma = np.asarray(sigma, dtype=float)
     rho = np.asarray(rho, dtype=float)
+    if integrated_covariances is not None:
+        integrated_covariances = np.asarray(integrated_covariances, dtype=float)
 
     if Z.ndim != 3:
         raise ValueError("Z must have shape (N_paths, M, d).")
@@ -51,6 +59,24 @@ def simulate_multi_asset_gbm(
             f"rho must have shape (d, d) = ({num_assets}, {num_assets}), "
             f"got {rho.shape}."
         )
+
+    if integrated_covariances is not None:
+        if not pathwise:
+            raise ValueError(
+                "integrated_covariances is only supported when pathwise=True."
+            )
+        expected_shape = (M, num_assets, num_assets)
+        if integrated_covariances.shape != expected_shape:
+            raise ValueError(
+                "integrated_covariances must have shape "
+                f"(M, d, d) = {expected_shape}, got "
+                f"{integrated_covariances.shape}."
+            )
+        if not np.allclose(
+            integrated_covariances,
+            np.swapaxes(integrated_covariances, 1, 2),
+        ):
+            raise ValueError("integrated_covariances must be symmetric.")
 
     # Spectral regularisation
     delta = 1e-6
@@ -130,15 +156,6 @@ def simulate_multi_asset_gbm(
             raise ValueError("Moment matching failed: zero-variance slice.")
         Z = (Z - mean) / std
 
-    L = np.linalg.cholesky(rho)
-
-    # correlate normals using Cholesky
-    Lt = np.ascontiguousarray(L.T)
-
-    # increase memory contiguity for better performance in the matrix multiplication below
-    Zc = (np.ascontiguousarray(Z).reshape(-1, num_assets) @ Lt).reshape(Z.shape) # shape (N_paths_eff, M, d)
-    #Zc = Z @ L.T
-
     # simulate correlated GBM paths
     log_S0 = np.log(S0)
     if pathwise:
@@ -146,10 +163,44 @@ def simulate_multi_asset_gbm(
             raise ValueError("Exposure dates must be strictly increasing when pathwise=True.")
 
         dt = np.diff(np.concatenate(([0.0], t)))
-        sqrt_dt = np.sqrt(dt)
-
-        drift_increment = (mu[None, :] - 0.5 * sigma_grid**2)[None, :, :] * dt[None, :, None] # broadcast to shape (M, d) then (1, M, d)
-        diff_increment  = sigma_grid[None, :, :] * sqrt_dt[None, :, None] * Zc # broadcast to shape (M, d) then (1, M, d)
+        if integrated_covariances is None:
+            L = np.linalg.cholesky(rho)
+            Lt = np.ascontiguousarray(L.T)
+            Zc = (
+                np.ascontiguousarray(Z).reshape(-1, num_assets) @ Lt
+            ).reshape(Z.shape)
+            sqrt_dt = np.sqrt(dt)
+            drift_increment = (
+                (mu[None, :] - 0.5 * sigma_grid**2)[None, :, :]
+                * dt[None, :, None]
+            )
+            diff_increment = (
+                sigma_grid[None, :, :]
+                * sqrt_dt[None, :, None]
+                * Zc
+            )
+        else:
+            variances = np.diagonal(
+                integrated_covariances,
+                axis1=1,
+                axis2=2,
+            )
+            if np.any(variances < 0.0):
+                raise ValueError(
+                    "integrated_covariances has negative diagonal entries."
+                )
+            drift_increment = (
+                mu[None, None, :] * dt[None, :, None]
+                - 0.5 * variances[None, :, :]
+            )
+            diff_increment = np.empty_like(Z)
+            for step in range(M):
+                step_cholesky = np.linalg.cholesky(
+                    integrated_covariances[step]
+                )
+                diff_increment[:, step, :] = (
+                    Z[:, step, :] @ step_cholesky.T
+                )
 
         log_S = log_S0[None, None, :] + np.cumsum(drift_increment + diff_increment, axis=1)
         S = np.exp(log_S)
@@ -160,6 +211,11 @@ def simulate_multi_asset_gbm(
         if sigma.ndim != 1:
             raise ValueError("pathwise=False only supports constant sigma with shape (d,).")
 
+        L = np.linalg.cholesky(rho)
+        Lt = np.ascontiguousarray(L.T)
+        Zc = (
+            np.ascontiguousarray(Z).reshape(-1, num_assets) @ Lt
+        ).reshape(Z.shape)
         sqrt_t = np.sqrt(t)
         drift  = (mu - 0.5 * sigma**2)[None, None, :] * t[None, :, None]
         diff   = sigma[None, None, :] * sqrt_t[None, :, None] * Zc

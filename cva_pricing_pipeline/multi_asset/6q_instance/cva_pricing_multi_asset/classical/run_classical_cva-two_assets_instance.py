@@ -25,7 +25,9 @@ from quantum_cva.multi_asset.classical.classical_cva.classical_discrete_cva impo
 from quantum_cva.multi_asset.instruments.derivatives import Call, Forward, Put
 from quantum_cva.multi_asset.instruments.market_data import MarketData
 from quantum_cva.multi_asset.classical.probability_and_underlying.piecewise_volatility_utils import (
+    build_integrated_covariance_grid,
     build_piecewise_sigma_grid,
+    build_piecewise_vol_curve_for_underlying,
     build_residual_volatility_function_for_underlying,
 )
 
@@ -60,7 +62,7 @@ P0_flat = lambda u: market_data.discount_factor(u)
 # Calculate drift from discount factor and dividend yields
 r: float = -np.log(P0_flat(1.0))
 
-# Dividend yields for the 3 assets
+# Dividend yields for the 2 assets
 div_yields =  [0.0224722, 0.0316306]
 
 # Drift for simulation: mu = r - div_yield
@@ -75,7 +77,9 @@ T: float = max(maturity_call, maturity_put)
 # Time grid
 m: int = int(2)
 M: int = 2**m
+M_fine_grid: int = 252 # for fine grid convergence analysis
 t: np.ndarray = np.linspace(0.0, T, M + 1)[1:]  # exposure dates only (no t=0)
+t_fine: np.ndarray = np.linspace(0.0, T, M_fine_grid + 1)[1:]  # fine grid for convergence analysis
 
 # Monte Carlo controls
 N_paths: int = int(1e5)
@@ -83,6 +87,10 @@ seed: int = 105
 rng: np.random.Generator = np.random.default_rng(seed)
 
 d: int = 2  # number of assets
+
+# False reproduces the historical right-endpoint volatility approximation.
+# True integrates all market volatility buckets crossed by each time step.
+USE_INTEGRATED_BUCKET_DYNAMICS: bool = False
 
 # Normals Z with shape (N_paths, M, d)
 Z: np.ndarray = rng.standard_normal(size=(N_paths, M, d))
@@ -107,11 +115,47 @@ _, _, survival_curve, q_interval = build_survival_from_cds(
 # ======================================================================
 #                 Simulate multi-asset GBM (correlated)
 # ======================================================================
-sigma_grid = build_piecewise_sigma_grid(
-    atm_vol_curves=atm_vol_curves,
-    underlyings=underlyings,
-    sim_times=t,
-)
+def build_right_endpoint_sigma_grid(sim_times: np.ndarray) -> np.ndarray:
+    """Legacy approximation: use the bucket at each step's right endpoint."""
+    sigma_cols: list[np.ndarray] = []
+    for underlying in underlyings:
+        maturities, sigma_pw = build_piecewise_vol_curve_for_underlying(
+            atm_vol_curves=atm_vol_curves,
+            underlying=underlying,
+        )
+        idx = np.searchsorted(maturities, sim_times, side="left")
+        sigma_cols.append(sigma_pw[idx])
+    return np.column_stack(sigma_cols)
+
+
+if USE_INTEGRATED_BUCKET_DYNAMICS:
+    sigma_grid = build_piecewise_sigma_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t,
+    )
+    integrated_covariance_grid = build_integrated_covariance_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t,
+        rho=rho_3d,
+    )
+    sigma_grid_fine = build_piecewise_sigma_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t_fine,
+    )
+    integrated_covariance_grid_fine = build_integrated_covariance_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t_fine,
+        rho=rho_3d,
+    )
+else:
+    sigma_grid = build_right_endpoint_sigma_grid(t)
+    integrated_covariance_grid = None
+    sigma_grid_fine = build_right_endpoint_sigma_grid(t_fine)
+    integrated_covariance_grid_fine = None
 
 S_by_time_multi_asset = simulate_multi_asset_gbm(
     S0=S0_list,
@@ -125,6 +169,22 @@ S_by_time_multi_asset = simulate_multi_asset_gbm(
     replications=1,
     replication_seed=12345,
     pathwise=True,
+    integrated_covariances=integrated_covariance_grid,
+)
+
+S_by_time_multi_asset_fine = simulate_multi_asset_gbm(
+    S0=S0_list,
+    mu=mu_list,
+    sigma=sigma_grid_fine,
+    rho=rho_3d,
+    t=t_fine,
+    Z=rng.standard_normal(size=(N_paths, M_fine_grid, d)),
+    antithetic=True,
+    moment_match=True,
+    replications=1,
+    replication_seed=12345,
+    pathwise=True,
+    integrated_covariances=integrated_covariance_grid_fine,
 )
 
 # ======================================================================
@@ -194,6 +254,24 @@ print(
 )
 print(f"Computation time: {elapsed_seconds:.2f} seconds")
 
+# =====================================================================
+#       Compute CVA using continuous underlying distribution on fine grid
+# =====================================================================
+t0_fine: float = time.perf_counter()
+cva_mc_continuous_fine, cva_std_err_mc_continuous_fine = continuous_cva_engine.cva_from_paths(
+    S_by_time=S_by_time_multi_asset_fine,
+    t=t_fine,
+)
+elapsed_seconds_fine = time.perf_counter() - t0_fine
+print("\n==========================================================")
+print("Continuous Underlying Distribution (3 assets) - Fine Grid")
+print("===========================================================")
+print(
+    f"CVA (continuous underlying, fine grid): {cva_mc_continuous_fine}"
+    f" ± {cva_std_err_mc_continuous_fine}"
+)
+print(f"Computation time (fine grid): {elapsed_seconds_fine:.2f} seconds")
+
 # ======================================================================
 #        Compute CVA using discrete underlying distribution
 # ======================================================================
@@ -220,7 +298,7 @@ def make_engine(n_bits: int | list[int]) -> DiscreteUnderlyingCvaEngine:
 # CVA by grid size (n_bits = 1..10)
 cva_by_grid_size: dict[int, float] = {}
 
-for n in range(1, 7):
+for n in range(1, 11):
     discrete_engine = make_engine(n)
     cva_n = discrete_engine.cva_from_paths_discretized(
         S_by_time=S_by_time_multi_asset,
@@ -235,7 +313,7 @@ cva_values: np.ndarray = np.array([cva_by_grid_size[n] for n in grid_sizes], dty
 # Proxy for CVA(infinite grid)
 t_0: float = time.perf_counter()
 
-grid_size_infinite: int = 8
+grid_size_infinite: int = 13  # chosen as a proxy for infinite grid (2^13 = 8192 bins per asset, total 67 million joint bins)
 engine_inf = make_engine(grid_size_infinite)
 
 cva_limit, grid_inf, P_joint_t_inf, v_joint_t_inf, p_target_inf, w_t_inf = (
@@ -257,12 +335,30 @@ discretization_relative_error: float = (
 
 t_fine: np.ndarray = np.linspace(0.0, T, 50)[1:]
 Z_fine: np.ndarray = rng.standard_normal(size=(N_paths, t_fine.size, d))
+if USE_INTEGRATED_BUCKET_DYNAMICS:
+    sigma_grid_fine = build_piecewise_sigma_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t_fine,
+    )
+    integrated_covariance_grid_fine = build_integrated_covariance_grid(
+        atm_vol_curves=atm_vol_curves,
+        underlyings=underlyings,
+        sim_times=t_fine,
+        rho=rho_3d,
+    )
+    sigma_times_fine = None
+else:
+    # Preserve the original small-grid construction: resample coarse rows.
+    sigma_grid_fine = sigma_grid
+    integrated_covariance_grid_fine = None
+    sigma_times_fine = t
 
 S_by_time_multi_asset_fine = simulate_multi_asset_gbm(
     S0=S0_list,
     mu=mu_list,
-    sigma=sigma_grid,
-    sigma_times=t,
+    sigma=sigma_grid_fine,
+    sigma_times=sigma_times_fine,
     rho=rho_3d,
     t=t_fine,
     Z=Z_fine,
@@ -271,6 +367,7 @@ S_by_time_multi_asset_fine = simulate_multi_asset_gbm(
     replications=1,
     replication_seed=12345,
     pathwise=True,
+    integrated_covariances=integrated_covariance_grid_fine,
 )
 
 engine_small = make_engine([2, 2])  # bins per asset = (4, 4)

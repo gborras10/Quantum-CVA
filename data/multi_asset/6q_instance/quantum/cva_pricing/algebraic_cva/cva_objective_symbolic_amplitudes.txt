@@ -1,0 +1,563 @@
+Symbolic CVA objective amplitudes
+=================================
+
+This is the symbolic amplitude of the CVA objective subspace.
+The full expanded expressions are intentionally not expanded: with 103
+parameters they become enormous. The recurrence below is exact and keeps
+the sin/cos structure visible gate by gate.
+
+Little-endian convention:
+  z = sum_j b_j(z) 2^j for logical qubits q0..q8.
+  q0,q1 are time; q2..q5 are underlying/state; q6,q7,q8 are
+  a_exposure,a_default,a_discount.
+
+Initial amplitude:
+  psi_0(0) = 1
+  psi_0(z != 0) = 0
+
+CVA objective amplitudes:
+  alpha_x(theta) = <x,111|A(theta)|0^9>
+  x = sum_{j=0}^5 x_j 2^j
+  alpha_x(theta) = psi_N(x + 2^6 + 2^7 + 2^8)
+  N = 109
+
+Gate-by-gate symbolic recurrence
+--------------------------------
+
+Step 000: G_0 = rx on qubits [0]; psi = psi_0, psi_next = psi_1
+if b_0(z)=0: psi_next(z) = cos(theta_qcbm_0/2) psi(z) - i sin(theta_qcbm_0/2) psi(z xor 2^0)
+if b_0(z)=1: psi_next(z) = -i sin(theta_qcbm_0/2) psi(z xor 2^0) + cos(theta_qcbm_0/2) psi(z)
+
+Step 001: G_1 = rz on qubits [0]; psi = psi_1, psi_next = psi_2
+if b_0(z)=0: psi_next(z) = exp(-i theta_qcbm_1/2) psi(z)
+if b_0(z)=1: psi_next(z) = exp(i theta_qcbm_1/2) psi(z)
+
+Step 002: G_2 = rx on qubits [1]; psi = psi_2, psi_next = psi_3
+if b_1(z)=0: psi_next(z) = cos(theta_qcbm_2/2) psi(z) - i sin(theta_qcbm_2/2) psi(z xor 2^1)
+if b_1(z)=1: psi_next(z) = -i sin(theta_qcbm_2/2) psi(z xor 2^1) + cos(theta_qcbm_2/2) psi(z)
+
+Step 003: G_3 = rz on qubits [1]; psi = psi_3, psi_next = psi_4
+if b_1(z)=0: psi_next(z) = exp(-i theta_qcbm_3/2) psi(z)
+if b_1(z)=1: psi_next(z) = exp(i theta_qcbm_3/2) psi(z)
+
+Step 004: G_4 = rx on qubits [2]; psi = psi_4, psi_next = psi_5
+if b_2(z)=0: psi_next(z) = cos(theta_qcbm_4/2) psi(z) - i sin(theta_qcbm_4/2) psi(z xor 2^2)
+if b_2(z)=1: psi_next(z) = -i sin(theta_qcbm_4/2) psi(z xor 2^2) + cos(theta_qcbm_4/2) psi(z)
+
+Step 005: G_5 = rz on qubits [2]; psi = psi_5, psi_next = psi_6
+if b_2(z)=0: psi_next(z) = exp(-i theta_qcbm_5/2) psi(z)
+if b_2(z)=1: psi_next(z) = exp(i theta_qcbm_5/2) psi(z)
+
+Step 006: G_6 = rx on qubits [3]; psi = psi_6, psi_next = psi_7
+if b_3(z)=0: psi_next(z) = cos(theta_qcbm_6/2) psi(z) - i sin(theta_qcbm_6/2) psi(z xor 2^3)
+if b_3(z)=1: psi_next(z) = -i sin(theta_qcbm_6/2) psi(z xor 2^3) + cos(theta_qcbm_6/2) psi(z)
+
+Step 007: G_7 = rz on qubits [3]; psi = psi_7, psi_next = psi_8
+if b_3(z)=0: psi_next(z) = exp(-i theta_qcbm_7/2) psi(z)
+if b_3(z)=1: psi_next(z) = exp(i theta_qcbm_7/2) psi(z)
+
+Step 008: G_8 = rx on qubits [4]; psi = psi_8, psi_next = psi_9
+if b_4(z)=0: psi_next(z) = cos(theta_qcbm_8/2) psi(z) - i sin(theta_qcbm_8/2) psi(z xor 2^4)
+if b_4(z)=1: psi_next(z) = -i sin(theta_qcbm_8/2) psi(z xor 2^4) + cos(theta_qcbm_8/2) psi(z)
+
+Step 009: G_9 = rz on qubits [4]; psi = psi_9, psi_next = psi_10
+if b_4(z)=0: psi_next(z) = exp(-i theta_qcbm_9/2) psi(z)
+if b_4(z)=1: psi_next(z) = exp(i theta_qcbm_9/2) psi(z)
+
+Step 010: G_10 = rx on qubits [5]; psi = psi_10, psi_next = psi_11
+if b_5(z)=0: psi_next(z) = cos(theta_qcbm_10/2) psi(z) - i sin(theta_qcbm_10/2) psi(z xor 2^5)
+if b_5(z)=1: psi_next(z) = -i sin(theta_qcbm_10/2) psi(z xor 2^5) + cos(theta_qcbm_10/2) psi(z)
+
+Step 011: G_11 = rz on qubits [5]; psi = psi_11, psi_next = psi_12
+if b_5(z)=0: psi_next(z) = exp(-i theta_qcbm_11/2) psi(z)
+if b_5(z)=1: psi_next(z) = exp(i theta_qcbm_11/2) psi(z)
+
+Step 012: G_12 = rzz on qubits [0, 1]; psi = psi_12, psi_next = psi_13
+if b_0(z)=b_1(z): psi_next(z) = exp(-i theta_qcbm_12/2) psi(z)
+if b_0(z)!=b_1(z): psi_next(z) = exp(i theta_qcbm_12/2) psi(z)
+
+Step 013: G_13 = rzz on qubits [0, 2]; psi = psi_13, psi_next = psi_14
+if b_0(z)=b_2(z): psi_next(z) = exp(-i theta_qcbm_13/2) psi(z)
+if b_0(z)!=b_2(z): psi_next(z) = exp(i theta_qcbm_13/2) psi(z)
+
+Step 014: G_14 = rzz on qubits [0, 3]; psi = psi_14, psi_next = psi_15
+if b_0(z)=b_3(z): psi_next(z) = exp(-i theta_qcbm_14/2) psi(z)
+if b_0(z)!=b_3(z): psi_next(z) = exp(i theta_qcbm_14/2) psi(z)
+
+Step 015: G_15 = rzz on qubits [1, 4]; psi = psi_15, psi_next = psi_16
+if b_1(z)=b_4(z): psi_next(z) = exp(-i theta_qcbm_15/2) psi(z)
+if b_1(z)!=b_4(z): psi_next(z) = exp(i theta_qcbm_15/2) psi(z)
+
+Step 016: G_16 = rzz on qubits [2, 5]; psi = psi_16, psi_next = psi_17
+if b_2(z)=b_5(z): psi_next(z) = exp(-i theta_qcbm_16/2) psi(z)
+if b_2(z)!=b_5(z): psi_next(z) = exp(i theta_qcbm_16/2) psi(z)
+
+Step 017: G_17 = rx on qubits [0]; psi = psi_17, psi_next = psi_18
+if b_0(z)=0: psi_next(z) = cos(theta_qcbm_17/2) psi(z) - i sin(theta_qcbm_17/2) psi(z xor 2^0)
+if b_0(z)=1: psi_next(z) = -i sin(theta_qcbm_17/2) psi(z xor 2^0) + cos(theta_qcbm_17/2) psi(z)
+
+Step 018: G_18 = rz on qubits [0]; psi = psi_18, psi_next = psi_19
+if b_0(z)=0: psi_next(z) = exp(-i theta_qcbm_18/2) psi(z)
+if b_0(z)=1: psi_next(z) = exp(i theta_qcbm_18/2) psi(z)
+
+Step 019: G_19 = rx on qubits [1]; psi = psi_19, psi_next = psi_20
+if b_1(z)=0: psi_next(z) = cos(theta_qcbm_19/2) psi(z) - i sin(theta_qcbm_19/2) psi(z xor 2^1)
+if b_1(z)=1: psi_next(z) = -i sin(theta_qcbm_19/2) psi(z xor 2^1) + cos(theta_qcbm_19/2) psi(z)
+
+Step 020: G_20 = rz on qubits [1]; psi = psi_20, psi_next = psi_21
+if b_1(z)=0: psi_next(z) = exp(-i theta_qcbm_20/2) psi(z)
+if b_1(z)=1: psi_next(z) = exp(i theta_qcbm_20/2) psi(z)
+
+Step 021: G_21 = rx on qubits [2]; psi = psi_21, psi_next = psi_22
+if b_2(z)=0: psi_next(z) = cos(theta_qcbm_21/2) psi(z) - i sin(theta_qcbm_21/2) psi(z xor 2^2)
+if b_2(z)=1: psi_next(z) = -i sin(theta_qcbm_21/2) psi(z xor 2^2) + cos(theta_qcbm_21/2) psi(z)
+
+Step 022: G_22 = rz on qubits [2]; psi = psi_22, psi_next = psi_23
+if b_2(z)=0: psi_next(z) = exp(-i theta_qcbm_22/2) psi(z)
+if b_2(z)=1: psi_next(z) = exp(i theta_qcbm_22/2) psi(z)
+
+Step 023: G_23 = rx on qubits [3]; psi = psi_23, psi_next = psi_24
+if b_3(z)=0: psi_next(z) = cos(theta_qcbm_23/2) psi(z) - i sin(theta_qcbm_23/2) psi(z xor 2^3)
+if b_3(z)=1: psi_next(z) = -i sin(theta_qcbm_23/2) psi(z xor 2^3) + cos(theta_qcbm_23/2) psi(z)
+
+Step 024: G_24 = rz on qubits [3]; psi = psi_24, psi_next = psi_25
+if b_3(z)=0: psi_next(z) = exp(-i theta_qcbm_24/2) psi(z)
+if b_3(z)=1: psi_next(z) = exp(i theta_qcbm_24/2) psi(z)
+
+Step 025: G_25 = rx on qubits [4]; psi = psi_25, psi_next = psi_26
+if b_4(z)=0: psi_next(z) = cos(theta_qcbm_25/2) psi(z) - i sin(theta_qcbm_25/2) psi(z xor 2^4)
+if b_4(z)=1: psi_next(z) = -i sin(theta_qcbm_25/2) psi(z xor 2^4) + cos(theta_qcbm_25/2) psi(z)
+
+Step 026: G_26 = rz on qubits [4]; psi = psi_26, psi_next = psi_27
+if b_4(z)=0: psi_next(z) = exp(-i theta_qcbm_26/2) psi(z)
+if b_4(z)=1: psi_next(z) = exp(i theta_qcbm_26/2) psi(z)
+
+Step 027: G_27 = rx on qubits [5]; psi = psi_27, psi_next = psi_28
+if b_5(z)=0: psi_next(z) = cos(theta_qcbm_27/2) psi(z) - i sin(theta_qcbm_27/2) psi(z xor 2^5)
+if b_5(z)=1: psi_next(z) = -i sin(theta_qcbm_27/2) psi(z xor 2^5) + cos(theta_qcbm_27/2) psi(z)
+
+Step 028: G_28 = rz on qubits [5]; psi = psi_28, psi_next = psi_29
+if b_5(z)=0: psi_next(z) = exp(-i theta_qcbm_28/2) psi(z)
+if b_5(z)=1: psi_next(z) = exp(i theta_qcbm_28/2) psi(z)
+
+Step 029: G_29 = rzz on qubits [0, 1]; psi = psi_29, psi_next = psi_30
+if b_0(z)=b_1(z): psi_next(z) = exp(-i theta_qcbm_29/2) psi(z)
+if b_0(z)!=b_1(z): psi_next(z) = exp(i theta_qcbm_29/2) psi(z)
+
+Step 030: G_30 = rzz on qubits [0, 2]; psi = psi_30, psi_next = psi_31
+if b_0(z)=b_2(z): psi_next(z) = exp(-i theta_qcbm_30/2) psi(z)
+if b_0(z)!=b_2(z): psi_next(z) = exp(i theta_qcbm_30/2) psi(z)
+
+Step 031: G_31 = rzz on qubits [0, 3]; psi = psi_31, psi_next = psi_32
+if b_0(z)=b_3(z): psi_next(z) = exp(-i theta_qcbm_31/2) psi(z)
+if b_0(z)!=b_3(z): psi_next(z) = exp(i theta_qcbm_31/2) psi(z)
+
+Step 032: G_32 = rzz on qubits [1, 4]; psi = psi_32, psi_next = psi_33
+if b_1(z)=b_4(z): psi_next(z) = exp(-i theta_qcbm_32/2) psi(z)
+if b_1(z)!=b_4(z): psi_next(z) = exp(i theta_qcbm_32/2) psi(z)
+
+Step 033: G_33 = rzz on qubits [2, 5]; psi = psi_33, psi_next = psi_34
+if b_2(z)=b_5(z): psi_next(z) = exp(-i theta_qcbm_33/2) psi(z)
+if b_2(z)!=b_5(z): psi_next(z) = exp(i theta_qcbm_33/2) psi(z)
+
+Step 034: G_34 = rx on qubits [0]; psi = psi_34, psi_next = psi_35
+if b_0(z)=0: psi_next(z) = cos(theta_qcbm_34/2) psi(z) - i sin(theta_qcbm_34/2) psi(z xor 2^0)
+if b_0(z)=1: psi_next(z) = -i sin(theta_qcbm_34/2) psi(z xor 2^0) + cos(theta_qcbm_34/2) psi(z)
+
+Step 035: G_35 = rz on qubits [0]; psi = psi_35, psi_next = psi_36
+if b_0(z)=0: psi_next(z) = exp(-i theta_qcbm_35/2) psi(z)
+if b_0(z)=1: psi_next(z) = exp(i theta_qcbm_35/2) psi(z)
+
+Step 036: G_36 = rx on qubits [1]; psi = psi_36, psi_next = psi_37
+if b_1(z)=0: psi_next(z) = cos(theta_qcbm_36/2) psi(z) - i sin(theta_qcbm_36/2) psi(z xor 2^1)
+if b_1(z)=1: psi_next(z) = -i sin(theta_qcbm_36/2) psi(z xor 2^1) + cos(theta_qcbm_36/2) psi(z)
+
+Step 037: G_37 = rz on qubits [1]; psi = psi_37, psi_next = psi_38
+if b_1(z)=0: psi_next(z) = exp(-i theta_qcbm_37/2) psi(z)
+if b_1(z)=1: psi_next(z) = exp(i theta_qcbm_37/2) psi(z)
+
+Step 038: G_38 = rx on qubits [2]; psi = psi_38, psi_next = psi_39
+if b_2(z)=0: psi_next(z) = cos(theta_qcbm_38/2) psi(z) - i sin(theta_qcbm_38/2) psi(z xor 2^2)
+if b_2(z)=1: psi_next(z) = -i sin(theta_qcbm_38/2) psi(z xor 2^2) + cos(theta_qcbm_38/2) psi(z)
+
+Step 039: G_39 = rz on qubits [2]; psi = psi_39, psi_next = psi_40
+if b_2(z)=0: psi_next(z) = exp(-i theta_qcbm_39/2) psi(z)
+if b_2(z)=1: psi_next(z) = exp(i theta_qcbm_39/2) psi(z)
+
+Step 040: G_40 = rx on qubits [3]; psi = psi_40, psi_next = psi_41
+if b_3(z)=0: psi_next(z) = cos(theta_qcbm_40/2) psi(z) - i sin(theta_qcbm_40/2) psi(z xor 2^3)
+if b_3(z)=1: psi_next(z) = -i sin(theta_qcbm_40/2) psi(z xor 2^3) + cos(theta_qcbm_40/2) psi(z)
+
+Step 041: G_41 = rz on qubits [3]; psi = psi_41, psi_next = psi_42
+if b_3(z)=0: psi_next(z) = exp(-i theta_qcbm_41/2) psi(z)
+if b_3(z)=1: psi_next(z) = exp(i theta_qcbm_41/2) psi(z)
+
+Step 042: G_42 = rx on qubits [4]; psi = psi_42, psi_next = psi_43
+if b_4(z)=0: psi_next(z) = cos(theta_qcbm_42/2) psi(z) - i sin(theta_qcbm_42/2) psi(z xor 2^4)
+if b_4(z)=1: psi_next(z) = -i sin(theta_qcbm_42/2) psi(z xor 2^4) + cos(theta_qcbm_42/2) psi(z)
+
+Step 043: G_43 = rz on qubits [4]; psi = psi_43, psi_next = psi_44
+if b_4(z)=0: psi_next(z) = exp(-i theta_qcbm_43/2) psi(z)
+if b_4(z)=1: psi_next(z) = exp(i theta_qcbm_43/2) psi(z)
+
+Step 044: G_44 = rx on qubits [5]; psi = psi_44, psi_next = psi_45
+if b_5(z)=0: psi_next(z) = cos(theta_qcbm_44/2) psi(z) - i sin(theta_qcbm_44/2) psi(z xor 2^5)
+if b_5(z)=1: psi_next(z) = -i sin(theta_qcbm_44/2) psi(z xor 2^5) + cos(theta_qcbm_44/2) psi(z)
+
+Step 045: G_45 = rz on qubits [5]; psi = psi_45, psi_next = psi_46
+if b_5(z)=0: psi_next(z) = exp(-i theta_qcbm_45/2) psi(z)
+if b_5(z)=1: psi_next(z) = exp(i theta_qcbm_45/2) psi(z)
+
+Step 046: G_46 = rzz on qubits [0, 1]; psi = psi_46, psi_next = psi_47
+if b_0(z)=b_1(z): psi_next(z) = exp(-i theta_qcbm_46/2) psi(z)
+if b_0(z)!=b_1(z): psi_next(z) = exp(i theta_qcbm_46/2) psi(z)
+
+Step 047: G_47 = rzz on qubits [0, 2]; psi = psi_47, psi_next = psi_48
+if b_0(z)=b_2(z): psi_next(z) = exp(-i theta_qcbm_47/2) psi(z)
+if b_0(z)!=b_2(z): psi_next(z) = exp(i theta_qcbm_47/2) psi(z)
+
+Step 048: G_48 = rzz on qubits [0, 3]; psi = psi_48, psi_next = psi_49
+if b_0(z)=b_3(z): psi_next(z) = exp(-i theta_qcbm_48/2) psi(z)
+if b_0(z)!=b_3(z): psi_next(z) = exp(i theta_qcbm_48/2) psi(z)
+
+Step 049: G_49 = rzz on qubits [1, 4]; psi = psi_49, psi_next = psi_50
+if b_1(z)=b_4(z): psi_next(z) = exp(-i theta_qcbm_49/2) psi(z)
+if b_1(z)!=b_4(z): psi_next(z) = exp(i theta_qcbm_49/2) psi(z)
+
+Step 050: G_50 = rzz on qubits [2, 5]; psi = psi_50, psi_next = psi_51
+if b_2(z)=b_5(z): psi_next(z) = exp(-i theta_qcbm_50/2) psi(z)
+if b_2(z)!=b_5(z): psi_next(z) = exp(i theta_qcbm_50/2) psi(z)
+
+Step 051: G_51 = ry on qubits [6]; psi = psi_51, psi_next = psi_52
+if b_6(z)=0: psi_next(z) = cos(theta_v_0/2) psi(z) - sin(theta_v_0/2) psi(z xor 2^6)
+if b_6(z)=1: psi_next(z) = sin(theta_v_0/2) psi(z xor 2^6) + cos(theta_v_0/2) psi(z)
+
+Step 052: G_52 = rz on qubits [6]; psi = psi_52, psi_next = psi_53
+if b_6(z)=0: psi_next(z) = exp(-i theta_v_1/2) psi(z)
+if b_6(z)=1: psi_next(z) = exp(i theta_v_1/2) psi(z)
+
+Step 053: G_53 = ry on qubits [6]; psi = psi_53, psi_next = psi_54
+if b_6(z)=0: psi_next(z) = cos(theta_v_2/2) psi(z) - sin(theta_v_2/2) psi(z xor 2^6)
+if b_6(z)=1: psi_next(z) = sin(theta_v_2/2) psi(z xor 2^6) + cos(theta_v_2/2) psi(z)
+
+Step 054: G_54 = crx on qubits [0, 6]; psi = psi_54, psi_next = psi_55
+if b_0(z)=0: psi_next(z) = psi(z)
+if b_0(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_3/2) psi(z) - i sin(theta_v_3/2) psi(z xor 2^6)
+if b_0(z)=1 and b_6(z)=1: psi_next(z) = -i sin(theta_v_3/2) psi(z xor 2^6) + cos(theta_v_3/2) psi(z)
+
+Step 055: G_55 = cry on qubits [0, 6]; psi = psi_55, psi_next = psi_56
+if b_0(z)=0: psi_next(z) = psi(z)
+if b_0(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_4/2) psi(z) - sin(theta_v_4/2) psi(z xor 2^6)
+if b_0(z)=1 and b_6(z)=1: psi_next(z) = sin(theta_v_4/2) psi(z xor 2^6) + cos(theta_v_4/2) psi(z)
+
+Step 056: G_56 = crz on qubits [0, 6]; psi = psi_56, psi_next = psi_57
+if b_0(z)=0: psi_next(z) = psi(z)
+if b_0(z)=1 and b_6(z)=0: psi_next(z) = exp(-i theta_v_5/2) psi(z)
+if b_0(z)=1 and b_6(z)=1: psi_next(z) = exp(i theta_v_5/2) psi(z)
+
+Step 057: G_57 = crx on qubits [2, 6]; psi = psi_57, psi_next = psi_58
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_6/2) psi(z) - i sin(theta_v_6/2) psi(z xor 2^6)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = -i sin(theta_v_6/2) psi(z xor 2^6) + cos(theta_v_6/2) psi(z)
+
+Step 058: G_58 = cry on qubits [2, 6]; psi = psi_58, psi_next = psi_59
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_7/2) psi(z) - sin(theta_v_7/2) psi(z xor 2^6)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = sin(theta_v_7/2) psi(z xor 2^6) + cos(theta_v_7/2) psi(z)
+
+Step 059: G_59 = crz on qubits [2, 6]; psi = psi_59, psi_next = psi_60
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = exp(-i theta_v_8/2) psi(z)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = exp(i theta_v_8/2) psi(z)
+
+Step 060: G_60 = crx on qubits [3, 6]; psi = psi_60, psi_next = psi_61
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_9/2) psi(z) - i sin(theta_v_9/2) psi(z xor 2^6)
+if b_3(z)=1 and b_6(z)=1: psi_next(z) = -i sin(theta_v_9/2) psi(z xor 2^6) + cos(theta_v_9/2) psi(z)
+
+Step 061: G_61 = cry on qubits [3, 6]; psi = psi_61, psi_next = psi_62
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_10/2) psi(z) - sin(theta_v_10/2) psi(z xor 2^6)
+if b_3(z)=1 and b_6(z)=1: psi_next(z) = sin(theta_v_10/2) psi(z xor 2^6) + cos(theta_v_10/2) psi(z)
+
+Step 062: G_62 = crz on qubits [3, 6]; psi = psi_62, psi_next = psi_63
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_6(z)=0: psi_next(z) = exp(-i theta_v_11/2) psi(z)
+if b_3(z)=1 and b_6(z)=1: psi_next(z) = exp(i theta_v_11/2) psi(z)
+
+Step 063: G_63 = swap on qubits [3, 6]; psi = psi_63, psi_next = psi_64
+psi_next(z) = psi(swap_bits(z, 3, 6))
+
+Step 064: G_64 = crx on qubits [1, 3]; psi = psi_64, psi_next = psi_65
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_3(z)=0: psi_next(z) = cos(theta_v_12/2) psi(z) - i sin(theta_v_12/2) psi(z xor 2^3)
+if b_1(z)=1 and b_3(z)=1: psi_next(z) = -i sin(theta_v_12/2) psi(z xor 2^3) + cos(theta_v_12/2) psi(z)
+
+Step 065: G_65 = cry on qubits [1, 3]; psi = psi_65, psi_next = psi_66
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_3(z)=0: psi_next(z) = cos(theta_v_13/2) psi(z) - sin(theta_v_13/2) psi(z xor 2^3)
+if b_1(z)=1 and b_3(z)=1: psi_next(z) = sin(theta_v_13/2) psi(z xor 2^3) + cos(theta_v_13/2) psi(z)
+
+Step 066: G_66 = crz on qubits [1, 3]; psi = psi_66, psi_next = psi_67
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_3(z)=0: psi_next(z) = exp(-i theta_v_14/2) psi(z)
+if b_1(z)=1 and b_3(z)=1: psi_next(z) = exp(i theta_v_14/2) psi(z)
+
+Step 067: G_67 = swap on qubits [1, 3]; psi = psi_67, psi_next = psi_68
+psi_next(z) = psi(swap_bits(z, 1, 3))
+
+Step 068: G_68 = crx on qubits [4, 1]; psi = psi_68, psi_next = psi_69
+if b_4(z)=0: psi_next(z) = psi(z)
+if b_4(z)=1 and b_1(z)=0: psi_next(z) = cos(theta_v_15/2) psi(z) - i sin(theta_v_15/2) psi(z xor 2^1)
+if b_4(z)=1 and b_1(z)=1: psi_next(z) = -i sin(theta_v_15/2) psi(z xor 2^1) + cos(theta_v_15/2) psi(z)
+
+Step 069: G_69 = cry on qubits [4, 1]; psi = psi_69, psi_next = psi_70
+if b_4(z)=0: psi_next(z) = psi(z)
+if b_4(z)=1 and b_1(z)=0: psi_next(z) = cos(theta_v_16/2) psi(z) - sin(theta_v_16/2) psi(z xor 2^1)
+if b_4(z)=1 and b_1(z)=1: psi_next(z) = sin(theta_v_16/2) psi(z xor 2^1) + cos(theta_v_16/2) psi(z)
+
+Step 070: G_70 = crz on qubits [4, 1]; psi = psi_70, psi_next = psi_71
+if b_4(z)=0: psi_next(z) = psi(z)
+if b_4(z)=1 and b_1(z)=0: psi_next(z) = exp(-i theta_v_17/2) psi(z)
+if b_4(z)=1 and b_1(z)=1: psi_next(z) = exp(i theta_v_17/2) psi(z)
+
+Step 071: G_71 = swap on qubits [4, 1]; psi = psi_71, psi_next = psi_72
+psi_next(z) = psi(swap_bits(z, 4, 1))
+
+Step 072: G_72 = crx on qubits [5, 4]; psi = psi_72, psi_next = psi_73
+if b_5(z)=0: psi_next(z) = psi(z)
+if b_5(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_18/2) psi(z) - i sin(theta_v_18/2) psi(z xor 2^4)
+if b_5(z)=1 and b_4(z)=1: psi_next(z) = -i sin(theta_v_18/2) psi(z xor 2^4) + cos(theta_v_18/2) psi(z)
+
+Step 073: G_73 = cry on qubits [5, 4]; psi = psi_73, psi_next = psi_74
+if b_5(z)=0: psi_next(z) = psi(z)
+if b_5(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_19/2) psi(z) - sin(theta_v_19/2) psi(z xor 2^4)
+if b_5(z)=1 and b_4(z)=1: psi_next(z) = sin(theta_v_19/2) psi(z xor 2^4) + cos(theta_v_19/2) psi(z)
+
+Step 074: G_74 = ry on qubits [4]; psi = psi_74, psi_next = psi_75
+if b_4(z)=0: psi_next(z) = cos(theta_v_20/2) psi(z) - sin(theta_v_20/2) psi(z xor 2^4)
+if b_4(z)=1: psi_next(z) = sin(theta_v_20/2) psi(z xor 2^4) + cos(theta_v_20/2) psi(z)
+
+Step 075: G_75 = rz on qubits [4]; psi = psi_75, psi_next = psi_76
+if b_4(z)=0: psi_next(z) = exp(-i theta_v_21/2) psi(z)
+if b_4(z)=1: psi_next(z) = exp(i theta_v_21/2) psi(z)
+
+Step 076: G_76 = ry on qubits [4]; psi = psi_76, psi_next = psi_77
+if b_4(z)=0: psi_next(z) = cos(theta_v_22/2) psi(z) - sin(theta_v_22/2) psi(z xor 2^4)
+if b_4(z)=1: psi_next(z) = sin(theta_v_22/2) psi(z xor 2^4) + cos(theta_v_22/2) psi(z)
+
+Step 077: G_77 = crx on qubits [5, 4]; psi = psi_77, psi_next = psi_78
+if b_5(z)=0: psi_next(z) = psi(z)
+if b_5(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_23/2) psi(z) - i sin(theta_v_23/2) psi(z xor 2^4)
+if b_5(z)=1 and b_4(z)=1: psi_next(z) = -i sin(theta_v_23/2) psi(z xor 2^4) + cos(theta_v_23/2) psi(z)
+
+Step 078: G_78 = cry on qubits [5, 4]; psi = psi_78, psi_next = psi_79
+if b_5(z)=0: psi_next(z) = psi(z)
+if b_5(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_24/2) psi(z) - sin(theta_v_24/2) psi(z xor 2^4)
+if b_5(z)=1 and b_4(z)=1: psi_next(z) = sin(theta_v_24/2) psi(z xor 2^4) + cos(theta_v_24/2) psi(z)
+
+Step 079: G_79 = crz on qubits [5, 4]; psi = psi_79, psi_next = psi_80
+if b_5(z)=0: psi_next(z) = psi(z)
+if b_5(z)=1 and b_4(z)=0: psi_next(z) = exp(-i theta_v_25/2) psi(z)
+if b_5(z)=1 and b_4(z)=1: psi_next(z) = exp(i theta_v_25/2) psi(z)
+
+Step 080: G_80 = crx on qubits [1, 4]; psi = psi_80, psi_next = psi_81
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_26/2) psi(z) - i sin(theta_v_26/2) psi(z xor 2^4)
+if b_1(z)=1 and b_4(z)=1: psi_next(z) = -i sin(theta_v_26/2) psi(z xor 2^4) + cos(theta_v_26/2) psi(z)
+
+Step 081: G_81 = cry on qubits [1, 4]; psi = psi_81, psi_next = psi_82
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_4(z)=0: psi_next(z) = cos(theta_v_27/2) psi(z) - sin(theta_v_27/2) psi(z xor 2^4)
+if b_1(z)=1 and b_4(z)=1: psi_next(z) = sin(theta_v_27/2) psi(z xor 2^4) + cos(theta_v_27/2) psi(z)
+
+Step 082: G_82 = crz on qubits [1, 4]; psi = psi_82, psi_next = psi_83
+if b_1(z)=0: psi_next(z) = psi(z)
+if b_1(z)=1 and b_4(z)=0: psi_next(z) = exp(-i theta_v_28/2) psi(z)
+if b_1(z)=1 and b_4(z)=1: psi_next(z) = exp(i theta_v_28/2) psi(z)
+
+Step 083: G_83 = swap on qubits [4, 1]; psi = psi_83, psi_next = psi_84
+psi_next(z) = psi(swap_bits(z, 4, 1))
+
+Step 084: G_84 = crx on qubits [3, 1]; psi = psi_84, psi_next = psi_85
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_1(z)=0: psi_next(z) = cos(theta_v_29/2) psi(z) - i sin(theta_v_29/2) psi(z xor 2^1)
+if b_3(z)=1 and b_1(z)=1: psi_next(z) = -i sin(theta_v_29/2) psi(z xor 2^1) + cos(theta_v_29/2) psi(z)
+
+Step 085: G_85 = cry on qubits [3, 1]; psi = psi_85, psi_next = psi_86
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_1(z)=0: psi_next(z) = cos(theta_v_30/2) psi(z) - sin(theta_v_30/2) psi(z xor 2^1)
+if b_3(z)=1 and b_1(z)=1: psi_next(z) = sin(theta_v_30/2) psi(z xor 2^1) + cos(theta_v_30/2) psi(z)
+
+Step 086: G_86 = crz on qubits [3, 1]; psi = psi_86, psi_next = psi_87
+if b_3(z)=0: psi_next(z) = psi(z)
+if b_3(z)=1 and b_1(z)=0: psi_next(z) = exp(-i theta_v_31/2) psi(z)
+if b_3(z)=1 and b_1(z)=1: psi_next(z) = exp(i theta_v_31/2) psi(z)
+
+Step 087: G_87 = swap on qubits [1, 3]; psi = psi_87, psi_next = psi_88
+psi_next(z) = psi(swap_bits(z, 1, 3))
+
+Step 088: G_88 = crx on qubits [6, 3]; psi = psi_88, psi_next = psi_89
+if b_6(z)=0: psi_next(z) = psi(z)
+if b_6(z)=1 and b_3(z)=0: psi_next(z) = cos(theta_v_32/2) psi(z) - i sin(theta_v_32/2) psi(z xor 2^3)
+if b_6(z)=1 and b_3(z)=1: psi_next(z) = -i sin(theta_v_32/2) psi(z xor 2^3) + cos(theta_v_32/2) psi(z)
+
+Step 089: G_89 = cry on qubits [6, 3]; psi = psi_89, psi_next = psi_90
+if b_6(z)=0: psi_next(z) = psi(z)
+if b_6(z)=1 and b_3(z)=0: psi_next(z) = cos(theta_v_33/2) psi(z) - sin(theta_v_33/2) psi(z xor 2^3)
+if b_6(z)=1 and b_3(z)=1: psi_next(z) = sin(theta_v_33/2) psi(z xor 2^3) + cos(theta_v_33/2) psi(z)
+
+Step 090: G_90 = crz on qubits [6, 3]; psi = psi_90, psi_next = psi_91
+if b_6(z)=0: psi_next(z) = psi(z)
+if b_6(z)=1 and b_3(z)=0: psi_next(z) = exp(-i theta_v_34/2) psi(z)
+if b_6(z)=1 and b_3(z)=1: psi_next(z) = exp(i theta_v_34/2) psi(z)
+
+Step 091: G_91 = swap on qubits [3, 6]; psi = psi_91, psi_next = psi_92
+psi_next(z) = psi(swap_bits(z, 3, 6))
+
+Step 092: G_92 = crx on qubits [2, 6]; psi = psi_92, psi_next = psi_93
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_35/2) psi(z) - i sin(theta_v_35/2) psi(z xor 2^6)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = -i sin(theta_v_35/2) psi(z xor 2^6) + cos(theta_v_35/2) psi(z)
+
+Step 093: G_93 = cry on qubits [2, 6]; psi = psi_93, psi_next = psi_94
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_36/2) psi(z) - sin(theta_v_36/2) psi(z xor 2^6)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = sin(theta_v_36/2) psi(z xor 2^6) + cos(theta_v_36/2) psi(z)
+
+Step 094: G_94 = crz on qubits [2, 6]; psi = psi_94, psi_next = psi_95
+if b_2(z)=0: psi_next(z) = psi(z)
+if b_2(z)=1 and b_6(z)=0: psi_next(z) = exp(-i theta_v_37/2) psi(z)
+if b_2(z)=1 and b_6(z)=1: psi_next(z) = exp(i theta_v_37/2) psi(z)
+
+Step 095: G_95 = crx on qubits [0, 6]; psi = psi_95, psi_next = psi_96
+if b_0(z)=0: psi_next(z) = psi(z)
+if b_0(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_38/2) psi(z) - i sin(theta_v_38/2) psi(z xor 2^6)
+if b_0(z)=1 and b_6(z)=1: psi_next(z) = -i sin(theta_v_38/2) psi(z xor 2^6) + cos(theta_v_38/2) psi(z)
+
+Step 096: G_96 = cry on qubits [0, 6]; psi = psi_96, psi_next = psi_97
+if b_0(z)=0: psi_next(z) = psi(z)
+if b_0(z)=1 and b_6(z)=0: psi_next(z) = cos(theta_v_39/2) psi(z) - sin(theta_v_39/2) psi(z xor 2^6)
+if b_0(z)=1 and b_6(z)=1: psi_next(z) = sin(theta_v_39/2) psi(z xor 2^6) + cos(theta_v_39/2) psi(z)
+
+Step 097: G_97 = rx on qubits [7]; psi = psi_97, psi_next = psi_98
+if b_7(z)=0: psi_next(z) = cos(theta_q_0/2) psi(z) - i sin(theta_q_0/2) psi(z xor 2^7)
+if b_7(z)=1: psi_next(z) = -i sin(theta_q_0/2) psi(z xor 2^7) + cos(theta_q_0/2) psi(z)
+
+Step 098: G_98 = rz on qubits [7]; psi = psi_98, psi_next = psi_99
+if b_7(z)=0: psi_next(z) = exp(-i theta_q_1/2) psi(z)
+if b_7(z)=1: psi_next(z) = exp(i theta_q_1/2) psi(z)
+
+Step 099: G_99 = rzz on qubits [0, 7]; psi = psi_99, psi_next = psi_100
+if b_0(z)=b_7(z): psi_next(z) = exp(-i theta_q_2/2) psi(z)
+if b_0(z)!=b_7(z): psi_next(z) = exp(i theta_q_2/2) psi(z)
+
+Step 100: G_100 = rzz on qubits [1, 7]; psi = psi_100, psi_next = psi_101
+if b_1(z)=b_7(z): psi_next(z) = exp(-i theta_q_3/2) psi(z)
+if b_1(z)!=b_7(z): psi_next(z) = exp(i theta_q_3/2) psi(z)
+
+Step 101: G_101 = rx on qubits [7]; psi = psi_101, psi_next = psi_102
+if b_7(z)=0: psi_next(z) = cos(theta_q_4/2) psi(z) - i sin(theta_q_4/2) psi(z xor 2^7)
+if b_7(z)=1: psi_next(z) = -i sin(theta_q_4/2) psi(z xor 2^7) + cos(theta_q_4/2) psi(z)
+
+Step 102: G_102 = rz on qubits [7]; psi = psi_102, psi_next = psi_103
+if b_7(z)=0: psi_next(z) = exp(-i theta_q_5/2) psi(z)
+if b_7(z)=1: psi_next(z) = exp(i theta_q_5/2) psi(z)
+
+Step 103: G_103 = rx on qubits [8]; psi = psi_103, psi_next = psi_104
+if b_8(z)=0: psi_next(z) = cos(theta_p_0/2) psi(z) - i sin(theta_p_0/2) psi(z xor 2^8)
+if b_8(z)=1: psi_next(z) = -i sin(theta_p_0/2) psi(z xor 2^8) + cos(theta_p_0/2) psi(z)
+
+Step 104: G_104 = rz on qubits [8]; psi = psi_104, psi_next = psi_105
+if b_8(z)=0: psi_next(z) = exp(-i theta_p_1/2) psi(z)
+if b_8(z)=1: psi_next(z) = exp(i theta_p_1/2) psi(z)
+
+Step 105: G_105 = rzz on qubits [0, 8]; psi = psi_105, psi_next = psi_106
+if b_0(z)=b_8(z): psi_next(z) = exp(-i theta_p_2/2) psi(z)
+if b_0(z)!=b_8(z): psi_next(z) = exp(i theta_p_2/2) psi(z)
+
+Step 106: G_106 = rzz on qubits [1, 8]; psi = psi_106, psi_next = psi_107
+if b_1(z)=b_8(z): psi_next(z) = exp(-i theta_p_3/2) psi(z)
+if b_1(z)!=b_8(z): psi_next(z) = exp(i theta_p_3/2) psi(z)
+
+Step 107: G_107 = rx on qubits [8]; psi = psi_107, psi_next = psi_108
+if b_8(z)=0: psi_next(z) = cos(theta_p_4/2) psi(z) - i sin(theta_p_4/2) psi(z xor 2^8)
+if b_8(z)=1: psi_next(z) = -i sin(theta_p_4/2) psi(z xor 2^8) + cos(theta_p_4/2) psi(z)
+
+Step 108: G_108 = rz on qubits [8]; psi = psi_108, psi_next = psi_109
+if b_8(z)=0: psi_next(z) = exp(-i theta_p_5/2) psi(z)
+if b_8(z)=1: psi_next(z) = exp(i theta_p_5/2) psi(z)
+
+Final CVA-subspace amplitudes
+-----------------------------
+
+alpha_000000(theta) = <q0..q8=000000111|A(theta)|0^9> = psi_109(448)
+alpha_100000(theta) = <q0..q8=100000111|A(theta)|0^9> = psi_109(449)
+alpha_010000(theta) = <q0..q8=010000111|A(theta)|0^9> = psi_109(450)
+alpha_110000(theta) = <q0..q8=110000111|A(theta)|0^9> = psi_109(451)
+alpha_001000(theta) = <q0..q8=001000111|A(theta)|0^9> = psi_109(452)
+alpha_101000(theta) = <q0..q8=101000111|A(theta)|0^9> = psi_109(453)
+alpha_011000(theta) = <q0..q8=011000111|A(theta)|0^9> = psi_109(454)
+alpha_111000(theta) = <q0..q8=111000111|A(theta)|0^9> = psi_109(455)
+alpha_000100(theta) = <q0..q8=000100111|A(theta)|0^9> = psi_109(456)
+alpha_100100(theta) = <q0..q8=100100111|A(theta)|0^9> = psi_109(457)
+alpha_010100(theta) = <q0..q8=010100111|A(theta)|0^9> = psi_109(458)
+alpha_110100(theta) = <q0..q8=110100111|A(theta)|0^9> = psi_109(459)
+alpha_001100(theta) = <q0..q8=001100111|A(theta)|0^9> = psi_109(460)
+alpha_101100(theta) = <q0..q8=101100111|A(theta)|0^9> = psi_109(461)
+alpha_011100(theta) = <q0..q8=011100111|A(theta)|0^9> = psi_109(462)
+alpha_111100(theta) = <q0..q8=111100111|A(theta)|0^9> = psi_109(463)
+alpha_000010(theta) = <q0..q8=000010111|A(theta)|0^9> = psi_109(464)
+alpha_100010(theta) = <q0..q8=100010111|A(theta)|0^9> = psi_109(465)
+alpha_010010(theta) = <q0..q8=010010111|A(theta)|0^9> = psi_109(466)
+alpha_110010(theta) = <q0..q8=110010111|A(theta)|0^9> = psi_109(467)
+alpha_001010(theta) = <q0..q8=001010111|A(theta)|0^9> = psi_109(468)
+alpha_101010(theta) = <q0..q8=101010111|A(theta)|0^9> = psi_109(469)
+alpha_011010(theta) = <q0..q8=011010111|A(theta)|0^9> = psi_109(470)
+alpha_111010(theta) = <q0..q8=111010111|A(theta)|0^9> = psi_109(471)
+alpha_000110(theta) = <q0..q8=000110111|A(theta)|0^9> = psi_109(472)
+alpha_100110(theta) = <q0..q8=100110111|A(theta)|0^9> = psi_109(473)
+alpha_010110(theta) = <q0..q8=010110111|A(theta)|0^9> = psi_109(474)
+alpha_110110(theta) = <q0..q8=110110111|A(theta)|0^9> = psi_109(475)
+alpha_001110(theta) = <q0..q8=001110111|A(theta)|0^9> = psi_109(476)
+alpha_101110(theta) = <q0..q8=101110111|A(theta)|0^9> = psi_109(477)
+alpha_011110(theta) = <q0..q8=011110111|A(theta)|0^9> = psi_109(478)
+alpha_111110(theta) = <q0..q8=111110111|A(theta)|0^9> = psi_109(479)
+alpha_000001(theta) = <q0..q8=000001111|A(theta)|0^9> = psi_109(480)
+alpha_100001(theta) = <q0..q8=100001111|A(theta)|0^9> = psi_109(481)
+alpha_010001(theta) = <q0..q8=010001111|A(theta)|0^9> = psi_109(482)
+alpha_110001(theta) = <q0..q8=110001111|A(theta)|0^9> = psi_109(483)
+alpha_001001(theta) = <q0..q8=001001111|A(theta)|0^9> = psi_109(484)
+alpha_101001(theta) = <q0..q8=101001111|A(theta)|0^9> = psi_109(485)
+alpha_011001(theta) = <q0..q8=011001111|A(theta)|0^9> = psi_109(486)
+alpha_111001(theta) = <q0..q8=111001111|A(theta)|0^9> = psi_109(487)
+alpha_000101(theta) = <q0..q8=000101111|A(theta)|0^9> = psi_109(488)
+alpha_100101(theta) = <q0..q8=100101111|A(theta)|0^9> = psi_109(489)
+alpha_010101(theta) = <q0..q8=010101111|A(theta)|0^9> = psi_109(490)
+alpha_110101(theta) = <q0..q8=110101111|A(theta)|0^9> = psi_109(491)
+alpha_001101(theta) = <q0..q8=001101111|A(theta)|0^9> = psi_109(492)
+alpha_101101(theta) = <q0..q8=101101111|A(theta)|0^9> = psi_109(493)
+alpha_011101(theta) = <q0..q8=011101111|A(theta)|0^9> = psi_109(494)
+alpha_111101(theta) = <q0..q8=111101111|A(theta)|0^9> = psi_109(495)
+alpha_000011(theta) = <q0..q8=000011111|A(theta)|0^9> = psi_109(496)
+alpha_100011(theta) = <q0..q8=100011111|A(theta)|0^9> = psi_109(497)
+alpha_010011(theta) = <q0..q8=010011111|A(theta)|0^9> = psi_109(498)
+alpha_110011(theta) = <q0..q8=110011111|A(theta)|0^9> = psi_109(499)
+alpha_001011(theta) = <q0..q8=001011111|A(theta)|0^9> = psi_109(500)
+alpha_101011(theta) = <q0..q8=101011111|A(theta)|0^9> = psi_109(501)
+alpha_011011(theta) = <q0..q8=011011111|A(theta)|0^9> = psi_109(502)
+alpha_111011(theta) = <q0..q8=111011111|A(theta)|0^9> = psi_109(503)
+alpha_000111(theta) = <q0..q8=000111111|A(theta)|0^9> = psi_109(504)
+alpha_100111(theta) = <q0..q8=100111111|A(theta)|0^9> = psi_109(505)
+alpha_010111(theta) = <q0..q8=010111111|A(theta)|0^9> = psi_109(506)
+alpha_110111(theta) = <q0..q8=110111111|A(theta)|0^9> = psi_109(507)
+alpha_001111(theta) = <q0..q8=001111111|A(theta)|0^9> = psi_109(508)
+alpha_101111(theta) = <q0..q8=101111111|A(theta)|0^9> = psi_109(509)
+alpha_011111(theta) = <q0..q8=011111111|A(theta)|0^9> = psi_109(510)
+alpha_111111(theta) = <q0..q8=111111111|A(theta)|0^9> = psi_109(511)
+
+CVA probability and value
+-------------------------
+
+p_111(theta) = sum_{x=0}^{63} |alpha_x(theta)|^2
+CVA(theta) = 2^m (1-R) C_v C_q C_p p_111(theta)

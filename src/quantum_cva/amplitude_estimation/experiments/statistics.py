@@ -173,6 +173,19 @@ def query_budget(row: Mapping[str, Any]) -> float:
     return np.nan
 
 
+def run_identity(row: Mapping[str, Any]) -> tuple[Any, ...] | None:
+    case_id = row.get("case_id")
+    case_repetition = row.get("case_repetition")
+    if case_id not in (None, "") and case_repetition not in (None, ""):
+        case_rep = as_float(case_repetition)
+        if np.isfinite(case_rep):
+            return (str(case_id), int(case_rep))
+    repetition = row.get("repetition")
+    if repetition not in (None, "") and np.isfinite(as_float(repetition)):
+        return (int(as_float(repetition)),)
+    return None
+
+
 def aggregate_budget_summary(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -218,12 +231,8 @@ def aggregate_budget_summary(
                 continue
             subset = [alg_rows[int(idx)] for idx in indices]
             n_subset = int(len(subset))
-            repetitions = {
-                int(as_float(row.get("repetition")))
-                for row in subset
-                if np.isfinite(as_float(row.get("repetition")))
-            }
-            n_runs = int(len(repetitions)) if repetitions else n_subset
+            run_ids = {identity for row in subset if (identity := run_identity(row))}
+            n_runs = int(len(run_ids)) if run_ids else n_subset
 
             q_actual = np.asarray([query_budget(row) for row in subset], dtype=float)
             estimates = np.asarray([as_float(row.get("estimate")) for row in subset])
@@ -231,6 +240,7 @@ def aggregate_budget_summary(
             norm_abs = np.asarray([as_float(row.get("normalized_abs_error")) for row in subset])
             processed_abs = np.asarray([as_float(row.get("processed_abs_error")) for row in subset])
             processed_rel = np.asarray([as_float(row.get("processed_relative_error")) for row in subset])
+            coverage = np.asarray([as_float(row.get("coverage")) for row in subset])
             runtime = np.asarray(
                 [
                     as_float(
@@ -287,57 +297,72 @@ def aggregate_budget_summary(
                 n_boot=bootstrap_samples,
                 rng=rng,
             )
-
-            summary.append(
-                {
-                    "budget": int(round(float(as_float(subset[0].get("budget"), np.nanmedian(q_actual)))))
-                    if group_by_budget
-                    else int(round(float(np.nanmedian(q_actual)))),
-                    "algorithm": algorithm,
-                    "algorithm_key": str(subset[0].get("algorithm_key", algorithm)),
-                    "target_name": str(subset[0].get("target_name", "amplitude")),
-                    "n_points": n_subset,
-                    "n_runs": n_runs,
-                    "total_repetitions": np.nan
-                    if total_repetitions is None
-                    else int(total_repetitions),
-                    "success_rate": np.nan
-                    if total_repetitions is None or int(total_repetitions) <= 0
-                    else float(n_runs / int(total_repetitions)),
-                    "estimate_mean": float(np.nanmean(estimates)),
-                    "query_budget_actual_mean": float(np.nanmean(q_actual)),
-                    "query_budget_actual_median": float(np.nanmedian(q_actual)),
-                    "abs_error_mean": float(np.nanmean(abs_error)),
-                    "abs_error_median": float(np.nanmedian(abs_error)),
-                    "mae_ci_low": abs_low,
-                    "mae_ci_high": abs_high,
-                    "normalized_abs_error_mean": norm_mean,
-                    "normalized_abs_error_ci_low": norm_low,
-                    "normalized_abs_error_ci_high": norm_high,
-                    "normalized_abs_error_median": norm_median,
-                    "normalized_abs_error_median_ci_low": norm_median_low,
-                    "normalized_abs_error_median_ci_high": norm_median_high,
-                    "normalized_abs_error_std": float(np.nanstd(norm_abs, ddof=1))
-                    if n_subset > 1
-                    else 0.0,
-                    "normalized_abs_error_se": standard_error(norm_abs),
-                    "processed_abs_error_median": processed_abs_median,
-                    "processed_abs_error_median_ci_low": processed_abs_low,
-                    "processed_abs_error_median_ci_high": processed_abs_high,
-                    "processed_abs_error_se": standard_error(processed_abs),
-                    "processed_relative_error_median": processed_rel_median,
-                    "processed_relative_error_median_ci_low": processed_rel_low,
-                    "processed_relative_error_median_ci_high": processed_rel_high,
-                    "processed_relative_error_se": standard_error(processed_rel),
-                    "grover_power_max_median": float(np.nanmedian(k_vals)),
-                    "amplification_factor_median": float(np.nanmedian(amp_factors)),
-                    "runtime_wall_seconds_mean": runtime_mean,
-                    "runtime_wall_seconds_ci_low": runtime_low,
-                    "runtime_wall_seconds_ci_high": runtime_high,
-                    "runtime_wall_seconds_median": runtime_median,
-                    "runtime_wall_seconds_median_ci_low": runtime_med_low,
-                    "runtime_wall_seconds_median_ci_high": runtime_med_high,
-                    "runtime_wall_seconds_se": standard_error(runtime),
-                }
+            coverage_mean, coverage_low, coverage_high = bootstrap_mean_ci(
+                coverage,
+                n_boot=bootstrap_samples,
+                rng=rng,
             )
+            coverage_n = int(np.count_nonzero(np.isfinite(coverage)))
+
+            row = {
+                "budget": int(round(float(as_float(subset[0].get("budget"), np.nanmedian(q_actual)))))
+                if group_by_budget
+                else int(round(float(np.nanmedian(q_actual)))),
+                "algorithm": algorithm,
+                "algorithm_key": str(subset[0].get("algorithm_key", algorithm)),
+                "target_name": str(subset[0].get("target_name", "amplitude")),
+                "n_points": n_subset,
+                "n_runs": n_runs,
+                "total_repetitions": np.nan
+                if total_repetitions is None
+                else int(total_repetitions),
+                "success_rate": np.nan
+                if total_repetitions is None or int(total_repetitions) <= 0
+                else float(n_runs / int(total_repetitions)),
+                "estimate_mean": float(np.nanmean(estimates)),
+                "query_budget_actual_mean": float(np.nanmean(q_actual)),
+                "query_budget_actual_median": float(np.nanmedian(q_actual)),
+                "abs_error_mean": float(np.nanmean(abs_error)),
+                "abs_error_median": float(np.nanmedian(abs_error)),
+                "mae_ci_low": abs_low,
+                "mae_ci_high": abs_high,
+                "normalized_abs_error_mean": norm_mean,
+                "normalized_abs_error_ci_low": norm_low,
+                "normalized_abs_error_ci_high": norm_high,
+                "normalized_abs_error_median": norm_median,
+                "normalized_abs_error_median_ci_low": norm_median_low,
+                "normalized_abs_error_median_ci_high": norm_median_high,
+                "normalized_abs_error_std": float(np.nanstd(norm_abs, ddof=1))
+                if n_subset > 1
+                else 0.0,
+                "normalized_abs_error_se": standard_error(norm_abs),
+                "processed_abs_error_median": processed_abs_median,
+                "processed_abs_error_median_ci_low": processed_abs_low,
+                "processed_abs_error_median_ci_high": processed_abs_high,
+                "processed_abs_error_se": standard_error(processed_abs),
+                "processed_relative_error_median": processed_rel_median,
+                "processed_relative_error_median_ci_low": processed_rel_low,
+                "processed_relative_error_median_ci_high": processed_rel_high,
+                "processed_relative_error_se": standard_error(processed_rel),
+                "grover_power_max_median": float(np.nanmedian(k_vals)),
+                "amplification_factor_median": float(np.nanmedian(amp_factors)),
+                "runtime_wall_seconds_mean": runtime_mean,
+                "runtime_wall_seconds_ci_low": runtime_low,
+                "runtime_wall_seconds_ci_high": runtime_high,
+                "runtime_wall_seconds_median": runtime_median,
+                "runtime_wall_seconds_median_ci_low": runtime_med_low,
+                "runtime_wall_seconds_median_ci_high": runtime_med_high,
+                "runtime_wall_seconds_se": standard_error(runtime),
+            }
+            if coverage_n:
+                row.update(
+                    {
+                        "coverage": coverage_mean,
+                        "coverage_ci_low": coverage_low,
+                        "coverage_ci_high": coverage_high,
+                        "coverage_se": standard_error(coverage),
+                        "coverage_n": coverage_n,
+                    }
+                )
+            summary.append(row)
     return summary

@@ -1,0 +1,22 @@
+{
+  "run_dir": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7",
+  "config_json": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\config.json",
+  "backend_snapshot_json": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\backend_snapshot.json",
+  "session_details_json": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\session_details.json",
+  "transpilation_report_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\transpilation_report.csv",
+  "readout_calibration_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\readout_calibration.csv",
+  "amplification_counts_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\amplification_counts.csv",
+  "amplification_points_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\amplification_points.csv",
+  "calibration_summary_json": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\calibration_summary.json",
+  "direct_trace_rows_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\direct_trace_rows.csv",
+  "direct_final_rows_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\direct_final_rows.csv",
+  "replay_trace_rows_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\replay_trace_rows.csv",
+  "replay_final_rows_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\replay_final_rows.csv",
+  "replay_budget_rows_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\replay_budget_rows.csv",
+  "budget_summary_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\budget_summary.csv",
+  "runtime_jobs_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\runtime_jobs.csv",
+  "errors_csv": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\errors.csv",
+  "trace_bundle_npz": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\trace_bundle.npz",
+  "qasm3_isa_dir": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\qasm3_isa",
+  "plots_dir": "cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\noisy_simulation\\experiment_results_baseline_1over8_k24_scale0.7\\plots"
+}

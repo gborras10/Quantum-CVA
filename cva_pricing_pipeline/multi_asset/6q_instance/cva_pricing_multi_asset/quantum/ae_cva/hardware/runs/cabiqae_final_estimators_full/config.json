@@ -1,0 +1,172 @@
+{
+  "run_id": "cabiqae_final_estimators_full",
+  "run_uuid": "157cd9b5-7155-4338-a8cb-c3a3f36129fa",
+  "pipeline": "6q_cva_cabiqae_final_estimators",
+  "mode": "replay-only",
+  "backend": "ibm_pittsburgh",
+  "backend_name": "ibm_pittsburgh",
+  "instance_name": "premium_new_usa",
+  "runtime_service_name": "premium_new_usa",
+  "channel": "ibm_cloud",
+  "hardware_executor": "qctrl",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "qiskit_function_channel": "",
+  "use_fractional_gates_requested": false,
+  "target_name": "cva",
+  "good_bitstring": "111",
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "objective_width": 3,
+  "a_true": 0.1328730942948926,
+  "processed_true_value": 0.6065952441817299,
+  "cva_true": 0.6065952441817299,
+  "bundle_metadata": {
+    "target_name": "cva",
+    "good_bitstring": "111",
+    "num_qubits_time": 2,
+    "num_qubits_underlying": 4,
+    "total_state_qubits": 6,
+    "objective_qubits": [
+      6,
+      7,
+      8
+    ],
+    "cva_scaling": {
+      "recovery_rate": 0.415,
+      "C_v": 9923.426093037278,
+      "C_q": 0.00019708755276215406,
+      "C_p": 0.9975283755255839
+    },
+    "builder": "6q_cva",
+    "qcbm_topology": "qcbm_heavyhex6",
+    "qcbm_n_layers": 6,
+    "exposure_ansatz": "heavy_hex_star",
+    "exposure_n_layers": 2,
+    "artifact_paths": {
+      "benchmark": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\benchmark\\three_asset_instance.npz",
+      "qcbm": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\qcbm\\shots\\6LAY_training_qcbm_heavyhex6_shots_backend_noise_snapshot.npz",
+      "crca_default": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\default_probabilities\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_discount": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\discount_factors\\training_crca2_shots_backend_noise_snapshot.npz",
+      "crca_exposure": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\data\\multi_asset\\6q_instance\\quantum\\training\\crca\\positive_exposure\\training_heavy_hex_star_shots_backend_noise_snapshot.npz"
+    }
+  },
+  "max_grover_power_requested": 4,
+  "scan_repeats": 2,
+  "scan_shots": 4096,
+  "readout_shots": 8192,
+  "skip_readout_calibration": false,
+  "readout_mitigation_mode": "measured_linear_correction",
+  "direct_shots": 128,
+  "max_direct_sampler_calls_per_algorithm": 64,
+  "replay_repetitions": 200,
+  "replay_probability_mode": "normal",
+  "replay_probability_se_scale": 1.0,
+  "replay_extrapolate": true,
+  "cabiqae_replay_contrast_model_all_k": false,
+  "budgets": [
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "session_max_time": "24h",
+  "soft_wallclock_limit_seconds": 315360000.0,
+  "max_isa_depth": 12000,
+  "max_isa_2q": 6000,
+  "optimization_level": 3,
+  "seed_transpiler": 1234,
+  "routing_method": "sabre",
+  "layout_search_strategy": "exhaustive",
+  "reference_ks": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "seed": 12345,
+  "algorithms": [
+    "cabiqae"
+  ],
+  "algorithm_labels": {
+    "cabiqae": "CABIQAE"
+  },
+  "epsilon_target": 0.1,
+  "epsilon_targets": {
+    "cabiqae": 0.1
+  },
+  "cabiqae_epsilon_target": 0.1,
+  "biqae_epsilon_target": null,
+  "noise_floor": 0.14032,
+  "contrast_baseline": 0.14032,
+  "min_ideal_offset": 0.08,
+  "min_fit_contrast_z": 2.0,
+  "min_visible_contrast_z": 3.0,
+  "min_baseline_fit_points": 3,
+  "cap_kappa": 3.0,
+  "cabiqae_hard_k_cap": true,
+  "final_estimators_execution_mode": "calibration_replay",
+  "epsilon_target_grid": [
+    0.1,
+    0.05,
+    0.02,
+    0.01,
+    0.005,
+    0.002,
+    0.001
+  ],
+  "final_repetitions": 100,
+  "bootstrap_samples": 2000,
+  "calibration_reuse": {
+    "source_run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware",
+    "source_run_id": "q_ctrl_hardware",
+    "source_calibration_summary_json": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware\\calibration_summary.json",
+    "source_amplification_points_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware\\amplification_points.csv",
+    "source_readout_calibration_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware\\readout_calibration.csv",
+    "new_qpu_submissions": false
+  },
+  "replay_extrapolation_model": {
+    "model": "free_intercept",
+    "contrast_prefactor": 0.5867542010323192,
+    "t_eff": 1.8918875595698206,
+    "contrast_baseline": 0.14032,
+    "a_true": 0.1328730942948926
+  },
+  "final_estimators_solver": {
+    "algorithm": "cabiqae",
+    "execution_mode": "calibration_replay",
+    "calibration_source_run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\results\\q_ctrl_hardware",
+    "epsilon_targets": [
+      0.1,
+      0.05,
+      0.02,
+      0.01,
+      0.005,
+      0.002,
+      0.001
+    ],
+    "final_repetitions": 100,
+    "direct_shots": 128,
+    "replay_max_calls_per_estimator": 4096,
+    "replay_probability_mode": "normal",
+    "replay_probability_se_scale": 1.0,
+    "replay_extrapolate": true,
+    "t_eff": 1.8918875595698206,
+    "contrast_prefactor": 0.5867542010323192,
+    "contrast_baseline": 0.14032,
+    "query_metric": "state_preparation_calls",
+    "construct_circuit_mode": "metadata_only"
+  },
+  "final_estimators_artifacts": {
+    "final_estimations_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\cabiqae_final_estimators_full\\final_cabiqae_estimations.csv",
+    "summary_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\cabiqae_final_estimators_full\\final_cabiqae_error_vs_queries_summary.csv",
+    "plot_png": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\cva_pricing_pipeline\\multi_asset\\6q_instance\\cva_pricing_multi_asset\\quantum\\ae_cva\\hardware\\runs\\cabiqae_final_estimators_full\\plots\\final_cabiqae_normalized_error_vs_queries.png"
+  }
+}

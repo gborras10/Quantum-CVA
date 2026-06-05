@@ -32,17 +32,15 @@ from toys.amplitude_estimation_experiments.ideal_regime.ideal_utils import (
 )
 
 
-ALGORITHMS = ("bae", "biqae", "iqae", "cabiqae_latentt")
+ALGORITHMS = ("bae", "biqae", "cabiqae_latentt")
 ALGORITHM_LABELS = {
     "bae": "BAE",
     "biqae": "BIQAE",
-    "iqae": "IQAE",
     "cabiqae_latentt": "CABIQAE",
 }
 ALGORITHM_STYLES = {
     "bae": {"color": "#E07A5F", "marker": "^"},
     "biqae": {"color": "#A23B72", "marker": "s"},
-    "iqae": {"color": "#4C78A8", "marker": "D"},
     "cabiqae_latentt": {"color": "#1F6F8B", "marker": "o"},
 }
 
@@ -50,23 +48,23 @@ OBJECTIVE_RY_OFFSETS = np.array([0.30, 0.44, 0.48, 0.52, 0.56, 0.60, 0.63, 0.67]
 
 ALGORITHM_CONFIG = {
     "bae": {
-        "epsilon_target": 5e-5,
+        "epsilon_target": 5e-3,
         "n_shots": None,
-        "max_queries": 3e5,
+        "max_queries": 1e4,
         "estimate_T": False,
     },
     "biqae": {
-        "epsilon_target": 5e-5,
+        "epsilon_target": 1e-3,
         "n_shots": None,
         "max_queries": None,
     },
     "iqae": {
-        "epsilon_target": 5e-5,
+        "epsilon_target": 1e-3,
         "n_shots": None,
         "max_queries": None,
     },
     "cabiqae_latentt": {
-        "epsilon_target": 5e-5,
+        "epsilon_target": 1e-3,
         "n_shots": None,
         "max_queries": None,
     },
@@ -123,18 +121,6 @@ def _build_solver(
             True,
         )
 
-    if algorithm == "iqae":
-        return (
-            BIQAE(
-                epsilon_target=epsilon_target,
-                alpha=alpha,
-                sampler=ideal_sampler,
-                min_ratio=2,
-                confint_method="beta",
-            ),
-            False,
-        )
-
     if algorithm == "cabiqae_latentt":
         return (
             CABIQAELatentTheta(
@@ -173,7 +159,7 @@ def run_experiment() -> None:
     Compare BAE, BIQAE, IQAE and CABIQAE_latentt in an ideal regime with
     the canonical 3-qubit AE topology used by the hardware experiment.
     """
-    n_rep = 25    
+    n_rep = 300    
 
     alpha = 0.05
     max_queries = 1e6
@@ -301,7 +287,7 @@ def run_experiment() -> None:
 
     output_dir = os.path.join(current_dir, "experiment_results")
     os.makedirs(output_dir, exist_ok=True)
-    output_prefix = "bae_biqae_iqae_cabiqae_latentt_ideal"
+    output_prefix = "bae_biqae_cabiqae_latentt_ideal"
     budget_summary = aggregate_budget_summary(
         trace_rows_all,
         total_repetitions=n_rep,
@@ -312,14 +298,19 @@ def run_experiment() -> None:
     save_csv(budget_summary, os.path.join(output_dir, f"{output_prefix}_budget_summary.csv"))
     save_csv(error_rows, os.path.join(output_dir, f"{output_prefix}_errors.csv"))
 
-    out_path = os.path.join(output_dir, "bae_biqae_iqae_cabiqae_latentt_ideal_rmse.png")
+    out_path = os.path.join(output_dir, "bae_biqae_cabiqae_latentt_ideal_rmse.png")
     plot_budget_summary(
         budget_summary,
         algorithms=ALGORITHMS,
         algorithm_labels=ALGORITHM_LABELS,
         algorithm_styles=ALGORITHM_STYLES,
         output_path=out_path,
-        title="Ideal regime comparison: BAE vs BIQAE vs IQAE vs CABIQAE_latentt",
+        title="",
+        drop_binned_point_indices={
+            "BAE": (-2, -1),
+            "CABIQAE": (-2, -1),
+        },
+        x_query_stat="median",
     )
     print(f"Saved plot to {out_path}")
     print(f"Saved CSV outputs with prefix {os.path.join(output_dir, output_prefix)}")

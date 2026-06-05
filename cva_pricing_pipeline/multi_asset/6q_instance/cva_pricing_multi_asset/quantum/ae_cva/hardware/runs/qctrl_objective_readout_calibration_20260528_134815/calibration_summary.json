@@ -1,0 +1,27 @@
+{
+  "run_id": "qctrl_objective_readout_calibration_20260528_134815",
+  "run_uuid": "2b74de5e-4575-498f-9cd9-f454b8deb132",
+  "calibration_type": "objective_assignment_8x8",
+  "backend_name": "ibm_pittsburgh",
+  "instance_name": "premium_new_usa",
+  "hardware_executor": "qctrl",
+  "qiskit_function_name": "q-ctrl/performance-management",
+  "shots_per_pub": 4096,
+  "repeats": 2,
+  "objective_qubits": [
+    6,
+    7,
+    8
+  ],
+  "good_bitstring": "111",
+  "bitstring_convention": "rightmost character corresponds to objective_qubits[0]",
+  "p_110_to_111": 0.0003662109375,
+  "p_110_to_111_se": 0.00021139326544833696,
+  "p_111_to_111": 0.9991455078125,
+  "p_000_to_111": 0.0,
+  "ideal_k0_p111": 0.13287309429489258,
+  "ideal_k0_p110": 0.8670389610547243,
+  "ideal_k0_distribution_json": "{\"000\": 1.112824918531132e-09, \"001\": 2.686606432552044e-10, \"010\": 1.7693243174784435e-05, \"011\": 2.7108795807792565e-06, \"100\": 5.45092843814297e-05, \"101\": 1.3029861760845099e-05, \"110\": 0.8670389610547243, \"111\": 0.13287309429489258}",
+  "predicted_k0_p111_from_110_leakage": 0.13307707442466551,
+  "k0_probe_mean_p111": 0.2080078125
+}

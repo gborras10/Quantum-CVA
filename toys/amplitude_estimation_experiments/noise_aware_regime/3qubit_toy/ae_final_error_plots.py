@@ -23,9 +23,32 @@ FINAL_ERROR_STYLE = {
     "BAE": {"color": "#E07A5F", "marker": "^"},
     "BIQAE": {"color": "#A23B72", "marker": "s"},
     "CABIQAE": {"color": "#1F6F8B", "marker": "o"},
+    "Classical MC": {"color": "#2A9D8F", "marker": "X"},
 }
 
-ALGORITHM_ORDER = ("BAE", "BIQAE", "CABIQAE")
+ALGORITHM_ORDER = ("BAE", "BIQAE", "CABIQAE", "Classical MC")
+
+
+def _paper_style_rc_context() -> dict[str, object]:
+    return {
+        "font.family": "serif",
+        "font.serif": ["STIXGeneral", "DejaVu Serif", "Times New Roman"],
+        "mathtext.fontset": "stix",
+        "axes.linewidth": 0.8,
+        "axes.labelsize": 11.5,
+        "xtick.labelsize": 10.5,
+        "ytick.labelsize": 10.5,
+        "legend.fontsize": 10.5,
+        "xtick.direction": "in",
+        "ytick.direction": "in",
+        "xtick.major.size": 3.2,
+        "ytick.major.size": 3.2,
+        "xtick.minor.size": 1.8,
+        "ytick.minor.size": 1.8,
+        "xtick.top": True,
+        "ytick.right": True,
+        "legend.frameon": False,
+    }
 
 
 def _algorithm_label(value: object) -> str:
@@ -37,6 +60,8 @@ def _algorithm_label(value: object) -> str:
         return "BIQAE"
     if key == "bae":
         return "BAE"
+    if key in {"classical_mc", "classical mc", "montecarlo", "monte_carlo", "mc"}:
+        return "Classical MC"
     return raw
 
 
@@ -72,7 +97,7 @@ def _plot_log_gaussian_contours(
     y_values: np.ndarray,
     *,
     color: str,
-    levels: tuple[float, ...] = (1.0, 2.0, 3.0),
+    levels: tuple[float, ...] = (np.sqrt(2.30), np.sqrt(5.99)),
 ) -> None:
     valid = (
         np.isfinite(x_values)
@@ -85,12 +110,16 @@ def _plot_log_gaussian_contours(
     if x_values.size < 3:
         return
 
-    log_points = np.vstack([np.log10(x_values), np.log10(y_values)])
-    covariance = np.cov(log_points)
+    points = np.column_stack([np.log10(x_values), np.log10(y_values)])
+    lower, upper = np.quantile(points, [0.025, 0.975], axis=0)
+    central = points[np.all((points >= lower) & (points <= upper), axis=1)]
+    if central.shape[0] < 3:
+        central = points
+    covariance = np.cov(central, rowvar=False)
     if not np.all(np.isfinite(covariance)):
         return
 
-    covariance = covariance + np.eye(2) * 1e-12
+    covariance = covariance + np.eye(2) * 1e-10
     eigvals, eigvecs = np.linalg.eigh(covariance)
     if np.any(eigvals <= 0.0) or not np.all(np.isfinite(eigvals)):
         return
@@ -98,21 +127,21 @@ def _plot_log_gaussian_contours(
     order = np.argsort(eigvals)[::-1]
     eigvals = eigvals[order]
     eigvecs = eigvecs[:, order]
-    center = np.mean(log_points, axis=1)
+    center = np.median(points, axis=0)
     angles = np.linspace(0.0, 2.0 * np.pi, 360)
-    unit_circle = np.vstack([np.cos(angles), np.sin(angles)])
+    unit_circle = np.column_stack([np.cos(angles), np.sin(angles)])
 
-    for level in levels:
-        ellipse = center[:, None] + eigvecs @ (
-            np.sqrt(eigvals)[:, None] * float(level) * unit_circle
+    for level, alpha in zip(levels, (0.24, 0.14)):
+        ellipse = center + float(level) * (
+            unit_circle @ (eigvecs @ np.diag(np.sqrt(eigvals))).T
         )
         ax.plot(
-            10.0 ** ellipse[0],
-            10.0 ** ellipse[1],
+            10.0 ** ellipse[:, 0],
+            10.0 ** ellipse[:, 1],
             color=color,
-            linewidth=1.25,
-            alpha=0.92,
-            zorder=2,
+            linewidth=0.85,
+            alpha=alpha,
+            zorder=1,
         )
 
 
@@ -150,6 +179,7 @@ def plot_final_error_scatter(
     if x_kind not in {"queries", "runtime"}:
         raise ValueError("x_kind must be 'queries' or 'runtime'")
 
+    plt.rcParams.update(_paper_style_rc_context())
     df = final_rows.copy()
     df["algorithm"] = df["algorithm"].map(_algorithm_label)
     error_col = _first_existing(df, ("final_normalized_abs_error", "final_nrmse"))
@@ -222,13 +252,14 @@ def plot_final_error_scatter(
         ax.scatter(
             plot_x_values,
             plot_y_values,
-            s=28,
+            s=16,
             marker=style["marker"],
             color=style["color"],
-            alpha=0.42,
-            edgecolors="white",
-            linewidths=0.35,
-            zorder=3,
+            alpha=0.30,
+            edgecolors="none",
+            linewidths=0.0,
+            rasterized=True,
+            zorder=2,
         )
         _plot_log_gaussian_contours(ax, plot_x_values, plot_y_values, color=style["color"])
 
@@ -237,11 +268,11 @@ def plot_final_error_scatter(
         ax.scatter(
             [median_x],
             [median_y],
-            s=145,
+            s=64,
             marker=style["marker"],
             facecolor=style["color"],
-            edgecolor="black",
-            linewidth=1.1,
+            edgecolor="white",
+            linewidth=0.85,
             zorder=5,
         )
         legend_handles.append(
@@ -251,10 +282,8 @@ def plot_final_error_scatter(
                 color=style["color"],
                 marker=style["marker"],
                 linestyle="None",
-                markersize=8,
-                label=f"{algorithm} (n={plot_x_values.size}/{len(group)})"
-                if plot_x_values.size != len(group)
-                else f"{algorithm} (n={len(group)})",
+                markersize=6.5,
+                label=algorithm,
             )
         )
 
@@ -290,25 +319,6 @@ def plot_final_error_scatter(
     if x_kind == "queries" and draw_query_scaling_guides:
         query_reference_handles = add_query_scaling_guides(ax, query_guide_points)
 
-    median_handle = Line2D(
-        [0],
-        [0],
-        color="black",
-        marker="o",
-        markerfacecolor="white",
-        linestyle="None",
-        markersize=8,
-        markeredgewidth=1.3,
-        label="median",
-    )
-    contour_handle = Line2D(
-        [0],
-        [0],
-        color="0.25",
-        linewidth=1.7,
-        label="Gaussian contours",
-    )
-    legend_handles.extend([median_handle, contour_handle])
     legend_handles.extend(query_reference_handles)
 
     ax.set_xscale("log")
@@ -322,28 +332,11 @@ def plot_final_error_scatter(
 
     ax.set_xlabel("Final query count" if x_kind == "queries" else "Runtime [s]")
     ax.set_ylabel("Final normalized absolute error")
-    ax.set_title(title)
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
-    ax.legend(handles=legend_handles, frameon=False, loc="upper right")
-
-    text = _summary_text(summary, x_kind=x_kind)
-    if text:
-        ax.text(
-            0.03,
-            0.04,
-            text,
-            transform=ax.transAxes,
-            fontsize=9.5,
-            va="bottom",
-            ha="left",
-            bbox={
-                "boxstyle": "round,pad=0.28",
-                "facecolor": "white",
-                "edgecolor": "0.75",
-                "alpha": 0.92,
-            },
-        )
+    if title:
+        ax.set_title(title)
+    ax.grid(True, which="major", color="#BFBFBF", linewidth=0.55, alpha=0.32)
+    ax.grid(True, which="minor", color="#D7D7D7", linewidth=0.40, alpha=0.16)
+    ax.legend(handles=legend_handles, frameon=False, loc="best")
 
     fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)

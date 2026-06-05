@@ -1,0 +1,16 @@
+backend_mode,context,job_id,n_circuits,sampler_call_index,shots,submitted_at_epoch
+runtime,readout_calibration,d8ar5mes3bbc73fj7sdg,2,0,8192,1779806937.5259612
+runtime,amplification_scan,d8ar62es3bbc73fj7su0,1,0,4096,1779806985.1067038
+runtime,amplification_scan,d8ar67qvnmpc73br2bn0,1,1,4096,1779807006.6503534
+runtime,amplification_scan,d8ar6bqvnmpc73br2bug,1,2,4096,1779807022.9875054
+runtime,amplification_scan,d8ar6dqa5s8s73cl072g,1,3,4096,1779807030.783107
+runtime,amplification_scan,d8ar6ggb1oec7382tuqg,1,4,4096,1779807041.5982435
+runtime,amplification_scan,d8ar6jaa5s8s73cl0790,1,5,4096,1779807052.626458
+runtime,amplification_scan,d8ar6lqa5s8s73cl07d0,1,6,4096,1779807063.3357244
+runtime,amplification_scan,d8ar6nqa5s8s73cl07i0,1,7,4096,1779807071.9800699
+runtime,amplification_scan,d8ar6pob1oec7382tvcg,1,8,4096,1779807079.3567061
+runtime,amplification_scan,d8ar6s0b1oec7382tvgg,1,9,4096,1779807087.8754547
+runtime,amplification_scan,d8arsfia5s8s73cl18f0,1,0,4096,1779809854.2298226
+runtime,amplification_scan,d8artvaa5s8s73cl1amg,1,1,4096,1779810045.608369
+runtime,amplification_scan,d8arvl8b1oec7382v500,1,0,4096,1779810260.9009914
+runtime,amplification_scan,d8as0fia5s8s73cl1fjg,1,1,4096,1779810365.7810993

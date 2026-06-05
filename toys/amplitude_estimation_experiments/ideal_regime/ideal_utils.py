@@ -22,6 +22,63 @@ from toys.amplitude_estimation_experiments.common_utils.plotting_utils import (
 )
 
 
+def _paper_style_rc_context() -> dict[str, object]:
+    return {
+        "font.family": "serif",
+        "font.serif": [
+            "Computer Modern Roman",
+            "CMU Serif",
+            "Latin Modern Roman",
+            "DejaVu Serif",
+        ],
+        "mathtext.fontset": "cm",
+        "axes.labelsize": 14,
+        "legend.fontsize": 11,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "axes.linewidth": 1.25,
+        "lines.solid_capstyle": "round",
+    }
+
+
+def _apply_paper_axes_style(ax: plt.Axes) -> None:
+    ax.minorticks_on()
+    ax.tick_params(
+        axis="both",
+        which="major",
+        direction="in",
+        length=6.0,
+        width=1.05,
+        top=True,
+        right=True,
+    )
+    ax.tick_params(
+        axis="both",
+        which="minor",
+        direction="in",
+        length=3.2,
+        width=0.85,
+        top=True,
+        right=True,
+    )
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color("#222222")
+        spine.set_linewidth(1.25)
+
+
+def _normalize_algorithm_series_name(value: object) -> str:
+    raw = str(value).strip()
+    key = raw.lower()
+    if key in {"cabiqae", "cabiqae_latentt", "cabiqae-latentt"}:
+        return "cabiqae_latentt"
+    if key == "biqae":
+        return "biqae"
+    if key == "bae":
+        return "bae"
+    return key
+
+
 def save_csv(rows: Sequence[Mapping[str, Any]], output_path: str | Path) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -452,14 +509,28 @@ def _bootstrap_median_ci(
     return center, float(low), float(high)
 
 
-def _query_budget(row: Mapping[str, Any]) -> float:
-    for key in (
-        "query_budget",
-        "query_budget_actual",
-        "query_budget_actual_mean",
-        "budget",
-        "final_queries",
-    ):
+def _query_budget(row: Mapping[str, Any], *, statistic: str = "mean") -> float:
+    if statistic not in {"mean", "median"}:
+        raise ValueError("statistic must be 'mean' or 'median'")
+    keys = (
+        (
+            "query_budget_actual_median",
+            "query_budget",
+            "query_budget_actual",
+            "query_budget_actual_mean",
+            "budget",
+            "final_queries",
+        )
+        if statistic == "median"
+        else (
+            "query_budget",
+            "query_budget_actual",
+            "query_budget_actual_mean",
+            "budget",
+            "final_queries",
+        )
+    )
+    for key in keys:
         value = _as_float(row.get(key))
         if np.isfinite(value):
             return value
@@ -476,95 +547,108 @@ def plot_budget_summary(
     title: str,
     max_points_per_algorithm: int | None = 14,
     connect_points: bool = True,
+    drop_binned_point_indices: dict[str, tuple[int, ...]] | None = None,
+    x_query_stat: str = "mean",
 ) -> None:
     if not summary_rows:
         return
 
-    fig, ax = plt.subplots(figsize=(6.8, 4.2))
-    guide_points: list[tuple[float, float]] = []
+    with plt.rc_context(_paper_style_rc_context()):
+        fig, ax = plt.subplots(figsize=(6.8, 4.2))
+        guide_points: list[tuple[float, float]] = []
+        drop_binned_point_indices = drop_binned_point_indices or {}
 
-    for algorithm in algorithms:
-        label = algorithm_labels.get(algorithm, algorithm)
-        group = [
-            row
-            for row in summary_rows
-            if str(row.get("algorithm_key", "")) == algorithm or str(row.get("algorithm", "")) == label
-        ]
-        if not group:
-            continue
-        group = sorted(group, key=lambda row: _query_budget(row))
-        x_values = np.asarray([_query_budget(row) for row in group], dtype=float)
-        y_values = np.asarray(
-            [_as_float(row.get("normalized_abs_error_median")) for row in group],
-            dtype=float,
-        )
-        ci_low = np.asarray(
-            [_as_float(row.get("normalized_abs_error_median_ci_low")) for row in group],
-            dtype=float,
-        )
-        ci_high = np.asarray(
-            [_as_float(row.get("normalized_abs_error_median_ci_high")) for row in group],
-            dtype=float,
-        )
-        style = algorithm_styles.get(algorithm, {})
-
-        valid = np.isfinite(x_values) & np.isfinite(y_values) & (x_values > 0.0) & (y_values > 0.0)
-        if not np.any(valid):
-            continue
-        if max_points_per_algorithm is None:
-            selected = np.flatnonzero(valid)
-        else:
-            selected = select_log_spaced_indices(
-                x_values,
-                valid,
-                max(2, int(max_points_per_algorithm)),
+        for algorithm in algorithms:
+            label = algorithm_labels.get(algorithm, algorithm)
+            group = [
+                row
+                for row in summary_rows
+                if _normalize_algorithm_series_name(row.get("algorithm_key", row.get("algorithm", "")))
+                == _normalize_algorithm_series_name(algorithm)
+                or _normalize_algorithm_series_name(row.get("algorithm", ""))
+                == _normalize_algorithm_series_name(label)
+            ]
+            if not group:
+                continue
+            group = sorted(group, key=lambda row: _query_budget(row, statistic=x_query_stat))
+            x_values = np.asarray(
+                [_query_budget(row, statistic=x_query_stat) for row in group],
+                dtype=float,
             )
+            y_values = np.asarray(
+                [_as_float(row.get("normalized_abs_error_median")) for row in group],
+                dtype=float,
+            )
+            ci_low = np.asarray(
+                [_as_float(row.get("normalized_abs_error_median_ci_low")) for row in group],
+                dtype=float,
+            )
+            ci_high = np.asarray(
+                [_as_float(row.get("normalized_abs_error_median_ci_high")) for row in group],
+                dtype=float,
+            )
+            style = algorithm_styles.get(algorithm, {})
 
-        valid_points = [(float(x), float(y)) for x, y in zip(x_values[selected], y_values[selected])]
-        guide_points.extend(valid_points)
-        n_runs = np.asarray(
-            [int(_as_float(group[idx].get("n_runs"), 0.0)) for idx in selected],
-            dtype=int,
-        )
-        if n_runs.size and int(np.nanmin(n_runs)) != int(np.nanmax(n_runs)):
-            plot_label = f"{label} (n={int(np.nanmin(n_runs))}-{int(np.nanmax(n_runs))})"
-        elif n_runs.size:
-            plot_label = f"{label} (n={int(n_runs[0])})"
-        else:
-            plot_label = label
+            valid = np.isfinite(x_values) & np.isfinite(y_values) & (x_values > 0.0) & (y_values > 0.0)
+            if not np.any(valid):
+                continue
+            if max_points_per_algorithm is None:
+                selected = np.flatnonzero(valid)
+            else:
+                selected = select_log_spaced_indices(
+                    x_values,
+                    valid,
+                    max(2, int(max_points_per_algorithm)),
+                )
 
-        yerr_selected = _bootstrap_ci_errorbar(
-            y_values[selected],
-            ci_low[selected],
-            ci_high[selected],
-        )
-        ax.errorbar(
-            x_values[selected],
-            y_values[selected],
-            yerr=yerr_selected,
-            fmt=style.get("marker", "o"),
-            color=style.get("color"),
-            linestyle="-" if connect_points else "None",
-            linewidth=2.0,
-            markersize=5.6,
-            elinewidth=1.0,
-            capsize=2.8,
-            label=plot_label,
-            zorder=3,
-        )
-    _add_power_fit_query_scaling_guides(ax, guide_points)
+            drop_indices = {
+                int(idx)
+                for idx in drop_binned_point_indices.get(label, ())
+                if -selected.size <= int(idx) < selected.size
+            }
+            if drop_indices:
+                keep = np.ones(selected.size, dtype=bool)
+                for idx in drop_indices:
+                    keep[idx % selected.size] = False
+                selected = selected[keep]
+            if selected.size == 0:
+                continue
 
-    ax.set_xscale("log")
-    ax.set_yscale("linear")
-    ax.set_xlabel(r"Actual query cost $N_q$")
-    ax.set_ylabel("Median normalized absolute error")
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
-    ax.legend(frameon=False, loc="lower left")
-    fig.tight_layout()
-    path = Path(output_path)
-    _save_figure_png_and_pdf(fig, path)
-    plt.close(fig)
+            valid_points = [(float(x), float(y)) for x, y in zip(x_values[selected], y_values[selected])]
+            guide_points.extend(valid_points)
+            yerr_selected = _bootstrap_ci_errorbar(
+                y_values[selected],
+                ci_low[selected],
+                ci_high[selected],
+            )
+            ax.errorbar(
+                x_values[selected],
+                y_values[selected],
+                yerr=yerr_selected,
+                fmt=style.get("marker", "o"),
+                color=style.get("color"),
+                linestyle="-" if connect_points else "None",
+                linewidth=2.0,
+                markersize=5.6,
+                elinewidth=1.0,
+                capsize=2.8,
+                label=label,
+                zorder=3,
+            )
+        _add_power_fit_query_scaling_guides(ax, guide_points)
+
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel(r"$N_q$")
+        ax.set_ylabel("Median relative error")
+        ax.grid(True, which="major", axis="both", color="#c7c7c7", linewidth=0.8, alpha=0.72)
+        ax.grid(True, which="minor", axis="both", color="#e7e7e7", linewidth=0.45, alpha=0.85)
+        _apply_paper_axes_style(ax)
+        ax.legend(frameon=False, loc="lower left", handlelength=2.7)
+        fig.tight_layout(pad=0.45)
+        path = Path(output_path)
+        _save_figure_png_and_pdf(fig, path)
+        plt.close(fig)
 
 
 def plot_final_runtime_scatter_from_budget_rows(
@@ -583,6 +667,7 @@ def plot_final_runtime_scatter_from_budget_rows(
     if x_kind not in {"runtime", "queries"}:
         raise ValueError("x_kind must be 'runtime' or 'queries'")
 
+    plt.rcParams.update(_paper_style_rc_context())
     final_rows = _final_rows_from_budget_rows(budget_rows)
     if not final_rows:
         return []
@@ -643,13 +728,14 @@ def plot_final_runtime_scatter_from_budget_rows(
         ax.scatter(
             plot_x_values,
             plot_y_values,
-            s=28,
+            s=16,
             marker=marker,
             color=color,
-            alpha=0.42,
-            edgecolors="white",
-            linewidths=0.35,
-            zorder=3,
+            alpha=0.30,
+            edgecolors="none",
+            linewidths=0.0,
+            rasterized=True,
+            zorder=2,
         )
         _plot_log_gaussian_contours(ax, plot_x_values, plot_y_values, color=str(color))
 
@@ -658,11 +744,11 @@ def plot_final_runtime_scatter_from_budget_rows(
         ax.scatter(
             [median_runtime],
             [median_error],
-            s=145,
+            s=64,
             marker=marker,
             facecolor=color,
-            edgecolor="black",
-            linewidth=1.1,
+            edgecolor="white",
+            linewidth=0.85,
             zorder=5,
         )
         legend_handles.append(
@@ -672,10 +758,8 @@ def plot_final_runtime_scatter_from_budget_rows(
                 color=color,
                 marker=marker,
                 linestyle="None",
-                markersize=8,
-                label=f"{label} (n={plot_x_values.size}/{x_values.size})"
-                if plot_x_values.size != x_values.size
-                else f"{label} (n={x_values.size})",
+                markersize=6.5,
+                label=label,
             )
         )
         summary_rows.append(
@@ -697,26 +781,6 @@ def plot_final_runtime_scatter_from_budget_rows(
     if summary_path is not None:
         save_csv(summary_rows, summary_path)
 
-    median_handle = Line2D(
-        [0],
-        [0],
-        color="black",
-        marker="o",
-        markerfacecolor="white",
-        linestyle="None",
-        markersize=8,
-        markeredgewidth=1.3,
-        label="median",
-    )
-    contour_handle = Line2D(
-        [0],
-        [0],
-        color="0.25",
-        linewidth=1.7,
-        label="Gaussian contours",
-    )
-    legend_handles.extend([median_handle, contour_handle])
-
     x_limits = _log_limits(np.asarray(all_x, dtype=float), pad_fraction=0.07)
     y_limits = _log_limits(np.asarray(all_y, dtype=float), pad_fraction=0.12)
     if x_limits is not None:
@@ -730,9 +794,10 @@ def plot_final_runtime_scatter_from_budget_rows(
     ax.set_ylabel("Final normalized absolute error")
     if title:
         ax.set_title(title)
-    ax.grid(True, which="major", alpha=0.24)
-    ax.grid(True, which="minor", alpha=0.12)
-    ax.legend(handles=legend_handles, frameon=False, loc="upper right")
+    ax.grid(True, which="major", color="#BFBFBF", linewidth=0.55, alpha=0.32)
+    ax.grid(True, which="minor", color="#D7D7D7", linewidth=0.40, alpha=0.16)
+    _apply_paper_axes_style(ax)
+    ax.legend(handles=legend_handles, frameon=False, loc="best")
 
     fig.tight_layout()
     path = Path(output_path)
@@ -807,7 +872,7 @@ def _plot_log_gaussian_contours(
     y_values: np.ndarray,
     *,
     color: str,
-    levels: tuple[float, ...] = (1.0, 2.0, 3.0),
+    levels: tuple[float, ...] = (np.sqrt(2.30), np.sqrt(5.99)),
 ) -> None:
     valid = (
         np.isfinite(x_values)
@@ -820,12 +885,16 @@ def _plot_log_gaussian_contours(
     if x_values.size < 3:
         return
 
-    log_points = np.vstack([np.log10(x_values), np.log10(y_values)])
-    covariance = np.cov(log_points)
+    points = np.column_stack([np.log10(x_values), np.log10(y_values)])
+    lower, upper = np.quantile(points, [0.025, 0.975], axis=0)
+    central = points[np.all((points >= lower) & (points <= upper), axis=1)]
+    if central.shape[0] < 3:
+        central = points
+    covariance = np.cov(central, rowvar=False)
     if not np.all(np.isfinite(covariance)):
         return
 
-    covariance = covariance + np.eye(2) * 1e-12
+    covariance = covariance + np.eye(2) * 1e-10
     eigvals, eigvecs = np.linalg.eigh(covariance)
     if np.any(eigvals <= 0.0) or not np.all(np.isfinite(eigvals)):
         return
@@ -833,21 +902,21 @@ def _plot_log_gaussian_contours(
     order = np.argsort(eigvals)[::-1]
     eigvals = eigvals[order]
     eigvecs = eigvecs[:, order]
-    center = np.mean(log_points, axis=1)
+    center = np.median(points, axis=0)
     angles = np.linspace(0.0, 2.0 * np.pi, 360)
-    unit_circle = np.vstack([np.cos(angles), np.sin(angles)])
+    unit_circle = np.column_stack([np.cos(angles), np.sin(angles)])
 
-    for level in levels:
-        ellipse = center[:, None] + eigvecs @ (
-            np.sqrt(eigvals)[:, None] * float(level) * unit_circle
+    for level, alpha in zip(levels, (0.24, 0.14)):
+        ellipse = center + float(level) * (
+            unit_circle @ (eigvecs @ np.diag(np.sqrt(eigvals))).T
         )
         ax.plot(
-            10.0 ** ellipse[0],
-            10.0 ** ellipse[1],
+            10.0 ** ellipse[:, 0],
+            10.0 ** ellipse[:, 1],
             color=color,
-            linewidth=1.25,
-            alpha=0.92,
-            zorder=2,
+            linewidth=0.85,
+            alpha=alpha,
+            zorder=1,
         )
 
 
