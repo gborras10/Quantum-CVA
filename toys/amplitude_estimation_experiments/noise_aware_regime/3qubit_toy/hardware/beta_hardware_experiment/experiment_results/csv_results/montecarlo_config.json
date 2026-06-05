@@ -1,0 +1,29 @@
+{
+  "run_kind": "hardware_classical_monte_carlo",
+  "algorithm_key": "classical_mc",
+  "run_dir": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\toys\\amplitude_estimation_experiments\\noise_aware_regime\\3qubit_toy\\hardware\\beta_hardware_experiment\\experiment_results\\csv_results",
+  "budget_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\toys\\amplitude_estimation_experiments\\noise_aware_regime\\3qubit_toy\\hardware\\beta_hardware_experiment\\experiment_results\\csv_results\\montecarlo_budget_rows.csv",
+  "final_rows_csv": "C:\\Users\\guilb\\Desktop\\Quantum-CVA\\toys\\amplitude_estimation_experiments\\noise_aware_regime\\3qubit_toy\\hardware\\beta_hardware_experiment\\experiment_results\\csv_results\\montecarlo_final_rows.csv",
+  "repetitions": 300,
+  "budgets": [
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384,
+    32768,
+    65536
+  ],
+  "seed": 12345,
+  "a_true": 0.3602728053304129,
+  "a_sampling": 0.36598988910632746,
+  "probability_mode": "fixed",
+  "probability_se_scale": 1.0,
+  "sample_model": "bernoulli_hardware_good_state",
+  "sampling_probability_source": "mitigated_points",
+  "sampling_grover_power": 0,
+  "sampling_probability_shots": 12288,
+  "sampling_probability_se": 0.00435376396026357
+}

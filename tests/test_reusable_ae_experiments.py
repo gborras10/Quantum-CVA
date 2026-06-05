@@ -683,12 +683,21 @@ def test_toy_ae_tree_is_absent_or_thin_compatibility_launchers() -> None:
     if not toy_dir.exists():
         return
 
+    curated_result_dirs = (
+        Path("ideal_regime/experiment_results"),
+        Path(
+            "noise_aware_regime/3qubit_toy/hardware/"
+            "beta_hardware_experiment/experiment_results/csv_results"
+        ),
+        Path("noise_aware_regime/3qubit_toy/simulations/experiment_results"),
+    )
     forbidden_suffixes = {".csv", ".json", ".png", ".pdf", ".npz", ".qasm", ".qasm3"}
     forbidden_dirs = {"experiment_results", "csv_results", "backup_before"}
     generated_artifacts = [
         path
         for path in toy_dir.rglob("*")
         if path.is_file()
+        and not any(path.relative_to(toy_dir).is_relative_to(result_dir) for result_dir in curated_result_dirs)
         and (
             path.suffix.lower() in forbidden_suffixes
             or any(part.startswith("backup_before") for part in path.parts)
@@ -751,6 +760,28 @@ def test_restored_toy_ae_experiment_launchers_exist() -> None:
         relative_path
         for relative_path in expected_paths
         if not (toy_dir / relative_path).exists()
+    ]
+    assert not missing
+
+
+def test_curated_toy_ae_experiment_results_are_retained() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    toy_dir = repo_root / "toys" / "amplitude_estimation_experiments"
+    if not toy_dir.exists():
+        return
+
+    expected_result_dirs = [
+        "ideal_regime/experiment_results",
+        (
+            "noise_aware_regime/3qubit_toy/hardware/beta_hardware_experiment/"
+            "experiment_results/csv_results"
+        ),
+        "noise_aware_regime/3qubit_toy/simulations/experiment_results",
+    ]
+    missing = [
+        relative_path
+        for relative_path in expected_result_dirs
+        if not (toy_dir / relative_path).is_dir()
     ]
     assert not missing
 
