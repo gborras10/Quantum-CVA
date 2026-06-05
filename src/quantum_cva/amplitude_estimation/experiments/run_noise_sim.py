@@ -3,7 +3,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from quantum_cva.amplitude_estimation.experiments.hardware import run_dry_run_experiment
+from quantum_cva.amplitude_estimation.experiments.configs import (
+    AlgorithmRunConfig,
+    NoiseSimulationConfig,
+    parse_int_csv,
+    parse_name_csv,
+)
+from quantum_cva.amplitude_estimation.experiments.noise_runner import (
+    NoiseSimulationRunner,
+)
 from quantum_cva.amplitude_estimation.experiments.runner_utils import (
     add_problem_builder_args,
     problem_bundle_from_args,
@@ -39,24 +47,26 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     args = build_arg_parser().parse_args(argv)
     bundle = problem_bundle_from_args(args)
-    run_dry_run_experiment(
-        bundle,
+    config = NoiseSimulationConfig(
         run_dir=Path(args.run_dir),
-        algorithms=tuple(x.strip() for x in args.algorithms.split(",") if x.strip()),
-        budgets=tuple(int(x.strip()) for x in args.budgets.split(",") if x.strip()),
+        algorithm=AlgorithmRunConfig(
+            algorithms=parse_name_csv(args.algorithms),
+            epsilon_target=float(args.epsilon_target),
+            alpha=float(args.alpha),
+            seed=int(args.seed),
+        ),
+        budgets=parse_int_csv(args.budgets),
         max_grover_power=int(args.max_grover_power),
         scan_repeats=int(args.scan_repeats),
         scan_shots=int(args.scan_shots),
         readout_shots=int(args.readout_shots),
         direct_shots=int(args.direct_shots),
         replay_repetitions=int(args.replay_repetitions),
-        epsilon_target=float(args.epsilon_target),
-        alpha=float(args.alpha),
-        seed=int(args.seed),
         noise_scale=float(args.noise_scale),
         noise_profile=str(args.noise_profile),
         contrast_baseline=float(args.contrast_baseline),
     )
+    NoiseSimulationRunner(config, bundle).run()
 
 
 if __name__ == "__main__":
