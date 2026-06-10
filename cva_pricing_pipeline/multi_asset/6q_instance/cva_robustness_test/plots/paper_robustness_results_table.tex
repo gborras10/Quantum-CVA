@@ -1,0 +1,17 @@
+\begin{table}
+\caption{Robustness-test results for the multi-asset CVA pipeline under 10\% call- and put-strike perturbations.}
+\label{tab:cva_robustness_results}
+\begin{tabular}{lcccccc}
+\toprule
+Scenario & Call scale & Put scale & Classical CVA & Statevector CVA & Relative error (\%) & Exposure L2 \\
+\midrule
+Base & 1.0 & 1.0 & 0.5216 & 0.5865 & +12.4 & 0.489 \\
+Call -10\% & 0.9 & 1.0 & 0.8119 & 0.6962 & -14.2 & 0.524 \\
+Call +10\% & 1.1 & 1.0 & 0.3115 & 0.4768 & +53.0 & 0.659 \\
+Put -10\% & 1.0 & 0.9 & 0.5735 & 0.5866 & +2.3 & 0.602 \\
+Put +10\% & 1.0 & 1.1 & 0.4136 & 0.5852 & +41.5 & 0.723 \\
+Both -10\% & 0.9 & 0.9 & 0.9601 & 0.6963 & -27.5 & 0.763 \\
+Both +10\% & 1.1 & 1.1 & 0.2320 & 0.4754 & +104.9 & 1.016 \\
+\bottomrule
+\end{tabular}
+\end{table}

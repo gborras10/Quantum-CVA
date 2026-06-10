@@ -1475,7 +1475,7 @@ def plot_ideal_vs_shots_noise_kl(
             markersize=5.5,
             color="#111827",
             linewidth=1.75,
-            label="Ideal statevector eval",
+            label="Noiseless evaluation",
         )
         ax.errorbar(
             x,
@@ -1486,7 +1486,7 @@ def plot_ideal_vs_shots_noise_kl(
             color="#c2410c",
             capsize=3,
             linewidth=1.75,
-            label="Shots + backend noise eval",
+            label="Noisy evaluation",
         )
         ax.set_xlabel("QCBM layers")
         ax.set_ylabel(r"$\mathrm{KL}_{\epsilon}(P_{\mathrm{target}}\Vert P_{\theta})$")

@@ -1,0 +1,5 @@
+plot_key,png,pdf
+ideal-toy,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\bae_biqae_cabiqae_latentt_ideal_rmse.png,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\bae_biqae_cabiqae_latentt_ideal_rmse.pdf
+noiseless-cva,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\noseless_cva_ae_cva_relative_error_vs_queries_paper.png,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\noseless_cva_ae_cva_relative_error_vs_queries_paper.pdf
+hardware-toy,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\hardware_replay_median_relative_error_paper.png,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\hardware_replay_median_relative_error_paper.pdf
+hardware-cva,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\hardware_replay_cva_budget.png,C:\Users\guilb\Desktop\Quantum-CVA\plots\error_budget\hardware_replay_cva_budget.pdf

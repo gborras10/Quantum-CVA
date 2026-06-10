@@ -713,7 +713,7 @@ def plot_noise_penalty(
             markersize=5.5,
             color="#111827",
             linewidth=1.75,
-            label="Clean statevector eval",
+            label="Noiseless evaluation",
         )
         ax.errorbar(
             x,
@@ -724,7 +724,7 @@ def plot_noise_penalty(
             color="#c2410c",
             capsize=3,
             linewidth=1.75,
-            label="Shots + backend noise eval",
+            label="Noisy evaluation",
         )
         ax.set_xlabel("QCBM layers")
         ax.set_ylabel(r"$\mathrm{KL}_{\epsilon}(P_{\mathrm{target}}\Vert P_{\theta})$")
