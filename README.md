@@ -10,16 +10,16 @@
   noisy simulation, and hardware-aware experimentation.</strong>
 </p>
 
-<p><em>Master's Thesis · Quantitative Banking and Finance · Universitat de València</em></p>
+<p><em>Master's Thesis · Quantitative Finance and Banking · Universitat de València</em></p>
 
 <br/>
 
 <p>
-  <a href="#-project-overview"><img alt="Project" src="https://img.shields.io/badge/project-Quantum%20CVA-1f6feb?style=for-the-badge&logo=atom&logoColor=white"/></a>
-  <a href="#-source-code-srcquantum_cva"><img alt="Package" src="https://img.shields.io/badge/package-src%2Fquantum__cva-0f766e?style=for-the-badge&logo=python&logoColor=white"/></a>
-  <a href="#-6q-cva-ae-experiments"><img alt="6q instance" src="https://img.shields.io/badge/thesis%20instance-6q%20multi--asset-7c3aed?style=for-the-badge&logo=ibm&logoColor=white"/></a>
+  <a href="#project-overview"><img alt="Project" src="https://img.shields.io/badge/project-Quantum%20CVA-1f6feb?style=for-the-badge&logo=atom&logoColor=white"/></a>
+  <a href="#source-code-srcquantum_cva"><img alt="Package" src="https://img.shields.io/badge/package-src%2Fquantum__cva-0f766e?style=for-the-badge&logo=python&logoColor=white"/></a>
+  <a href="#6q-cva-ae-experiments"><img alt="6q instance" src="https://img.shields.io/badge/thesis%20instance-6q%20multi--asset-7c3aed?style=for-the-badge&logo=ibm&logoColor=white"/></a>
   <a href="#amplitude-estimation-and-cabiqae"><img alt="CABIQAE" src="https://img.shields.io/badge/algorithm-CABIQAE-b45309?style=for-the-badge&logoColor=white"/></a>
-  <a href="#%EF%B8%8F-execution-notes"><img alt="Execution" src="https://img.shields.io/badge/execution-replay%20%7C%20sim%20%7C%20hardware-374151?style=for-the-badge&logo=qiskit&logoColor=white"/></a>
+  <a href="#execution-notes"><img alt="Execution" src="https://img.shields.io/badge/execution-replay%20%7C%20sim%20%7C%20hardware-374151?style=for-the-badge&logo=qiskit&logoColor=white"/></a>
 </p>
 
 <br/>
@@ -42,20 +42,20 @@
 
 ---
 
-## 🔬 Pipeline Architecture
+## Pipeline Architecture
 
 The full quantum CVA pipeline proceeds from market data through classical benchmarking, quantum training, circuit composition, and amplitude estimation to a final CVA estimate with explicit error accounting.
 
 ```mermaid
 flowchart LR
-    MD(["📈 Market Data"])
-    CB(["📊 Classical CVA\nBenchmark"])
-    QCBM(["⚛️ QCBM\nState Prep"])
-    CRCA(["🔗 CRCA\nFunction Encoding"])
-    CC(["🔄 CVA Circuit\nComposition"])
-    AE(["📐 Amplitude\nEstimation"])
-    CA(["🎯 CABIQAE\nNoise-Aware"])
-    CVA(["💡 CVA Estimate\n+ Error Budget"])
+    MD(["Market Data"])
+    CB(["Classical CVA\nBenchmark"])
+    QCBM(["QCBM\nState Prep"])
+    CRCA(["CRCA\nFunction Encoding"])
+    CC(["CVA Circuit\nComposition"])
+    AE(["Amplitude\nEstimation"])
+    CA(["CABIQAE\nNoise-Aware"])
+    CVA(["CVA Estimate\n+ Error Budget"])
 
     MD --> CB
     MD --> QCBM
@@ -70,7 +70,7 @@ flowchart LR
 
 ---
 
-## 🗺️ Research Map
+## Research Map
 
 | Layer | Public surface | Purpose |
 |:---|:---|:---|
@@ -83,32 +83,32 @@ flowchart LR
 
 ---
 
-## 📋 Contents
+## Contents
 
 <table>
 <tr>
 <td valign="top">
 
 **Core**
-- [Project Overview](#-project-overview)
-- [Repository Structure](#-repository-structure)
-- [Source Code: `src/quantum_cva`](#-source-code-srcquantum_cva)
+- [Project Overview](#project-overview)
+- [Repository Structure](#repository-structure)
+- [Source Code: `src/quantum_cva`](#source-code-srcquantum_cva)
 
 </td>
 <td valign="top">
 
 **Experiments**
-- [Single Asset and Multi Asset](#%EF%B8%8F-single-asset-and-multi-asset)
-- [6q CVA AE Experiments](#-6q-cva-ae-experiments)
-- [Toys](#-toys)
+- [Single Asset and Multi Asset](#single-asset-and-multi-asset)
+- [6q CVA AE Experiments](#6q-cva-ae-experiments)
+- [Toys](#toys)
 
 </td>
 <td valign="top">
 
 **Reference**
-- [Plots](#-plots)
-- [Data and References](#-data-and-references)
-- [Execution Notes](#%EF%B8%8F-execution-notes)
+- [Plots](#plots)
+- [Data and References](#data-and-references)
+- [Execution Notes](#execution-notes)
 
 </td>
 </tr>
@@ -116,7 +116,7 @@ flowchart LR
 
 ---
 
-## 🔭 Project Overview
+## Project Overview
 
 <details open>
 <summary><strong>Repository mission and central contribution</strong></summary>
@@ -133,7 +133,7 @@ This README describes the components that are part of the public project tree: s
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 <details open>
 <summary><strong>Top-level project tree</strong></summary>
@@ -146,7 +146,7 @@ quantum-cva/
 ├── cva_pricing_pipeline/
 │   ├── single_asset/                   ← legacy single-asset code
 │   └── multi_asset/
-│       ├── 6q_instance/               ← ★ thesis instance
+│       ├── 6q_instance/               ← thesis instance [main]
 │       ├── 8q_instance/               ← scaling study
 │       └── 10q_instance/              ← scaling study
 ├── toys/
@@ -169,7 +169,7 @@ quantum-cva/
 
 ---
 
-## ⚗️ Single Asset and Multi Asset
+## Single Asset and Multi Asset
 
 <details open>
 <summary><strong>Pipeline families and thesis instance</strong></summary>
@@ -207,7 +207,7 @@ This is the instance developed for the master's. It combines two time qubits and
 
 ---
 
-## 📦 Source Code: `src/quantum_cva`
+## Source Code: `src/quantum_cva`
 
 <details open>
 <summary><strong>Reusable package architecture</strong></summary>
@@ -218,7 +218,7 @@ The package `src/quantum_cva` is the reusable implementation layer. Experiment s
 
 ---
 
-### 📉 Classical Multi-Asset CVA
+### Classical Multi-Asset CVA
 
 `src/quantum_cva/multi_asset/classical` implements the classical side of the pipeline:
 
@@ -235,7 +235,7 @@ The package `src/quantum_cva` is the reusable implementation layer. Experiment s
 
 ---
 
-### ⚛️ Quantum Training Pipeline
+### Quantum Training Pipeline
 
 The quantum CVA construction requires two families of trained components.
 
@@ -255,7 +255,7 @@ Each CRCA encodes a classical function on the relevant control register into an 
 
 ---
 
-### 🔄 Quantum CVA Circuit
+### Quantum CVA Circuit
 
 `src/quantum_cva/multi_asset/quantum/amplitude_estimation/cva_circuit.py` combines the trained QCBM and CRCA blocks into the final CVA circuit.
 
@@ -276,7 +276,7 @@ For the 6q thesis instance, the amplitude-estimation problem is built in `src/qu
 
 ---
 
-### 🎯 Amplitude Estimation and CABIQAE
+### Amplitude Estimation and CABIQAE
 
 `src/quantum_cva/amplitude_estimation` contains the reusable amplitude estimation layer:
 
@@ -310,7 +310,7 @@ This structure is important for CVA on NISQ devices: the theoretically attractiv
 
 ---
 
-## 🔬 6q CVA AE Experiments
+## 6q CVA AE Experiments
 
 <details open>
 <summary><strong>Noiseless, noisy, and hardware-oriented CVA AE</strong></summary>
@@ -347,7 +347,7 @@ The semantic invariant is the same as in simulation: the target is the `|111⟩`
 
 ---
 
-## 🧪 Toys
+## Toys
 
 <details open>
 <summary><strong>Exploratory and methodological experiments</strong></summary>
@@ -403,7 +403,7 @@ The remaining toys — including multi-asset demos, single-asset demos, and quan
 
 ---
 
-## 📊 Plots
+## Plots
 
 <details open>
 <summary><strong>Final figure-generation layer</strong></summary>
@@ -425,7 +425,7 @@ Other useful plots are kept close to the experiment that generates them. In the 
 
 ---
 
-## 💾 Data and References
+## Data and References
 
 <details open>
 <summary><strong>Reproducibility artifacts and literature</strong></summary>
@@ -442,7 +442,7 @@ Other useful plots are kept close to the experiment that generates them. In the 
 
 ---
 
-## ⚡️ Execution Notes
+## Execution Notes
 
 <details open>
 <summary><strong>Local validation and hardware caution</strong></summary>
@@ -462,5 +462,5 @@ Most scripts are intended to be run from the repository root. Lightweight experi
 ---
 
 <div align="center">
-<sub>Developed as part of a Master's Thesis in Quantitative Banking and Finance at the Universitat de València.</sub>
+<sub>Developed as part of a Master's Thesis in Quantitative Finance and Banking at the Universitat de València.</sub>
 </div>
