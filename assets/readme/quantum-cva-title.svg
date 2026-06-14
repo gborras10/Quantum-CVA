@@ -170,9 +170,9 @@
     <circle cx="252" cy="48" r="7.2" fill="none" stroke="#7dd3fc" stroke-width="1" stroke-opacity="0.24"/>
     <path d="M245 48H259M252 41V55" stroke="#7dd3fc" stroke-width="1" stroke-opacity="0.24"/>
     <rect class="quantumGate" x="336" y="12" width="38" height="24" rx="6"/>
-    <text class="quantumGateText" x="355" y="28" text-anchor="middle">U</text>
+    <text class="quantumGateText" x="355" y="28" text-anchor="middle">Rx</text>
     <rect class="quantumGate" x="436" y="36" width="30" height="24" rx="6"/>
-    <text class="quantumGateText" x="451" y="52" text-anchor="middle">M</text>
+    <text class="quantumGateText" x="451" y="52" text-anchor="middle">Z</text>
     <rect class="quantumGateGlow" x="72" y="-12" width="30" height="24" rx="6" opacity="0.12">
       <animate attributeName="opacity" values="0.08;0.98;0.08" dur="7s" begin="0.8s" repeatCount="indefinite"/>
     </rect>
@@ -196,16 +196,16 @@
     <rect class="quantumGateGlow" x="336" y="12" width="38" height="24" rx="6" opacity="0.12">
       <animate attributeName="opacity" values="0.08;0.98;0.08" dur="7s" begin="4.1s" repeatCount="indefinite"/>
     </rect>
-    <text class="quantumGateTextGlow" x="355" y="28" text-anchor="middle" opacity="0.12">U<animate attributeName="opacity" values="0.08;1;0.08" dur="7s" begin="4.1s" repeatCount="indefinite"/></text>
+    <text class="quantumGateTextGlow" x="355" y="28" text-anchor="middle" opacity="0.12">Rx<animate attributeName="opacity" values="0.08;1;0.08" dur="7s" begin="4.1s" repeatCount="indefinite"/></text>
     <rect class="quantumGateGlow" x="436" y="36" width="30" height="24" rx="6" opacity="0.12">
       <animate attributeName="opacity" values="0.08;0.98;0.08" dur="7s" begin="5.4s" repeatCount="indefinite"/>
     </rect>
-    <text class="quantumGateTextGlow" x="451" y="52" text-anchor="middle" opacity="0.12">M<animate attributeName="opacity" values="0.08;1;0.08" dur="7s" begin="5.4s" repeatCount="indefinite"/></text>
+    <text class="quantumGateTextGlow" x="451" y="52" text-anchor="middle" opacity="0.12">Z<animate attributeName="opacity" values="0.08;1;0.08" dur="7s" begin="5.4s" repeatCount="indefinite"/></text>
   </g>
 
   <line class="rule" x1="214" y1="58" x2="986" y2="58"/>
   <line class="rule" x1="214" y1="204" x2="986" y2="204"/>
 
   <text class="wordmark" x="600" y="126" text-anchor="middle">Quantum-CVA</text>
-  <text class="subtitle" x="600" y="162" text-anchor="middle">A research toolkit for quantum credit valuation analysis</text>
+  <text class="subtitle" x="600" y="162" text-anchor="middle">A research toolkit for quantum Credit Valuation Adjustments</text>
 </svg>
