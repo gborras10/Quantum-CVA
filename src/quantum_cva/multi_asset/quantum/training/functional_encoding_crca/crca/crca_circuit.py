@@ -514,8 +514,6 @@ class CrcaCircuit:
                     )
                     k += n_ctrl if not is_last else n_last
 
-        # Limpieza: Si entrenas con un número IMPAR de capas, la ancilla termina en la punta.
-        # Debemos regresarla vacía al centro para no romper tus mediciones lógicas al final.
         if self._n_layers % 2 != 0:
             for q1, q2 in reversed(swaps_tracker):
                 qc.swap(q1, q2)

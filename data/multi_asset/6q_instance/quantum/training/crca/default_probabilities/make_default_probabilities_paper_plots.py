@@ -17,8 +17,8 @@ def main() -> None:
             output_dir=BASE_DIR,
             data_path=BASE_DIR / "training_crca2.npz",
             objective_label=r"$\mathcal{L}_q$",
-            trained_label=r"$F_{\phi_q}(x)$",
-            target_label=r"$q(x)$",
+            trained_label=r"$F_{\phi_q^*}(x)$",
+            target_label=r"$\tilde{q}(x)$",
             combined_stem="default_probabilities_training_and_fit",
         )
     )

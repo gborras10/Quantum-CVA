@@ -30,7 +30,7 @@ PAPER_RC = {
     ],
     "mathtext.fontset": "cm",
     "axes.labelsize": 16,
-    "legend.fontsize": 9.5,
+    "legend.fontsize": 16,
     "xtick.labelsize": 11,
     "ytick.labelsize": 11,
     "axes.linewidth": 1.15,
@@ -160,7 +160,7 @@ def plot_distribution_histogram(data: np.lib.npyio.NpzFile) -> None:
             linewidth=0.25,
             alpha=0.95,
             zorder=2,
-            label=r"$P_{\theta}$",
+            label=r"$P_{\theta^*}$",
         )
         ax.bar(
             x,
@@ -193,7 +193,7 @@ def plot_combined(data: np.lib.npyio.NpzFile) -> None:
     combined_rc = {
         **PAPER_RC,
         "axes.labelsize": 13,
-        "legend.fontsize": 8.8,
+        "legend.fontsize": 13,
         "xtick.labelsize": 9.5,
         "ytick.labelsize": 9.5,
     }
@@ -239,7 +239,7 @@ def plot_combined(data: np.lib.npyio.NpzFile) -> None:
             linewidth=0.25,
             alpha=0.95,
             zorder=2,
-            label=r"$P_{\theta}$",
+            label=r"$P_{\theta^*}$",
         )
         axes[1].bar(
             states,

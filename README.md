@@ -2,7 +2,9 @@
 
 <br/>
 
-<h1>⟨ Quantum-CVA ⟩</h1>
+<h1>
+  <img src="assets/readme/quantum-cva-title.svg" alt="Quantum-CVA" width="1040"/>
+</h1>
 
 <p>
   <strong>Research software for quantum Credit Valuation Adjustment, multi-asset CVA pricing,<br/>
@@ -17,7 +19,6 @@
 <p>
   <a href="#project-overview"><img alt="Project" src="https://img.shields.io/badge/project-Quantum%20CVA-1f6feb?style=for-the-badge&logo=atom&logoColor=white"/></a>
   <a href="#source-code-srcquantum_cva"><img alt="Package" src="https://img.shields.io/badge/package-src%2Fquantum__cva-0f766e?style=for-the-badge&logo=python&logoColor=white"/></a>
-  <a href="#6q-cva-ae-experiments"><img alt="6q instance" src="https://img.shields.io/badge/thesis%20instance-6q%20multi--asset-7c3aed?style=for-the-badge&logo=ibm&logoColor=white"/></a>
   <a href="#amplitude-estimation-and-cabiqae"><img alt="CABIQAE" src="https://img.shields.io/badge/algorithm-CABIQAE-b45309?style=for-the-badge&logoColor=white"/></a>
   <a href="#execution-notes"><img alt="Execution" src="https://img.shields.io/badge/execution-replay%20%7C%20sim%20%7C%20hardware-374151?style=for-the-badge&logo=qiskit&logoColor=white"/></a>
 </p>

@@ -19,8 +19,6 @@ from quantum_cva.quantum_hardware_utilities.layout_utils import (
     summarize_circuit,
 )
 
-# Prefer the new gradient-capable implementation. Keep fallbacks so the script
-# still works if you replaced the old mps.py in-place.
 from quantum_cva.multi_asset.quantum.training.state_prep_mps.mps import (
 MLMpsCircuit,
 )

@@ -17,8 +17,8 @@ def main() -> None:
             output_dir=BASE_DIR,
             data_path=BASE_DIR / "training_crca2.npz",
             objective_label=r"$\mathcal{L}_p$",
-            trained_label=r"$F_{\phi_p}(x)$",
-            target_label=r"$p(x)$",
+            trained_label=r"$F_{\phi_p^*}(x)$",
+            target_label=r"$\tilde{p}(x)$",
             combined_stem="discount_factors_training_and_fit",
         )
     )

@@ -23,13 +23,10 @@ def build_support_aware_cost(
         zero_term = 0.0
 
         if np.any(pos_mask):
-            # Mantenemos el error relativo al cuadrado para los picos
             rel_diff = (fx[pos_mask] - f_target[pos_mask]) / (f_target[pos_mask] + RELATIVE_EPS)
             pos_term = float(np.mean(rel_diff * rel_diff))
 
         if np.any(zero_mask):
-            # CAMBIO CLAVE: Usamos L1 (valor absoluto) en lugar de L2 (cuadrado)
-            # Esto fuerza los valores a 0 estricto porque el gradiente no se desvanece
             zero_term = float(np.mean(np.abs(fx[zero_mask])))
 
         return LAMBDA_POS * pos_term + LAMBDA_ZERO * zero_term

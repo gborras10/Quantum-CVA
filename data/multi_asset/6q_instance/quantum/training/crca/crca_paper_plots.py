@@ -29,7 +29,7 @@ PAPER_RC = {
     ],
     "mathtext.fontset": "cm",
     "axes.labelsize": 16,
-    "legend.fontsize": 9.5,
+    "legend.fontsize": 16,
     "xtick.labelsize": 11,
     "ytick.labelsize": 11,
     "axes.linewidth": 1.15,
@@ -225,7 +225,7 @@ def plot_combined(data: np.lib.npyio.NpzFile, config: CrcaPaperPlotConfig) -> No
     combined_rc = {
         **PAPER_RC,
         "axes.labelsize": 13,
-        "legend.fontsize": 8.8,
+        "legend.fontsize": 13,
         "xtick.labelsize": 9.5,
         "ytick.labelsize": 9.5,
     }
