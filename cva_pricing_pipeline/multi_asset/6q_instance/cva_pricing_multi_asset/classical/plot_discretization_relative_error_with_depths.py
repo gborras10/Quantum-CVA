@@ -413,13 +413,14 @@ def convergence_rows(
     rows: list[dict[str, Any]] = []
     for bits, cva in zip(selected_bits, selected_cva):
         n = int(bits)
+        total_asset_qubits = n_underlyings * n
         absolute_error = float(abs(float(cva) - cva_reference))
         relative_error = float(absolute_error / abs(cva_reference))
         row: dict[str, Any] = {
             "time_qubits_m": TIME_QUBITS,
             "asset_qubits_per_underlying_n": n,
-            "x_axis_n_plus_m": n + TIME_QUBITS,
-            "total_asset_qubits": n_underlyings * n,
+            "x_axis_n_plus_m": total_asset_qubits + TIME_QUBITS,
+            "total_asset_qubits": total_asset_qubits,
             "joint_asset_grid_cells": int((2**n) ** n_underlyings),
             "cva_n": float(cva),
             "cva_reference_n13": cva_reference,
@@ -437,6 +438,12 @@ def save_plot(rows: list[dict[str, Any]], output_dir: Path) -> list[Path]:
     configure_plot_style()
     x = np.asarray([row["x_axis_n_plus_m"] for row in rows], dtype=int)
     pct_err = np.asarray([row["relative_error_pct"] for row in rows], dtype=float)
+    qubits_per_point = rows[0]["total_asset_qubits"] // rows[0][
+        "asset_qubits_per_underlying_n"
+    ]
+    reference_total_asset_qubits = (
+        qubits_per_point * rows[0]["reference_bits_per_underlying"]
+    )
 
     fig, ax = plt.subplots(figsize=(4.7, 2.55))
     ax.plot(
@@ -452,7 +459,8 @@ def save_plot(rows: list[dict[str, Any]], output_dir: Path) -> list[Path]:
     )
     ax.set_xlabel(r"$n + m$")
     ax.set_ylabel(
-        r"$100\,|\mathrm{CVA}_n-\mathrm{CVA}_{13}|/|\mathrm{CVA}_{13}|$",
+        rf"$100\,|\mathrm{{CVA}}_n-\mathrm{{CVA}}_{{{reference_total_asset_qubits}}}|"
+        rf"/|\mathrm{{CVA}}_{{{reference_total_asset_qubits}}}|$",
         fontsize=8.5,
     )
     ax.set_yscale("linear")
@@ -607,6 +615,10 @@ def main() -> None:
         "reference_bits_per_underlying": int(args.reference_bits),
         "max_plotted_bits_per_underlying": int(args.max_plot_bits),
         "time_qubits": TIME_QUBITS,
+        "x_axis_definition": (
+            "n+m, where n is the total number of underlying qubits "
+            "(n=n1+n2) and m is the number of time qubits."
+        ),
         "depth_method": (
             "For n=2, the Q^1 A logical and ISA metrics are read directly from "
             "the ibm_pittsburgh hardware preflight report. For n!=2, no trained "

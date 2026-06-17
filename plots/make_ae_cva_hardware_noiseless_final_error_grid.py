@@ -39,17 +39,17 @@ DEFAULT_NOISELESS_RUN_DIR = (
 )
 DEFAULT_OUTPUT = ROOT / "plots" / "ae_cva_qctrl_basquecountry_noiseless_final_error_grid"
 
-ALGORITHM_ORDER = ("CABIQAE", "BIQAE", "Classical MC")
+ALGORITHM_ORDER = ("CABIQAE", "BIQAE", "DCS")
 STYLES = {
     "CABIQAE": {"color": "#1F6F8B", "marker": "o"},
     "BIQAE": {"color": "#A23B72", "marker": "s"},
-    "Classical MC": {"color": "#2A9D8F", "marker": "X"},
+    "DCS": {"color": "#2A9D8F", "marker": "X"},
 }
 KEY_TO_LABEL = {
     "cabiqae": "CABIQAE",
     "cabiqae_latentt": "CABIQAE",
     "biqae": "BIQAE",
-    "classical_mc": "Classical MC",
+    "classical_mc": "DCS",
 }
 VISUAL_JITTER_DEX = 0.0035
 
@@ -142,7 +142,7 @@ def read_hardware_rows(hardware_run_dir: Path, dcs_run_dir: Path) -> pd.DataFram
     quantum = read_budget_rows(hardware_run_dir / "replay_budget_rows.csv")
     quantum = quantum[quantum["algorithm"].isin(("CABIQAE", "BIQAE"))]
     classical = read_budget_rows(dcs_run_dir / "montecarlo_budget_rows.csv")
-    classical = classical[classical["algorithm"] == "Classical MC"]
+    classical = classical[classical["algorithm"] == "DCS"]
     return pd.concat([quantum, classical], ignore_index=True)
 
 
@@ -150,7 +150,7 @@ def read_noiseless_rows(noiseless_run_dir: Path) -> pd.DataFrame:
     quantum = read_budget_rows(noiseless_run_dir / "replay_budget_rows.csv")
     quantum = quantum[quantum["algorithm"].isin(("CABIQAE", "BIQAE"))]
     classical = read_budget_rows(noiseless_run_dir / "montecarlo_budget_rows.csv")
-    classical = classical[classical["algorithm"] == "Classical MC"]
+    classical = classical[classical["algorithm"] == "DCS"]
     return pd.concat([quantum, classical], ignore_index=True)
 
 

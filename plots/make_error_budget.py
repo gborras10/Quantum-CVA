@@ -39,7 +39,6 @@ HARDWARE_TOY_DIR = (
     / "hardware"
     / "beta_hardware_experiment"
     / "experiment_results"
-    / "csv_results"
 )
 CVA_NOISELESS_DIR = (
     ROOT
@@ -158,6 +157,15 @@ def parse_args() -> argparse.Namespace:
         help=f"Comma-separated plot keys or 'all'. Available: {', '.join(plot_keys)}.",
     )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--sqrt-guide-coefficient",
+        type=float,
+        default=None,
+        help=(
+            "Draw the square-root guide as coefficient/sqrt(N) instead of an "
+            "anchored O(1/sqrt(N)) guide."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -278,7 +286,13 @@ def finite_positive(values: Iterable[float]) -> np.ndarray:
     return array[np.isfinite(array) & (array > 0.0)]
 
 
-def add_scaling_guides(ax: plt.Axes, rows: pd.DataFrame, spec: CurveSpec) -> None:
+def add_scaling_guides(
+    ax: plt.Axes,
+    rows: pd.DataFrame,
+    spec: CurveSpec,
+    *,
+    sqrt_guide_coefficient: float | None = None,
+) -> None:
     if not spec.include_linear_guide and not spec.include_sqrt_guide:
         return
 
@@ -333,14 +347,22 @@ def add_scaling_guides(ax: plt.Axes, rows: pd.DataFrame, spec: CurveSpec) -> Non
             zorder=1,
         )
     if spec.include_sqrt_guide:
+        if sqrt_guide_coefficient is None:
+            sqrt_guide_y = anchor_y * np.sqrt(anchor_x / guide_x)
+            sqrt_guide_label = r"$O(1/\sqrt{N})$"
+        else:
+            if not np.isfinite(sqrt_guide_coefficient) or sqrt_guide_coefficient <= 0.0:
+                raise ValueError("sqrt_guide_coefficient must be positive and finite.")
+            sqrt_guide_y = float(sqrt_guide_coefficient) / np.sqrt(guide_x)
+            sqrt_guide_label = rf"${sqrt_guide_coefficient:g}/\sqrt{{N}}$"
         ax.loglog(
             guide_x,
-            anchor_y * np.sqrt(anchor_x / guide_x),
+            sqrt_guide_y,
             color="#262626",
             linestyle=":",
             linewidth=1.45,
             alpha=0.82,
-            label=r"$O(1/\sqrt{N})$",
+            label=sqrt_guide_label,
             zorder=1,
         )
 
@@ -358,14 +380,24 @@ def multiplicative_limits(values: Sequence[float], *, margin_factor: float) -> t
     return low / float(margin_factor), high * float(margin_factor)
 
 
-def plot_curve(spec: CurveSpec, output_dir: Path) -> Path:
+def plot_curve(
+    spec: CurveSpec,
+    output_dir: Path,
+    *,
+    sqrt_guide_coefficient: float | None = None,
+) -> Path:
     rows = load_curve_rows(spec)
     if rows.empty:
         raise ValueError(f"{spec.key} has no valid rows to plot.")
 
     with mpl.rc_context(PAPER_STYLE):
         fig, ax = plt.subplots(figsize=(6.8, 4.2), constrained_layout=True)
-        add_scaling_guides(ax, rows, spec)
+        add_scaling_guides(
+            ax,
+            rows,
+            spec,
+            sqrt_guide_coefficient=sqrt_guide_coefficient,
+        )
 
         for series in spec.algorithm_order:
             group = rows[rows["series"] == series].sort_values("x")
@@ -575,7 +607,11 @@ def main() -> None:
     output_dir = args.output_dir.resolve()
     written: list[Path] = []
     for spec in specs:
-        output_base = plot_curve(spec, output_dir)
+        output_base = plot_curve(
+            spec,
+            output_dir,
+            sqrt_guide_coefficient=args.sqrt_guide_coefficient,
+        )
         written.extend([output_base.with_suffix(".png"), output_base.with_suffix(".pdf")])
         print(f"[{spec.key}] saved {output_base.with_suffix('.png')}")
         print(f"[{spec.key}] saved {output_base.with_suffix('.pdf')}")
