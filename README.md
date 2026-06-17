@@ -1,8 +1,10 @@
 <div align="center">
 
-<p>
-  <img src="assets/readme/quantum-cva-title.svg" alt="Quantum-CVA" width="100%"/>
-</p>
+<br/>
+
+<h1>
+  <img src="assets/readme/quantum-cva-title.svg" alt="Quantum-CVA" width="1040"/>
+</h1>
 
 <p>
   <strong>Research software for quantum Credit Valuation Adjustment, multi-asset CVA pricing,<br/>
