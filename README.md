@@ -106,7 +106,7 @@ flowchart LR
 
 **Reference**
 - [Plots](#plots)
-- [Data and References](#data-and-references)
+- [Data](#data)
 - [Execution Notes](#execution-notes)
 
 </td>
@@ -126,7 +126,7 @@ Quantum-CVA is a research repository for quantum Credit Valuation Adjustment (CV
 
 The central software contribution is the reusable source package in `src/quantum_cva`. The repository is not a collection of isolated notebooks: it contains a public end-to-end quantum CVA pipeline that builds the classical benchmark, trains the quantum state and function encoders, composes the CVA circuit, and runs amplitude-estimation experiments with explicit accounting of queries, noise, calibration, and hardware constraints.
 
-This README describes the components that are part of the public project tree: source code, experiment scripts, selected data artifacts, references, and final plotting utilities.
+This README describes the components that are part of the public project tree: source code, experiment scripts, selected data artifacts, and final plotting utilities.
 
 </details>
 
@@ -152,7 +152,6 @@ quantum-cva/
 │   └── amplitude_estimation_experiments/
 ├── plots/                              ← final figure-generation layer
 ├── data/                               ← market inputs, benchmarks, artifacts
-├── references/                         ← bibliography
 └── requirements.txt
 ```
 
@@ -161,7 +160,6 @@ quantum-cva/
 - **`toys/`** — focused experiments for studying amplitude estimation, discretisation, hardware effects, and modelling choices.
 - **`plots/`** — final AE/CVA figure-generation scripts and curated figures.
 - **`data/`** — market inputs, benchmarks, trained parameters, and selected reproducibility artifacts.
-- **`references/`** — literature used during the development of the project.
 - **`requirements.txt`** — dependency snapshot used for the experiments.
 
 </details>
@@ -421,18 +419,14 @@ Other useful plots are kept close to the experiment that generates them. In the 
 
 ---
 
-## Data and References
+## Data
 
 <details open>
-<summary><strong>Reproducibility artifacts and literature</strong></summary>
+<summary><strong>Reproducibility artifacts</strong></summary>
 
 <br/>
 
 `data/` contains the selected inputs and artifacts needed to reproduce the visible experiments: market data, classical CVA benchmarks, multi-asset 6q training artifacts, selected 8q/10q artifacts, and single-asset legacy data. The most important public path is `data/multi_asset/6q_instance`, which contains the benchmark and trained quantum artifacts used by the thesis instance.
-
-`references/` contains the bibliography used in the project, covering:
-
-`quantum CVA` &nbsp;·&nbsp; `quantum option pricing` &nbsp;·&nbsp; `amplitude estimation` &nbsp;·&nbsp; `near-term / noise-aware AE` &nbsp;·&nbsp; `QCBM` &nbsp;·&nbsp; `MPS` &nbsp;·&nbsp; `tensor networks` &nbsp;·&nbsp; `controlled-rotation circuits`
 
 </details>
 
