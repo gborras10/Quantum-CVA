@@ -199,8 +199,7 @@ This is the instance developed for the master's. It combines two time qubits and
 | `cva_robustness_test/` | Robustness studies for perturbations of the 6q instance. |
 | `cva_robustness_test_ideal/` | Ideal-regime robustness studies for perturbations of the 6q instance. |
 
-> [!NOTE]
-> **On scaling cases.** The `8q_instance` and `10q_instance` directories are not explained in the thesis. They are additional reproducibility and scaling tests used to study the feasibility of different qubit counts and to support the choice of the 6q instance.
+> **Note - On scaling cases.** The `8q_instance` and `10q_instance` directories are not explained in the thesis. They are additional reproducibility and scaling tests used to study the feasibility of different qubit counts and to support the choice of the 6q instance.
 
 </details>
 
@@ -287,8 +286,7 @@ For the 6q thesis instance, the amplitude-estimation problem is built in `src/qu
 
 The repository includes several amplitude-estimation algorithms for comparison, but the algorithmic contribution that should be highlighted is CABIQAE.
 
-> [!IMPORTANT]
-> **CABIQAE — the main algorithmic contribution of the repository.**
+> **Important - CABIQAE: the main algorithmic contribution of the repository.**
 >
 > In the code it appears as `CABIQAELatentTheta` in `src/quantum_cva/algorithms/proposed_algorithms/cabiae.py`, used in the runners with the key `cabiqae_latentt`.
 
@@ -393,8 +391,7 @@ This toy is intentionally smaller than the full CVA circuit, but it exercises th
 8.  Aggregate errors by actual query cost; generate hardware-replay plots
 ```
 
-> [!NOTE]
-> **Methodological point.** The hardware toy separates expensive hardware sampling from algorithmic post-processing. Hardware is used to obtain calibrated probabilities by Grover depth; replay then enables many statistically independent AE executions without resubmitting every adaptive trajectory to the device.
+> **Note - Methodological point.** The hardware toy separates expensive hardware sampling from algorithmic post-processing. Hardware is used to obtain calibrated probabilities by Grover depth; replay then enables many statistically independent AE executions without resubmitting every adaptive trajectory to the device.
 
 The remaining toys — including multi-asset demos, single-asset demos, and quantum hardware demos — should be read as supporting notebooks and experiments. They document how specific modelling, discretisation, training, or transpilation decisions were understood, but they are not the main implementation of the CVA pipeline.
 
@@ -450,11 +447,9 @@ Other useful plots are kept close to the experiment that generates them. In the 
 
 Most scripts are intended to be run from the repository root. Lightweight experiments and plot builders can be executed locally after installing the dependencies in `requirements.txt`. Hardware modes require configured IBM Quantum or Qiskit Runtime credentials and should not be launched as smoke tests.
 
-> [!TIP]
-> For quick validation, use few repetitions, few shots, and the available `dry-run` or `replay-only` modes.
+> **Tip.** For quick validation, use few repetitions, few shots, and the available `dry-run` or `replay-only` modes.
 
-> [!WARNING]
-> Full 6q training and hardware executions are costly reproducibility workflows, not ordinary unit tests.
+> **Warning.** Full 6q training and hardware executions are costly reproducibility workflows, not ordinary unit tests.
 
 </details>
 
